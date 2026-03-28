@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+:root {
+  --foreground: #ffffff;
+  --foreground-trans: #ffffff56;
+  --foreground-ultralight: #565656;
+
+  --secondary: #e8e8e8;
+  --background: #1c1c24;
+}
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 11px;
+}
+
+
+
+/* Controls buttons */
+.react-flow__controls {
+  fill: rgba(255,255,255,0.5) !important;
+
+  background: var(--foreground-trans) !important;
+  border: 0.5px solid var(--foreground-ultralight) !important;
+  border-radius: 10;
+  color: var(--background) !important;
+  backdrop-filter: blur(10px);
+}
+
+.react-flow__controls-button {
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  background: none !important;
+}
+
+.popup-menu {
+  transition: padding 0.15s;
+  white-space: nowrap;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  gap: 6;
+  flex-direction: row !important;
+}
+
+.popup-menu-input {
+  font-size: 13;
+  border: none;
+  outline: none;
+  width: 90;
+  background: transparent;
+  color: var(--background)
+                
+    
+}
+
+/* MiniMap node */
+.react-flow__minimap-node {
+  stroke: none !important;
+}
+
+.node-toolbar-button {
+  background: var(--foreground);
+  border: 1px solid var(--foreground);
+  padding: 3px 10px;
+  color: var(--background);
+  cursor: pointer;
+}
+
+.node-parent {
+  width: 100%;
+  height: 100%;
+  background: var(--foreground);
+  color: var(--background);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+  transition: border-color 0.05s;
+}
+
+
+.node-body {
+  flex: 1;
+  margin: 1em;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transition: opacity 0.1s ease-in-out;
+  .image {
+    padding: 0.8em;
+    transition: opacity 0.1s ease-in-out;
+  }
+}
+
+.adder {
+  font-size: 20px;
+  vertical-align: center;
+  text-align: center;
+}
+
+.button {
+  transition: transform 0.2s ease-in-out;
+  transform: scale(1);
+
+  &:hover {
+    transform: scale(1.2);
+    cursor: pointer;
+  }
+}
+
+.search-input {
+  color: var(--background);
+  transition: opacity 0.1s ease-in-out;
+  pointer-events: none;
+  margin: 0 !important;
+  margin-right: 1em !important;
+  input {
+    padding: 0.5em;
+    width: 100%;
+  }
+}
