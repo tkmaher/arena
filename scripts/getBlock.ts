@@ -45,7 +45,7 @@ async function getChildren(id: string, page: number, type: string): Promise<Chil
         const data = await response.json();
         const children: (Block | Channel)[] = await Promise.all(
             data.data.map((child: any) =>
-                child.class === "Channel" ? parseChannel(child, false) : parseBlock(child, false)
+                child.type === "Channel" ? parseChannel(child, false) : parseBlock(child, false)
             )
         );
         return { children, complete: data.has_more_pages, page: page + 1 };
@@ -123,10 +123,10 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         itemCount: data.counts.contents,
         blockCount: data.counts.blocks,
         channelCount: data.counts.channels,
-        collaborations: data.collaborators.map((collaborator: any) => ({
+        collaborations: data.collaborators ? data.collaborators.map((collaborator: any) => ({
             name: collaborator.name,
             id: collaborator.id
-        })),
+        })) : null,
         connectionStatus: conn,
         childrenStatus: children
     };
