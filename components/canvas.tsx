@@ -1,5 +1,7 @@
 "use client";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useMemo } from "react";
+import RadialMenu from "@/components/radialmenu";
+import InfoPanel from "@/components/infopanel";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -11,17 +13,18 @@ import {
   useReactFlow,
   Panel,
   type Node,
-  Edge
+  Edge,
+  MarkerType
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import FloatingEdge from '@/components/flow/FloatingEdge';
+import FloatingConnectionLine from '@/components/flow/FloatingConnectionLine';
 
 import BlockProp from "@/components/node";
-import { getBlock, getChannel } from "@/scripts/getBlock";
-import { Block, Channel } from "@/types/arena";
+import { getBlock, getChannel, getConnections, getChildren } from "@/scripts/getBlock";
+import { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
 
 const GRID_SIZE = 250;
-const MENU_W = 200; // approximate pill width, used for clamping
-const MENU_H = 44;  // approximate pill height
 
 interface NodeData { onCanvas: boolean; children: string[] }
 const nodeMap = new Map<string, NodeData>();
@@ -29,232 +32,31 @@ const availablePositions: { x: number; y: number }[] = [{ x: 0, y: 0 }];
 const occupiedPositions = new Set<{ x: number; y: number }>();
 
 const nodeTypes = { Canvas: BlockProp };
+const edgeTypes = { floating: FloatingEdge };
 
 function deriveEdges(): Edge[] {
-    const edges: Edge[] = [];
-    for (const [parentId, data] of nodeMap.entries()) {
-      if (!data.onCanvas) continue;
-      for (const childId of data.children) {
-        if (nodeMap.get(childId)?.onCanvas) {
-          edges.push({ id: `${parentId}-${childId}`, source: parentId.toString(), target: childId.toString() });
-        }
+  const edges: Edge[] = [];
+  for (const [parentId, data] of nodeMap.entries()) {
+    if (!data.onCanvas) continue;
+    for (const childId of data.children) {
+      if (nodeMap.get(childId)?.onCanvas) {
+        edges.push({ 
+          id: `${parentId}-${childId}`, 
+          source: parentId.toString(), 
+          target: childId.toString(),
+          markerEnd: { 
+            type: MarkerType.ArrowClosed,
+            
+            color: "#000",
+            },
+          type: 'floating',
+          
+        });
       }
     }
-    console.log("Derived edges:", edges);
-    return edges;
   }
-  
-
-// ─── Radial context menu pill ─────────────────────────────────────────────────
-interface RadialMenuProps {
-  origin: { x: number; y: number } | null;
-  onClose: () => void;
-  onAddBlock: (id: string) => void;
-  onAddChannel: (id: string) => void;
-}
-
-function RadialMenu({ origin, onClose, onAddBlock, onAddChannel }: RadialMenuProps) {
-  const [blockInput, setBlockInput] = useState("");
-  const [channelInput, setChannelInput] = useState("");
-  const [blockOpen, setBlockOpen] = useState(false);
-  const [channelOpen, setChannelOpen] = useState(false);
-  const [visible, setVisible] = useState(true);
-
-  if (!origin) return null;
-
-  // Clamp so pills don't overflow viewport
-  const OFFSET = 130; // horizontal distance from origin to pill center
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-
-  const clamp = (val: number, lo: number, hi: number) => Math.min(Math.max(val, lo), hi);
-
-  const leftCenter = {
-    x: clamp(origin.x - OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
-    y: clamp(origin.y, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
-  };
-  const rightCenter = {
-    x: clamp(origin.x + OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
-    y: clamp(origin.y, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
-  };
-
-  const submitBlock = () => {
-    if (!blockInput.trim()) return;
-    onAddBlock(blockInput.trim());
-    setBlockInput("");
-    setBlockOpen(false);
-    onClose();
-  };
-
-  const submitChannel = () => {
-    if (!channelInput.trim()) return;
-    onAddChannel(channelInput.trim());
-    setChannelInput("");
-    setChannelOpen(false);
-    onClose();
-  };
-
-  return (
-    // Invisible overlay catches outside-clicks to dismiss
-    <div
-        style={{ position: "fixed", inset: 0, zIndex: 1000, pointerEvents: "auto" }}
-        onMouseDown={(e) => {
-            // Only close if clicking the backdrop itself, not the pills
-            if (e.target === e.currentTarget) onClose();
-        }}
-    >
-
-        <div
-            style={{
-                position: "absolute",
-                left: leftCenter.x,
-                top: leftCenter.y,
-                transform: "translate(-50%,-50%)",
-                animation: "radial-left 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="react-flow__controls"
-        >
-            <div
-                style={{
-                    padding: blockOpen ? "6px 10px 6px 14px" : "6px 16px",
-                    cursor: blockOpen ? "default" : "pointer",
-                }}
-                className=" popup-menu"
-                onClick={() => setBlockOpen(true)}
-            >
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", letterSpacing: 0.2 }}>
-                    Block
-                </span>
-                {blockOpen ? (
-                    <>
-                        <input
-                            autoFocus
-                            type="text"
-                            placeholder="ID…"
-                            value={blockInput}
-                            onChange={(e) => setBlockInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && submitBlock()}
-                            className="popup-menu-input"
-                        />
-                        <button
-                            onClick={submitBlock}
-                            style={{
-                            background: "#111",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 999,
-                            padding: "3px 10px",
-                            fontSize: 12,
-                            cursor: "pointer",
-                            }}
-                        >
-                            Add
-                        </button>
-                    </>
-                ) : (
-                    <button
-                        
-                        style={{
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontSize: 18,
-                            lineHeight: 1,
-                            color: "#6b7280",
-                            padding: 0,
-                        }}
-                        >
-                            +
-                    </button>
-                )}
-            </div>
-        </div>
-
-        <div
-            style={{
-                position: "absolute",
-                left: rightCenter.x,
-                top: rightCenter.y,
-                transform: "translate(-50%,-50%)",
-                animation: "radial-right 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
-            }}
-            onMouseDown={(e) => e.stopPropagation()}
-            className="react-flow__controls"
-        >
-            <div
-                style={{
-                    padding: channelOpen ? "6px 10px 6px 14px" : "6px 16px",
-                    cursor: channelOpen ? "default" : "pointer",
-                }}
-                className="popup-menu"
-                onClick={() => setChannelOpen(true)}
-            >
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#374151", letterSpacing: 0.2 }}>
-                    Channel
-                </span>
-                {channelOpen ? (
-                    <>
-                        <input
-                            autoFocus
-                            type="text"
-                            placeholder="ID…"
-                            value={channelInput}
-                            onChange={(e) => setChannelInput(e.target.value)}
-                            onKeyDown={(e) => e.key === "Enter" && submitChannel()}
-                            className="popup-menu-input"
-                        />
-                        <button
-                            onClick={submitChannel}
-                            style={{
-                            background: "#111",
-                            color: "#fff",
-                            border: "none",
-                            borderRadius: 999,
-                            padding: "3px 10px",
-                            fontSize: 12,
-                            cursor: "pointer",
-                            }}
-                        >
-                            Add
-                        </button>
-                    </>
-                ) : (
-                    <button
-                    
-                    style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        fontSize: 18,
-                        lineHeight: 1,
-                        color: "#6b7280",
-                        padding: 0,
-                    }}
-                    >
-                        +
-                    </button>
-                )}
-            </div>
-        </div>
-
-        <style>{`
-            @keyframes radial-left {
-            from { opacity: 0; transform: translate(calc(-50% + 80px), -50%) scale(0.7); }
-            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-            @keyframes radial-right {
-            from { opacity: 0; transform: translate(calc(-50% - 80px), -50%) scale(0.7); }
-            to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            }
-            @keyframes radial-dot {
-            from { opacity: 0; transform: translate(-50%,-50%) scale(0); }
-            to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-            }
-        `}
-        </style>
-    </div>
-  );
+  console.log("Derived edges:", edges);
+  return edges;
 }
 
 // ─── Canvas ───────────────────────────────────────────────────────────────────
@@ -262,7 +64,14 @@ function CanvasInner() {
     const [nodes, setNodes, onNodesChange] = useNodesState([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState([]);
     const [menuOrigin, setMenuOrigin] = useState<{ x: number; y: number } | null>(null);
-  
+    const [infoOpen, setInfoOpen] = useState(false);
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+    const selectedNode = useMemo(
+      () => nodes.find(n => n.id === selectedId),
+      [nodes, selectedId]
+    );
+    console.log("Selected node:", selectedNode);
+
     // Call after any nodeMap mutation + setNodes to keep edges in sync
     function syncEdges() {
       setEdges(deriveEdges());
@@ -291,6 +100,68 @@ function CanvasInner() {
         if (!nodeMap.has(parent)) nodeMap.set(parent, { onCanvas, children: [connection.id] });
         else nodeMap.get(parent)!.children.push(connection.id);
     }
+
+    async function fetchMoreConnections(id: string, connectionStatus: ConnectionStatus, type: string) {
+      if (connectionStatus.complete) return;
+      const conn: ConnectionStatus = await getConnections(id, type, connectionStatus.page);
+      console.log("Fetched more connections:", conn);
+      setNodes((nds: Node[]) =>
+      nds.map((node: Node) => {
+        if (node.id === id.toString()) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              object: {
+                ...node.data.object,
+                connectionStatus: {
+                  complete: conn.complete,
+                  page: conn.page,
+                  connections: [
+                    ...node.data.object.connectionStatus.connections,
+                    ...conn.connections
+                  ]
+                }
+              }
+            }
+          };
+        }
+        return node;
+      })
+    );
+      syncEdges();
+    }
+
+    async function fetchMoreChildren(id: string, childrenStatus: ChildrenStatus) {
+      if (childrenStatus.complete) return;
+      const chil: ChildrenStatus = await getChildren(id, childrenStatus.page);
+      console.log("Fetched more connections:", chil);
+      setNodes((nds: Node[]) =>
+      nds.map((node: Node) => {
+        if (node.id === id.toString()) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              object: {
+                ...node.data.object,
+                childrenStatus: {
+                  complete: chil.complete,
+                  page: chil.page,
+                  children: [
+                    ...node.data.object.childrenStatus.children,
+                    ...chil.children
+                  ]
+                }
+              }
+            }
+          };
+        }
+        return node;
+      })
+    );
+      syncEdges();
+    }
   
     async function addBlockNode(id: string, data?: Block) {
         if (nodeMap.has(id) && nodeMap.get(id)?.onCanvas) return;
@@ -299,7 +170,7 @@ function CanvasInner() {
         const newNodes: Node[] = [];
     
         function collectNode(nodeId: string, obj: Block | Channel) {
-            if (nodeMap.has(nodeId) && nodeMap.get(nodeId)?.onCanvas) return;
+            if (nodeMap.has(nodeId) || nodeMap.get(nodeId)?.onCanvas) return;
             const pos = getNextPosition();
             nodeMap.set(nodeId, { onCanvas: true, children: nodeMap.get(nodeId)?.children ?? [] });
             newNodes.push({
@@ -336,10 +207,10 @@ function CanvasInner() {
             const pos = getNextPosition();
             nodeMap.set(nodeId, { onCanvas: true, children: nodeMap.get(nodeId)?.children ?? [] });
             newNodes.push({
-                id: nodeId.toString(), type: "Canvas",
-                position: { x: pos.x * GRID_SIZE, y: pos.y * GRID_SIZE },
-                style: { width: GRID_SIZE * 0.75, height: GRID_SIZE * 0.75 },
-                data: { object: obj },
+              id: nodeId.toString(), type: "Canvas",
+              position: { x: pos.x * GRID_SIZE, y: pos.y * GRID_SIZE },
+              style: { width: GRID_SIZE * 0.75, height: GRID_SIZE * 0.75 },
+              data: { object: obj },
             });
         }
   
@@ -358,9 +229,9 @@ function CanvasInner() {
       syncEdges();
     }
   
-    const onPaneClick = useCallback((event: React.MouseEvent) => {
-      setMenuOrigin({ x: event.clientX, y: event.clientY });
-    }, []);
+  const onPaneClick = useCallback((event: React.MouseEvent) => {
+    setMenuOrigin({ x: event.clientX, y: event.clientY });
+  }, []);
 
   return (
     <>
@@ -370,6 +241,7 @@ function CanvasInner() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         onPaneClick={onPaneClick}
         fitView
         minZoom={0.1}
@@ -383,6 +255,13 @@ function CanvasInner() {
         style={{ background: "#e8e8e8" }}
         proOptions={{ hideAttribution: true }}
         nodeOrigin={[0.5, 0.5]}
+        onNodeClick={(event, node: Node) => {
+          if (infoOpen) setSelectedId(node.id);
+        }}
+        onNodeDoubleClick={(event, node: Node) => {
+          setInfoOpen(true);
+        }}
+        connectionLineComponent={FloatingConnectionLine}
       >
         <Background
           variant={BackgroundVariant.Cross}
@@ -392,17 +271,31 @@ function CanvasInner() {
           color="rgba(0,0,0, 0.5)"
         />
         <Controls showInteractive={false} />
+        {infoOpen && 
+          <InfoPanel
+            current={selectedNode?.data.object}
+            connectionFetcher={(id, connectionStatus, type) =>
+              fetchMoreConnections(id, connectionStatus, type)
+            }
+            childrenFetcher={(id, childrenStatus) =>
+              fetchMoreChildren(id, childrenStatus)
+            }
+          />
+        }
+
       </ReactFlow>
 
       {/* Radial menu rendered outside ReactFlow so it's in screen-space */}
-      {menuOrigin && (
+      {menuOrigin && 
         <RadialMenu
           origin={menuOrigin}
           onClose={() => setMenuOrigin(null)}
           onAddBlock={(id) => addBlockNode(id)}
           onAddChannel={(id) => addChannelNode(id)}
         />
-      )}
+      }
+
+      
     </>
   );
 }

@@ -18,7 +18,6 @@ body {
 }
 
 
-
 /* Controls buttons */
 .react-flow__controls {
   fill: rgba(255,255,255,0.5) !important;
@@ -28,6 +27,20 @@ body {
   border-radius: 10;
   color: var(--background) !important;
   backdrop-filter: blur(10px);
+}
+
+.react-flow__handle {
+  opacity: 0;
+  visibility: hidden; 
+}
+
+.react-flow__edge-path {
+  stroke: var(--background) !important;
+  stroke-width: 0.5px !important;
+}
+
+.react-flow__panel {
+  margin: 0.8em !important;
 }
 
 .react-flow__controls-button {
@@ -54,6 +67,43 @@ body {
   color: var(--background)
                 
     
+}
+
+.info-box {
+  width: 40vw;
+  max-height: calc(100vh - 1.6em);
+  overflow: hidden;
+}
+
+.info-body {
+  transition: opacity 0.1s ease-in-out;
+  opacity: 0;
+  overflow-y: auto;
+  height: 100%;
+  padding: 1em;
+  display: flex;
+  flex-direction: column;
+
+  img {
+    width: 100%;
+    max-height: 50vh;
+    position: relative !important;
+    object-fit: contain;
+    height: auto !important;
+    padding: 1.7em;
+    cursor: pointer;
+  }
+
+  .p-text {
+    width: 100%;
+    text-align: justify;
+    font-size: 16px;
+    padding: 1.7em;
+  }
+
+  a {
+    cursor: pointer;
+  }
 }
 
 /* MiniMap node */
@@ -89,6 +139,8 @@ body {
   background-position: center;
   background-repeat: no-repeat;
   transition: opacity 0.1s ease-in-out;
+  text-overflow: ellipsis;
+  overflow: hidden;
   .image {
     padding: 0.8em;
     transition: opacity 0.1s ease-in-out;
@@ -121,4 +173,22 @@ body {
     padding: 0.5em;
     width: 100%;
   }
+}
+
+.menu-title {
+  font-size: 13px; 
+  font-weight: 600; 
+  color: rgb(55, 65, 81); 
+  letter-spacing: 0.2px;
+}
+
+.info-title {
+  font-size: 18px;
+  font-weight: 50;
+  line-height: 1.5;
+}
+
+.info-subheader {
+  font-size: 14px;
+  font-weight: 300;
 }

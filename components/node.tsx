@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import Image from "next/image";
+import { htmlDecode } from "@/scripts/utility";
 
 import {
     useReactFlow,
@@ -26,14 +27,26 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
         <NodeToolbar style={{
                 opacity: selected ? "100%" : "0%"
             }} 
-            position={Position.Top} 
-            align="end"
+            position={Position.Bottom} 
+            align="center"
         >
           <button
             onClick={deleteNode}
-            className="node-toolbar-button"
+            className="node-toolbar-button react-flow__controls popup-menu"
           >
             ✕
+          </button>
+        </NodeToolbar>
+        <NodeToolbar style={{
+                opacity: selected ? "100%" : "0%"
+            }} 
+            position={Position.Top} 
+            align="center"
+        >
+          <button
+            className="node-toolbar-button react-flow__controls popup-menu"
+          >
+            ?
           </button>
         </NodeToolbar>
   
@@ -56,7 +69,7 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
                         placeholder="empty"
                         className="image"
                     /> : (data.object.content ? 
-                        <>{data.object.content}</> :
+                        <>{htmlDecode(data.object.content)}</> :
                         <>{data.object.title}</>
                     )
                   )

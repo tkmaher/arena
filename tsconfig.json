@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-  ],
+, "components/flow/FloatingConnectionLine.jsx", "components/flow/FloatingEdge.tsx"  ],
   "exclude": ["node_modules"]
 }

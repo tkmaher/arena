@@ -17,6 +17,8 @@ export interface Channel {
     title?: string;
     description?: string;
 
+    type: "Channel";
+
     state: string;
     visibility: string;
     itemCount: number;
@@ -31,6 +33,7 @@ export interface Channel {
 export interface User {
     name: string;
     id: number;
+    slug: string;
 }
 
 export interface ConnectionStatus {

@@ -12,7 +12,12 @@ import {
 
 const CONNECTIONS_PER_PAGE = 50;
 
-async function getConnections(id: string, type: string, page: number): Promise<ConnectionStatus> {
+function formattedDate(dateString: string): string {
+    const date = new Date(dateString);
+    return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+export async function getConnections(id: string, type: string, page: number): Promise<ConnectionStatus> {
     const url = new URL(`https://api.are.na/v3/${type}/${id}/connections`);
     url.searchParams.append("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.append("page", page.toString());
@@ -25,16 +30,16 @@ async function getConnections(id: string, type: string, page: number): Promise<C
         const connections: Channel[] = await Promise.all(
             data.data.map((connection: any) => parseChannel(connection, false))
         );
-        console.log("block connections:", connections);
-        return { connections, complete: data.has_more_pages, page: page + 1 };
+        console.log("block connections:", data);
+        return { connections, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         console.error("Error fetching connections:", error);
         return { connections: [], complete: true, page };
     }
 }
 
-async function getChildren(id: string, page: number, type: string): Promise<ChildrenStatus> {
-    const url = new URL(`https://api.are.na/v3/${type}/${id}/contents`);
+export async function getChildren(id: string, page: number): Promise<ChildrenStatus> {
+    const url = new URL(`https://api.are.na/v3/channels/${id}/contents`);
     url.searchParams.append("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.append("page", page.toString());
     try {
@@ -48,7 +53,7 @@ async function getChildren(id: string, page: number, type: string): Promise<Chil
                 child.type === "Channel" ? parseChannel(child, false) : parseBlock(child, false)
             )
         );
-        return { children, complete: data.has_more_pages, page: page + 1 };
+        return { children, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         console.error("Error fetching children:", error);
         return { children: [], complete: true, page };
@@ -62,10 +67,10 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | und
 
     const block: Block = {
         id: data.id,
-        date: data.created_at,
+        date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: { name: data.user.name, id: data.user.id },
+        owner: { name: data.user.name, id: data.user.id, slug: data.user.slug },
         type: data.type,
         connectionStatus: conn
     };
@@ -77,14 +82,14 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | und
     } else if (data.type === "Image") {
         const image = block as ImageBlock;
         image.thumbnailUrl = data.image.small.src;
-        image.imageUrl = data.image.src;
+        image.imageUrl = data.image.large.src;
         return image;
     } else if (data.type === "Link") {
         const link = block as LinkBlock;
         link.url = data.source.url;
         link.urlTitle = data.source.title;
-        link.imageUrl = data.image ? data.image.src : null;
         link.thumbnailUrl = data.image ? data.image.small.src : null;
+        link.imageUrl = data.image ? data.image.large.src : null;
         return link;
     } else if (data.type === "Embed") {
         const embed = block as EmbedBlock;
@@ -98,7 +103,7 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | und
         attachment.filename = data.attachment.filename;
         attachment.url = data.attachment.url;
         attachment.thumbnailUrl = data.image ? data.image.small.src : null;
-        attachment.imageUrl = data.image ? data.image.src : null;
+        attachment.imageUrl = data.image ? data.image.large.src : null;
         return attachment;
     }
 }
@@ -108,16 +113,17 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
 
     if (performFetch) {
-        children = await getChildren(data.id, 1, "channels");
+        children = await getChildren(data.id, 1);
         conn = await getConnections(data.id, "channels", 1);
     }
 
     return {
         id: data.id,
-        date: data.created_at,
+        date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: { name: data.owner.name, id: data.owner.id },
+        owner: { name: data.owner.name, id: data.owner.id, slug: data.owner.slug },
+        type: "Channel",
         state: data.state,
         visibility: data.visibility,
         itemCount: data.counts.contents,
@@ -125,7 +131,8 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         channelCount: data.counts.channels,
         collaborations: data.collaborators ? data.collaborators.map((collaborator: any) => ({
             name: collaborator.name,
-            id: collaborator.id
+            id: collaborator.id,
+            slug: collaborator.slug
         })) : null,
         connectionStatus: conn,
         childrenStatus: children
