@@ -7,6 +7,7 @@
 
   --secondary: #e8e8e8;
   --background: #1c1c24;
+  --link: #3b82f6;
 }
 
 
@@ -77,7 +78,6 @@ body {
 
 .info-body {
   transition: opacity 0.1s ease-in-out;
-  opacity: 0;
   overflow-y: auto;
   height: 100%;
   padding: 1em;
@@ -98,6 +98,11 @@ body {
     width: 100%;
     text-align: justify;
     font-size: 16px;
+    padding: 1.7em;
+  }
+
+  .p-iframe {
+    height: 50vh;
     padding: 1.7em;
   }
 
@@ -191,4 +196,10 @@ body {
 .info-subheader {
   font-size: 14px;
   font-weight: 300;
+}
+
+.info-id {
+  font-size: 12px;
+  color: var(--background);
+  opacity: 0.5c;
 }

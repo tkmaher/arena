@@ -12,58 +12,148 @@ import {
 
 const CONNECTIONS_PER_PAGE = 50;
 
-function formattedDate(dateString: string): string {
-    const date = new Date(dateString);
-    return date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+import { formattedDate } from "@/scripts/utility"
+
+class ArenaApiError extends Error {
+    constructor(
+        public readonly status: number,
+        message: string,
+        public readonly url?: string,
+    ) {
+        super(message);
+        this.name = "ArenaApiError";
+    }
 }
 
-export async function getConnections(id: string, type: string, page: number): Promise<ConnectionStatus> {
-    const url = new URL(`https://api.are.na/v3/${type}/${id}/connections`);
-    url.searchParams.append("per", CONNECTIONS_PER_PAGE.toString());
-    url.searchParams.append("page", page.toString());
+async function arenaFetch(url: string | URL): Promise<any> {
+    let response: Response;
     try {
-        const response = await fetch(url, {
+        response = await fetch(url.toString(), {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });
-        const data = await response.json();
+    } catch (networkError) {
+        throw new ArenaApiError(0, `Network error reaching Are.na: ${networkError}`, url.toString());
+    }
+
+    if (!response.ok) {
+        // Try to pull a message from the response body; fall back gracefully.
+        let serverMessage = "";
+        try {
+            const body = await response.json();
+            serverMessage = body?.message ?? body?.error ?? "";
+        } catch {
+            // body wasn't JSON — that's fine, ignore
+        }
+
+        const reason = serverMessage
+            ? `${response.status} ${response.statusText}: ${serverMessage}`
+            : `${response.status} ${response.statusText}`;
+
+        throw new ArenaApiError(response.status, reason, url.toString());
+    }
+
+    try {
+        return await response.json();
+    } catch {
+        throw new ArenaApiError(
+            response.status,
+            "Are.na returned an invalid JSON response.",
+            url.toString()
+        );
+    }
+}
+export async function getConnections(
+    id: string,
+    type: string,
+    page: number
+): Promise<ConnectionStatus> {
+    const url = new URL(`https://api.are.na/v3/${type}/${id}/connections`);
+    url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
+    url.searchParams.set("page", page.toString());
+
+    try {
+        const data = await arenaFetch(url);
         const connections: Channel[] = await Promise.all(
             data.data.map((connection: any) => parseChannel(connection, false))
         );
-        console.log("block connections:", data);
         return { connections, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
-        console.error("Error fetching connections:", error);
+        if (error instanceof ArenaApiError) {
+            console.error(`[getConnections] API error for ${type}/${id} (page ${page}):`, error.message);
+        } else {
+            console.error(`[getConnections] Unexpected error for ${type}/${id}:`, error);
+        }
+        // Return a terminal state so the UI stops paginating.
         return { connections: [], complete: true, page };
     }
 }
 
 export async function getChildren(id: string, page: number): Promise<ChildrenStatus> {
     const url = new URL(`https://api.are.na/v3/channels/${id}/contents`);
-    url.searchParams.append("per", CONNECTIONS_PER_PAGE.toString());
-    url.searchParams.append("page", page.toString());
+    url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
+    url.searchParams.set("page", page.toString());
+
     try {
-        const response = await fetch(url, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-        const data = await response.json();
-        const children: (Block | Channel)[] = await Promise.all(
-            data.data.map((child: any) =>
-                child.type === "Channel" ? parseChannel(child, false) : parseBlock(child, false)
+        const data = await arenaFetch(url);
+        const children: (Block | Channel)[] = (
+            await Promise.all(
+                data.data.map((child: any) =>
+                    child.type === "Channel"
+                        ? parseChannel(child, false)
+                        : parseBlock(child, false)
+                )
             )
-        );
+        ).filter((item): item is Block | Channel => item !== null);
+
         return { children, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
-        console.error("Error fetching children:", error);
+        if (error instanceof ArenaApiError) {
+            console.error(`[getChildren] API error for channel ${id} (page ${page}):`, error.message);
+        } else {
+            console.error(`[getChildren] Unexpected error for channel ${id}:`, error);
+        }
         return { children: [], complete: true, page };
     }
 }
 
-async function parseBlock(data: any, performFetch: boolean): Promise<Block | undefined> {
+export async function getBlock(id: string): Promise<Block | null> {
+    try {
+        const data = await arenaFetch(`https://api.are.na/v3/blocks/${id}`);
+        return parseBlock(data, true);
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 404) {
+            console.warn(`[getBlock] Block "${id}" not found.`);
+        } else if (error instanceof ArenaApiError) {
+            console.error(`[getBlock] API error for block "${id}":`, error.message);
+        } else {
+            console.error(`[getBlock] Unexpected error for block "${id}":`, error);
+        }
+        return null;
+    }
+}
+
+export async function getChannel(id: string): Promise<Channel | null> {
+    try {
+        const data = await arenaFetch(`https://api.are.na/v3/channels/${id}`);
+        return parseChannel(data, true);
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 404) {
+            console.warn(`[getChannel] Channel "${id}" not found.`);
+        } else if (error instanceof ArenaApiError) {
+            console.error(`[getChannel] API error for channel "${id}":`, error.message);
+        } else {
+            console.error(`[getChannel] Unexpected error for channel "${id}":`, error);
+        }
+        return null;
+    }
+}
+
+// ─── Parsers ───────────────────────────────────────────────────────────────────
+
+async function parseBlock(data: any, performFetch: boolean): Promise<Block | null> {
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
-    if (performFetch)
-        conn = await getConnections(data.id, "blocks", 1);
+    if (performFetch) conn = await getConnections(data.id, "blocks", 1);
 
     const block: Block = {
         id: data.id,
@@ -72,39 +162,48 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | und
         description: data.description ? data.description.html : null,
         owner: { name: data.user.name, id: data.user.id, slug: data.user.slug },
         type: data.type,
-        connectionStatus: conn
+        connectionStatus: conn,
     };
 
-    if (data.type === "Text") {
-        const text = block as TextBlock;
-        text.content = data.content.html;
-        return text;
-    } else if (data.type === "Image") {
-        const image = block as ImageBlock;
-        image.thumbnailUrl = data.image.small.src;
-        image.imageUrl = data.image.large.src;
-        return image;
-    } else if (data.type === "Link") {
-        const link = block as LinkBlock;
-        link.url = data.source.url;
-        link.urlTitle = data.source.title;
-        link.thumbnailUrl = data.image ? data.image.small.src : null;
-        link.imageUrl = data.image ? data.image.large.src : null;
-        return link;
-    } else if (data.type === "Embed") {
-        const embed = block as EmbedBlock;
-        embed.url = data.source.url;
-        embed.urlTitle = data.source.title;
-        embed.thumbnailUrl = data.embed.thumbnail_url ?? null;
-        embed.embed = data.embed.html;
-        return embed;
-    } else if (data.type === "Attachment") {
-        const attachment = block as AttachmentBlock;
-        attachment.filename = data.attachment.filename;
-        attachment.url = data.attachment.url;
-        attachment.thumbnailUrl = data.image ? data.image.small.src : null;
-        attachment.imageUrl = data.image ? data.image.large.src : null;
-        return attachment;
+    switch (data.type) {
+        case "Text": {
+            const text = block as TextBlock;
+            text.content = data.content.html;
+            return text;
+        }
+        case "Image": {
+            const image = block as ImageBlock;
+            image.thumbnailUrl = data.image.small.src;
+            image.imageUrl = data.image.large.src;
+            return image;
+        }
+        case "Link": {
+            const link = block as LinkBlock;
+            link.url = data.source.url;
+            link.urlTitle = data.source.title;
+            link.thumbnailUrl = data.image ? data.image.small.src : null;
+            link.imageUrl = data.image ? data.image.large.src : null;
+            return link;
+        }
+        case "Embed": {
+            const embed = block as EmbedBlock;
+            embed.url = data.source.url;
+            embed.urlTitle = data.source.title;
+            embed.thumbnailUrl = data.embed.thumbnail_url ?? null;
+            embed.embed = data.embed.html;
+            return embed;
+        }
+        case "Attachment": {
+            const attachment = block as AttachmentBlock;
+            attachment.filename = data.attachment.filename;
+            attachment.url = data.attachment.url;
+            attachment.thumbnailUrl = data.image ? data.image.small.src : null;
+            attachment.imageUrl = data.image ? data.image.large.src : null;
+            return attachment;
+        }
+        default:
+            console.warn(`[parseBlock] Unrecognised block type "${data.type}" for block ${data.id} — skipping.`);
+            return null;
     }
 }
 
@@ -113,8 +212,10 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
 
     if (performFetch) {
-        children = await getChildren(data.id, 1);
-        conn = await getConnections(data.id, "channels", 1);
+        [children, conn] = await Promise.all([
+            getChildren(data.id, 1),
+            getConnections(data.id, "channels", 1),
+        ]);
     }
 
     return {
@@ -129,41 +230,10 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         itemCount: data.counts.contents,
         blockCount: data.counts.blocks,
         channelCount: data.counts.channels,
-        collaborations: data.collaborators ? data.collaborators.map((collaborator: any) => ({
-            name: collaborator.name,
-            id: collaborator.id,
-            slug: collaborator.slug
-        })) : null,
+        collaborations: data.collaborators
+            ? data.collaborators.map((c: any) => ({ name: c.name, id: c.id, slug: c.slug }))
+            : null,
         connectionStatus: conn,
-        childrenStatus: children
+        childrenStatus: children,
     };
-}
-
-export async function getBlock(id: string): Promise<Block | undefined> {
-    try {
-        const response = await fetch(`https://api.are.na/v3/blocks/${id}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-        const data = await response.json();
-        console.log(data);
-        return parseBlock(data, true);
-    } catch (error) {
-        console.error("Error fetching block:", error);
-        return undefined;
-    }
-}
-
-export async function getChannel(id: string): Promise<Channel | undefined> {
-    try {
-        const response = await fetch(`https://api.are.na/v3/channels/${id}`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-        const data = await response.json();
-        return parseChannel(data, true);
-    } catch (error) {
-        console.error("Error fetching channel:", error);
-        return undefined;
-    }
 }
