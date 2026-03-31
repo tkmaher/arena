@@ -10,7 +10,7 @@ import {
     ChildrenStatus
 } from "@/types/arena";
 
-const CONNECTIONS_PER_PAGE = 50;
+const CONNECTIONS_PER_PAGE = 25;
 
 import { formattedDate } from "@/scripts/utility"
 
@@ -189,7 +189,7 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
             const embed = block as EmbedBlock;
             embed.url = data.source.url;
             embed.urlTitle = data.source.title;
-            embed.thumbnailUrl = data.embed.thumbnail_url ?? null;
+            embed.thumbnailUrl = data.image.small.src ?? null;
             embed.embed = data.embed.html;
             return embed;
         }

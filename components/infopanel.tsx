@@ -1,31 +1,64 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
 import Image from "next/image";
-import { htmlDecode } from "@/scripts/utility";
+import { HTMLDecode } from "@/scripts/utility";
 
-function InfoPanelInner({ current, connectionFetcher, childrenFetcher }: InfoPanelProps) {
+interface InfoPanelType {
+    connectionFetcher: (id: string, s: ConnectionStatus, type: string) => Promise<void>;
+    childrenFetcher: (id: string, s: ChildrenStatus) => Promise<void>;
+    checkNodeVisible: (id: string) => boolean;
+    makeNodeVisible: (id: string, body: Block | Channel) => void;
+  }
+
+interface InfoPanelProps extends InfoPanelType {
+    current: Block | Channel;
+}
+
+interface InfoPanelPropsNull extends InfoPanelType {
+    current: Block | Channel | undefined;
+}
+
+function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelProps) {
     const [imageLoaded, setImageLoaded] = useState(current.hasOwnProperty("thumbnailUrl") ? false : true);
+
+    const visibleIds = useMemo(() => {
+        const ids = current.connectionStatus.connections.map(c => c.id.toString());
+        if (current.type === "Channel") {
+          ids.push(...current.childrenStatus.children.map(c => c.id.toString()));
+        }
+        return new Set(ids.filter(checkNodeVisible));
+    }, [
+        current.connectionStatus.connections,
+        current.type === "Channel" ? current.childrenStatus.children : null,
+        checkNodeVisible
+    ]);
 
     useEffect(() => {
         if (!current) return;
-        const controller = new AbortController();
       
-        if (!current.connectionStatus.complete) {
-            connectionFetcher(current.id, 
-                current.connectionStatus, 
-                current.type == "Channel" ? "channels" : "blocks"
-            );
+        if (!current.connectionStatus.complete && 
+            current.connectionStatus.connections.length == 0) {
+          connectionFetcher(
+            current.id,
+            current.connectionStatus,
+            current.type === "Channel" ? "channels" : "blocks"
+          );
         }
-        return () => controller.abort();
-        }, 
-        [
-            current?.id,
-            current?.connectionStatus.page,
-            current?.connectionStatus.complete
-        ]
-    );
+      
+        if (current.type === "Channel" && 
+            !current.childrenStatus.complete &&
+            current.childrenStatus.children.length == 0) {
+            childrenFetcher(current.id, current.childrenStatus);
+        }
+    }, [
+        current.id,
+        current.connectionStatus.page,
+        current.connectionStatus.complete,
+        current.type === "Channel" ? current.childrenStatus.page : null,
+        current.type === "Channel" ? current.childrenStatus.complete : null
+    ]);
 
     useEffect(() => {
         setImageLoaded(current.hasOwnProperty("thumbnailUrl") ? false : true);
@@ -56,7 +89,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher }: InfoPan
                 }
                 {current.type === "Text" &&
                     <p className="p-text">
-                        {htmlDecode(current.content)}
+                        <HTMLDecode rawHTML={current.content}/>
                     </p>
                 }
                 {current.type == "Attachment" &&
@@ -69,30 +102,6 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher }: InfoPan
                 {current.type == "Embed" &&
                     <script>{current.embed}</script>
                 }
-            </>
-        );
-    }
-
-    function ChannelDisplay({channel}: {channel: Channel}) {
-        useEffect(() => {
-            if (!channel) return;
-            const controller = new AbortController();
-          
-            if (!channel.connectionStatus.complete) {
-                childrenFetcher(current.id, 
-                    channel.childrenStatus
-                );
-            }
-            return () => controller.abort();
-            }, 
-            [
-                channel.id,
-                channel.childrenStatus.page,
-                channel.childrenStatus.complete
-            ]
-        );
-        return (
-            <>
             </>
         );
     }
@@ -115,7 +124,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher }: InfoPan
 
     return (
         <div className="info-body">
-            { (current.type != "Channel") ? <BlockDisplay /> : <ChannelDisplay channel={current} /> }
+            {current.type !== "Channel" && <BlockDisplay />}
             {(current.title || current.filename) && 
                 <a 
                     className="h info-title"
@@ -125,45 +134,70 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher }: InfoPan
             </a>}
             <div className="h info-subheader"><UserLink/> • {current.date}</div>
             <a className="info-id" href={linkOut} target="_blank">{current.id}</a>
-            {current.description && <div className="">{htmlDecode(current.description)}</div>}
-            {current.connectionStatus.connections.length > 0 && <div>
-                Connections
-                {current.connectionStatus.connections.map((channel) => (
-                    <div key={channel.id}>
-                        <a 
-                            href={`https://www.are.na/${channel.owner.slug}/${channel.id}`} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                        >
-                            {channel.title || channel.id}
-                        </a>
+            {current.description && <div><HTMLDecode rawHTML={current.description}/></div>}
+            <div className="collections-children">
+                {current.connectionStatus.connections.length > 0 && <div className="half">
+                    <div className="check-header info-subheader">Connections</div>
+                    <div className="check-header info-subheader">⇣</div>
+                    <div className="list-container">
+                        {current.connectionStatus.connections.map((channel) => (
+                            <div
+                                key={channel.id}
+                                className="checklist"
+                                onClick={() => makeNodeVisible(channel.id, channel)}
+                            >
+                                <a>{channel.title || channel.id}</a>
+                                <input type="checkbox" readOnly checked={visibleIds.has(channel.id.toString())}/>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>}
+                    {!current.connectionStatus.complete && <button 
+                        className="loader" 
+                        onClick={() => connectionFetcher(
+                            current.id,
+                            current.connectionStatus,
+                            current.type === "Channel" ? "channels" : "blocks"
+                        )}
+                    >
+                        Load more...
+                    </button>}
+                </div>}
+                {(current.type == "Channel" && current.childrenStatus.children.length > 0) && <div className="half">
+                    <div className="check-header info-subheader">Contents</div>
+                    <div className="check-header info-subheader">⇣</div>
+                    <div className="list-container">
+                        {current.childrenStatus.children.map((node: Block | Channel) => (
+                            <div
+                                key={node.id}
+                                className="checklist"
+                                onClick={() => makeNodeVisible(node.id, node)}
+                            >
+                                <a>{node.title || node.id}</a>
+                                <input type="checkbox" readOnly checked={visibleIds.has(node.id.toString())}/>
+                            </div>
+                        ))}
+                    </div>
+                    {!current.childrenStatus.complete && <button 
+                        className="loader" 
+                        onClick={() => childrenFetcher(current.id, current.childrenStatus)}
+                    >
+                        Load more...
+                    </button>}
+                </div>}
+            </div>
         </div>
     );
 }
 
-interface InfoPanelProps {
-    current: Block | Channel;
-    connectionFetcher: (id: string, connectionStatus: ConnectionStatus, type: string) => Promise<void>;
-    childrenFetcher: (id: string, childrenStatus: ChildrenStatus) => Promise<void>;
-}
-
-interface InfoPanelPropsNull {
-    current: Block | Channel | undefined;
-    connectionFetcher: (id: string, connectionStatus: ConnectionStatus, type: string) => Promise<void>;
-    childrenFetcher: (id: string, childrenStatus: ChildrenStatus) => Promise<void>;
-
-}
-
-export default function InfoPanel({ current, connectionFetcher, childrenFetcher }: InfoPanelPropsNull) {
+export default function InfoPanel({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelPropsNull) {
     return (
         <Panel position="top-right" className="react-flow__controls info-box">
             {current ? <InfoPanelInner 
                     current={current} 
                     connectionFetcher={connectionFetcher}
                     childrenFetcher={childrenFetcher}
+                    checkNodeVisible={checkNodeVisible}
+                    makeNodeVisible={makeNodeVisible}
                 /> : 
                 <div>Select a block or channel.</div>
             }

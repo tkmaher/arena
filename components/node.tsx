@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import Image from "next/image";
-import { htmlDecode } from "@/scripts/utility";
+import { HTMLDecode } from "@/scripts/utility";
 
 import {
     useReactFlow,
@@ -32,7 +32,7 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
         >
           <button
             onClick={deleteNode}
-            className="node-toolbar-button react-flow__controls popup-menu"
+            className="node-toolbar-button react-flow__controls popup-menu menu-title"
           >
             ✕
           </button>
@@ -44,7 +44,7 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
             align="center"
         >
           <button
-            className="node-toolbar-button react-flow__controls popup-menu"
+            className="node-toolbar-button react-flow__controls popup-menu menu-title"
           >
             ?
           </button>
@@ -52,8 +52,8 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
   
         <div className="node-parent" style={{
             border: selected
-            ? `0.5px dashed #9c9c9c`
-            : `0.5px solid #000000`
+            ? `0.5px dashed #cfcfcf`
+            : `0.5px solid #1c1c24`
         }}>
             <div className="node-body" style={{opacity: imageLoaded ? 1 : 0}}>
               {"childrenStatus" in data.object ?
@@ -69,7 +69,7 @@ export default function BlockProp({ id, data, selected }: {id: string, data: any
                         placeholder="empty"
                         className="image"
                     /> : (data.object.content ? 
-                        <>{htmlDecode(data.object.content)}</> :
+                        <HTMLDecode rawHTML={data.object.content}/> :
                         <>{data.object.title}</>
                     )
                   )

@@ -17,19 +17,19 @@ export default function RadialMenu({ origin, onClose, onAdd }: RadialMenuProps) 
     if (!origin) return null;
   
     // Clamp so pills don't overflow viewport
-    const OFFSET = 130; // horizontal distance from origin to pill center
+    const OFFSET = 70; // horizontal distance from origin to pill center
     const vw = window.innerWidth;
     const vh = window.innerHeight;
   
     const clamp = (val: number, lo: number, hi: number) => Math.min(Math.max(val, lo), hi);
   
-    const leftCenter = {
-        x: clamp(origin.x - OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
-        y: clamp(origin.y, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
+    const topCenter = {
+        x: clamp(origin.x, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
+        y: clamp(origin.y - OFFSET, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
     };
-    const rightCenter = {
-        x: clamp(origin.x + OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
-        y: clamp(origin.y, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
+    const bottomCenter = {
+        x: clamp(origin.x , MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
+        y: clamp(origin.y + OFFSET, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
     };
   
   
@@ -42,97 +42,131 @@ export default function RadialMenu({ origin, onClose, onAdd }: RadialMenuProps) 
     };
   
     return (
-      // Invisible overlay catches outside-clicks to dismiss
-      <div
-          style={{ position: "fixed", inset: 0, zIndex: 1000, pointerEvents: "auto" }}
-          onMouseDown={(e) => {
-              // Only close if clicking the backdrop itself, not the pills
-              if (e.target === e.currentTarget) onClose();
-          }}
-      >
+        <div
+            style={{ position: "fixed", inset: 0, zIndex: 1000, pointerEvents: "auto" }}
+            onMouseDown={(e) => {
+                if (e.target === e.currentTarget) onClose();
+            }}
+        >
+            <div
+                style={{
+                    position: "absolute",
+                    left: topCenter.x,
+                    top: topCenter.y,
+                    transform: "translate(-50%,-50%)",
+                    animation: "radial-top 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="react-flow__controls"
+            >
+                <div
+                    style={{
+                        padding: "6px 10px 6px 14px",
+                        cursor: inputOpen ? "default" : "pointer",
+                    }}
+                    className=" popup-menu"
+                    onClick={() => setInputOpen(true)}
+                >
+                    <span className="menu-title">
+                        Node
+                    </span>
+                    {inputOpen ? (
+                        <>
+                            <input
+                                autoFocus
+                                type="text"
+                                placeholder="Are.na URL/ID"
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => e.key === "Enter" && submit()}
+                                className="popup-menu-input"
+                            />
+                            <button
+                                onClick={submit}
+                                style={{
+                                    background: "#111",
+                                    color: "#fff",
+                                    border: "none",
+                                    borderRadius: 999,
+                                    padding: "3px 10px",
+                                    fontSize: 12,
+                                    cursor: "pointer",
+                                }}
+                            >
+                                +
+                            </button>
+                        </>
+                    ) : (
+                        <button
+                            style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                fontSize: 18,
+                                lineHeight: 1,
+                                color: "#6b7280",
+                                padding: 0,
+                            }}
+                        >
+                            +
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            <div
+                style={{
+                    position: "absolute",
+                    left: bottomCenter.x,
+                    top: bottomCenter.y,
+                    transform: "translate(-50%,-50%)",
+                    animation: "radial-bottom 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="react-flow__controls"
+            >
+                <div
+                    style={{
+                        padding: "6px 10px 6px 14px",
+                        cursor: "pointer",
+                    }}
+                    className="popup-menu"
+                    onClick={() => setInputOpen(true)}
+                >
+                    <span className="menu-title">
+                        Random
+                    </span>
+                    <button
+                        style={{
+                            background: "none",
+                            border: "none",
+                            cursor: "pointer",
+                            fontSize: 18,
+                            lineHeight: 1,
+                            color: "#6b7280",
+                            padding: 0,
+                        }}
+                    >
+                        <img src="dice.svg" style={{maxHeight: 18}}/>
+                    </button>
+                </div>
+            </div>
   
-          <div
-              style={{
-                  position: "absolute",
-                  left: leftCenter.x,
-                  top: leftCenter.y,
-                  transform: "translate(-50%,-50%)",
-                  animation: "radial-left 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
-              }}
-              onMouseDown={(e) => e.stopPropagation()}
-              className="react-flow__controls"
-          >
-              <div
-                  style={{
-                      padding: inputOpen ? "6px 10px 6px 14px" : "6px 16px",
-                      cursor: inputOpen ? "default" : "pointer",
-                  }}
-                  className=" popup-menu"
-                  onClick={() => setInputOpen(true)}
-              >
-                  <span className="menu-title">
-                      Block
-                  </span>
-                  {inputOpen ? (
-                      <>
-                          <input
-                              autoFocus
-                              type="text"
-                              placeholder="ID…"
-                              value={input}
-                              onChange={(e) => setInput(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && submit()}
-                              className="popup-menu-input"
-                          />
-                          <button
-                              onClick={submit}
-                              style={{
-                              background: "#111",
-                              color: "#fff",
-                              border: "none",
-                              borderRadius: 999,
-                              padding: "3px 10px",
-                              fontSize: 12,
-                              cursor: "pointer",
-                              }}
-                          >
-                              Add
-                          </button>
-                      </>
-                  ) : (
-                      <button
-                          
-                          style={{
-                              background: "none",
-                              border: "none",
-                              cursor: "pointer",
-                              fontSize: 18,
-                              lineHeight: 1,
-                              color: "#6b7280",
-                              padding: 0,
-                          }}
-                          >
-                              +
-                      </button>
-                  )}
-              </div>
-          </div>
-  
-          <style>{`
-              @keyframes radial-left {
-              from { opacity: 0; transform: translate(calc(-50% + 80px), -50%) scale(0.7); }
-              to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-              }
-              @keyframes radial-right {
-              from { opacity: 0; transform: translate(calc(-50% - 80px), -50%) scale(0.7); }
-              to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-              }
-              @keyframes radial-dot {
-              from { opacity: 0; transform: translate(-50%,-50%) scale(0); }
-              to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-              }
-          `}
-          </style>
+            <style>{`
+                @keyframes radial-top {
+                from { opacity: 0; transform: translate( -50%, calc(-50% + 80px)) scale(0.7); }
+                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+                @keyframes radial-bottom {
+                from { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.7); }
+                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                }
+                @keyframes radial-dot {
+                from { opacity: 0; transform: translate(-50%,-50%) scale(0); }
+                to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+                }
+            `}
+            </style>
       </div>
     );
 }

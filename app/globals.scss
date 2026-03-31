@@ -5,7 +5,7 @@
   --foreground-trans: #ffffff56;
   --foreground-ultralight: #565656;
 
-  --secondary: #e8e8e8;
+  --secondary: #cfcfcf;
   --background: #1c1c24;
   --link: #3b82f6;
 }
@@ -109,6 +109,59 @@ body {
   a {
     cursor: pointer;
   }
+
+  .collections-children {
+    justify-self: center;
+    margin-top: 1.6em;
+    display: flex;
+    gap: 1em;
+    .half {
+      flex-basis: 50%;
+      max-width: 50%;
+    }
+    .check-header {
+      width: 100%;
+      text-align: center;
+    }
+    .checklist {
+      display: flex;
+      width: 100%;
+      flex-basis: 50%;
+      flex-grow: 0;
+      flex-shrink: 0;
+      gap: 0.5em;
+      a {
+        flex-grow: 1;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+      #visible {
+        align-self: flex-end;
+      }
+    }
+
+    .loader {
+      cursor: pointer;
+      justify-self: center;
+      text-align: center;
+      margin-top: 1em;
+      padding: 0.2em 0.5em 0.2em 0.5em;
+      border: 0.5px solid var(--background);
+      width: 100%;
+      &:hover {
+        background-color: var(--secondary);
+      }
+    }
+  }
+
+  .list-container {
+    border: 0.5px solid var(--background);
+    width: 100%;
+    padding: 0.5em;
+  }
+
+  
 }
 
 /* MiniMap node */
@@ -191,15 +244,20 @@ body {
   font-size: 18px;
   font-weight: 50;
   line-height: 1.5;
+  width: fit-content;
 }
 
 .info-subheader {
   font-size: 14px;
   font-weight: 300;
+  width: fit-content;
+
 }
 
 .info-id {
   font-size: 12px;
   color: var(--background);
-  opacity: 0.5c;
+  opacity: 0.5;
+  width: fit-content;
+
 }

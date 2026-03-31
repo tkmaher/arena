@@ -17,14 +17,12 @@ export interface Channel {
     title?: string;
     description?: string;
 
-    type: "Channel";
-
     state: string;
     visibility: string;
     itemCount: number;
     blockCount: number;
     channelCount: number;
-    collaborations?: User[];
+    collaborations: User[];
 
     connectionStatus: ConnectionStatus;
     childrenStatus: ChildrenStatus;
