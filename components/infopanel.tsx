@@ -76,6 +76,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                         onLoad={() => setImageLoaded(true)}
                         placeholder="empty"
                         className="image"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                         onClick={() => {
                             if (current.hasOwnProperty("url")) {
                                 window.open(current.url
@@ -136,6 +137,29 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
             <a className="info-id" href={linkOut} target="_blank">{current.id}</a>
             {current.description && <div><HTMLDecode rawHTML={current.description}/></div>}
             <div className="collections-children">
+                
+                {(current.type == "Channel" && current.childrenStatus.children.length > 0) && <div className="half">
+                    <div className="check-header info-subheader">Contents</div>
+                    <div className="check-header info-subheader">⇣</div>
+                    <div className="list-container">
+                        {current.childrenStatus.children.map((node: Block | Channel) => (
+                            <div
+                                key={node.id}
+                                className="checklist"
+                                onClick={() => makeNodeVisible(node.id, node)}
+                            >
+                                <a>{node.title || node.id}</a>
+                                <input type="checkbox" readOnly checked={visibleIds.has(node.id.toString())}/>
+                            </div>
+                        ))}
+                    </div>
+                    {!current.childrenStatus.complete && <button 
+                        className="loader" 
+                        onClick={() => childrenFetcher(current.id, current.childrenStatus)}
+                    >
+                        Load more...
+                    </button>}
+                </div>}
                 {current.connectionStatus.connections.length > 0 && <div className="half">
                     <div className="check-header info-subheader">Connections</div>
                     <div className="check-header info-subheader">⇣</div>
@@ -158,28 +182,6 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                             current.connectionStatus,
                             current.type === "Channel" ? "channels" : "blocks"
                         )}
-                    >
-                        Load more...
-                    </button>}
-                </div>}
-                {(current.type == "Channel" && current.childrenStatus.children.length > 0) && <div className="half">
-                    <div className="check-header info-subheader">Contents</div>
-                    <div className="check-header info-subheader">⇣</div>
-                    <div className="list-container">
-                        {current.childrenStatus.children.map((node: Block | Channel) => (
-                            <div
-                                key={node.id}
-                                className="checklist"
-                                onClick={() => makeNodeVisible(node.id, node)}
-                            >
-                                <a>{node.title || node.id}</a>
-                                <input type="checkbox" readOnly checked={visibleIds.has(node.id.toString())}/>
-                            </div>
-                        ))}
-                    </div>
-                    {!current.childrenStatus.complete && <button 
-                        className="loader" 
-                        onClick={() => childrenFetcher(current.id, current.childrenStatus)}
                     >
                         Load more...
                     </button>}

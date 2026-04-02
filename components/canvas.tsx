@@ -21,6 +21,7 @@ import RadialMenu from "@/components/radialmenu";
 import InfoPanel from "@/components/infopanel";
 import type { CanvasNode } from "@/types/reactflow";
 import type { Block, Channel } from "@/types/arena";
+import { GraphContext } from "@/context/graphcontext";
 
 const nodeTypes = { Canvas: BlockProp };
 const edgeTypes = { floating: FloatingEdge };
@@ -50,7 +51,8 @@ function CanvasInner() {
   );
 
   return (
-    <>
+    <GraphContext.Provider value={{ removeNode: engine.removeNode }}>
+
       <ReactFlow<CanvasNode, Edge>
         nodes={engine.nodes}
         edges={engine.edges}
@@ -66,7 +68,6 @@ function CanvasInner() {
         zoomOnScroll
         zoomOnPinch
         zoomOnDoubleClick={false}
-        deleteKeyCode="Delete"
         multiSelectionKeyCode="Shift"
         style={{ background: "#e8e8e8" }}
         proOptions={{ hideAttribution: true }}
@@ -105,7 +106,7 @@ function CanvasInner() {
           onAdd={engine.addNode}
         />
       )}
-    </>
+    </GraphContext.Provider>
   );
 }
 

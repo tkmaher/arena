@@ -7,6 +7,8 @@ import {
   type Edge,
   type OnNodesChange,
   type OnEdgesChange,
+  useReactFlow
+  
 } from "@xyflow/react";
 
 import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT } from "@/lib/graph";
@@ -55,20 +57,48 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const flush = useCallback(() => {
     const g = graph.current;
-    setRfNodes(g.toReactFlowNodes());
-    setRfEdges(g.toReactFlowEdges());
+    const freshNodes = g.toReactFlowNodes(); 
+    const freshEdges = g.toReactFlowEdges();
+  
+    setRfNodes(prev => {
+      const prevMap = new Map(prev.map(n => [n.id, n]));
+      return freshNodes.map(n => {
+        const existing = prevMap.get(n.id);
+        if (!existing) return n; 
+        return {
+          ...n,
+          position: existing.position,
+          selected: existing.selected,
+        };
+      });
+    });
+  
+    setRfEdges(prev => {
+      const prevMap = new Map(prev.map(e => [e.id, e]));
+      return freshEdges.map(e => prevMap.get(e.id) ?? e);
+    });
+  
     setVisibleIds(g.canvasIds());
-  }, [setRfNodes, setRfEdges]);
+  }, [setRfNodes, setRfEdges]); 
 
   // ── Position helpers ──────────────────────────────────────────────────────
+
+  const { screenToFlowPosition, getViewport } = useReactFlow();
 
   const mountNode = useCallback((id: string, object: Block | Channel): boolean => {
     const g = graph.current;
     if (g.isOnCanvas(id)) return false;
-    const gridPos = positions.current.allocate();
+  
+    const vp = getViewport();
+    const centerFlow = screenToFlowPosition({
+      x: window.innerWidth / 2,
+      y: window.innerHeight / 2,
+    });
+  
+    const gridPos = positions.current.allocate(centerFlow);
     g.ensure(id, { object, gridPos, onCanvas: true });
     return true;
-  }, []);
+  }, [screenToFlowPosition, getViewport]);
 
   const unmountNode = useCallback((id: string): boolean => {
     const g = graph.current;

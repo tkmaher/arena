@@ -22,11 +22,17 @@ export class PositionAllocator {
     return `${x},${y}`;
   }
 
-  allocate(): { x: number; y: number } {
-    const flow = useReactFlow();
-    
-    while (this.queue.length > 0) {
-      const pos = this.queue.shift()!;
+  allocate(near?: { x: number; y: number }): { x: number; y: number } {
+    // pick the queued position closest to `near`, or just shift() if no hint
+    while (near && this.queue.length > 0) {
+      let best = 0;
+      let bestDist = Infinity;
+      for (let i = 0; i < this.queue.length; i++) {
+        const p = this.queue[i];
+        const d = ((p.x * GRID_SIZE) - near.x) ** 2 + ((p.y * GRID_SIZE) - near.y) ** 2;
+        if (d < bestDist) { bestDist = d; best = i; }
+      }
+      const [pos] = this.queue.splice(best, 1);
       const k = PositionAllocator.key(pos.x, pos.y);
       this.inQueue.delete(k);
 

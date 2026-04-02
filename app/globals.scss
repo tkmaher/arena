@@ -83,6 +83,7 @@ body {
   padding: 1em;
   display: flex;
   flex-direction: column;
+  position: relative;
 
   img {
     width: 100%;
@@ -92,6 +93,7 @@ body {
     height: auto !important;
     padding: 1.7em;
     cursor: pointer;
+    filter: drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.384));
   }
 
   .p-text {
@@ -199,10 +201,14 @@ body {
   transition: opacity 0.1s ease-in-out;
   text-overflow: ellipsis;
   overflow: hidden;
-  .image {
-    padding: 0.8em;
-    transition: opacity 0.1s ease-in-out;
-  }
+  position: relative;
+}
+
+.image {
+  padding: 0.8em;
+  transition: opacity 0.1s ease-in-out;
+  object-fit: cover;
+  
 }
 
 .adder {
@@ -245,6 +251,7 @@ body {
   font-weight: 50;
   line-height: 1.5;
   width: fit-content;
+  word-break: break-all;
 }
 
 .info-subheader {
