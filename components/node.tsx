@@ -30,7 +30,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
   
         <div className="node-parent" style={{
             border: selected
-            ? `0.5px dashed #cfcfcf`
+            ? `1.5px dashed #1c1c24`
             : `0.5px solid #1c1c24`,
             position: "relative"
         }}>

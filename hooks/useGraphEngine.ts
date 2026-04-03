@@ -1,14 +1,13 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import {
   useNodesState,
   useEdgesState,
   type Edge,
   type OnNodesChange,
   type OnEdgesChange,
-  useReactFlow
-  
+  useReactFlow,
 } from "@xyflow/react";
 
 import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT } from "@/lib/graph";
@@ -55,10 +54,13 @@ export function useGraphEngine(): GraphEngineAPI {
 
   // ── Flush graph → React state ─────────────────────────────────────────────
 
+  const { setViewport } = useReactFlow();
+
   const flush = useCallback(() => {
     const g = graph.current;
     const freshNodes = g.toReactFlowNodes(); 
     const freshEdges = g.toReactFlowEdges();
+    setViewport(v => ({ ...v }));
   
     setRfNodes(prev => {
       const prevMap = new Map(prev.map(n => [n.id, n]));

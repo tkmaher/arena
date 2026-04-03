@@ -87,17 +87,15 @@ function CanvasInner() {
           color="rgba(0,0,0,0.5)"
         />
         <Controls showInteractive={false} />
-
-        {infoOpen && (
-          <InfoPanel
-            current={selectedNode?.data.object}
-            connectionFetcher={engine.fetchMoreConnections}
-            childrenFetcher={engine.fetchMoreChildren}
-            checkNodeVisible={id => engine.visibleIds.has(id)}
-            makeNodeVisible={makeNodeVisible}
-          />
-        )}
       </ReactFlow>
+
+      <InfoPanel
+        current={infoOpen ? selectedNode?.data.object : undefined}
+        connectionFetcher={engine.fetchMoreConnections}
+        childrenFetcher={engine.fetchMoreChildren}
+        checkNodeVisible={id => engine.visibleIds.has(id)}
+        makeNodeVisible={makeNodeVisible}
+      />
 
       {menuOrigin && (
         <RadialMenu
