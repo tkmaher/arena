@@ -18,6 +18,7 @@ interface InfoPanelProps extends InfoPanelType {
 
 interface InfoPanelPropsNull extends InfoPanelType {
     current: Block | Channel | undefined;
+    closePanel: () => void;
 }
 
 function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelProps) {
@@ -193,16 +194,32 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
     );
 }
 
-export default function InfoPanel({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelPropsNull) {
+export default function InfoPanel({ 
+    current,
+    connectionFetcher, 
+    childrenFetcher, 
+    checkNodeVisible, 
+    makeNodeVisible,
+    closePanel
+}: InfoPanelPropsNull) {
     if (current) return (
-        <Panel position="top-right" className="react-flow__controls info-box">
-            <InfoPanelInner 
-                    current={current} 
-                    connectionFetcher={connectionFetcher}
-                    childrenFetcher={childrenFetcher}
-                    checkNodeVisible={checkNodeVisible}
-                    makeNodeVisible={makeNodeVisible}
-                />
+        <Panel position="top-right" className="info-container">
+            <div className="react-flow__controls info-box">
+                <InfoPanelInner 
+                        current={current} 
+                        connectionFetcher={connectionFetcher}
+                        childrenFetcher={childrenFetcher}
+                        checkNodeVisible={checkNodeVisible}
+                        makeNodeVisible={makeNodeVisible}
+                    />
+                
+            </div>
+            <button 
+                onClick={() => closePanel()} 
+                className="node-toolbar-button react-flow__controls popup-menu menu-title"
+            >
+                ✕
+            </button>
         </Panel>
     )
 }

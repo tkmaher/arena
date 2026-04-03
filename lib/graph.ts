@@ -1,4 +1,4 @@
-import { Edge, MarkerType, useReactFlow } from "@xyflow/react";
+import { Edge, MarkerType } from "@xyflow/react";
 import type { Block, Channel } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
@@ -22,40 +22,97 @@ export class PositionAllocator {
     return `${x},${y}`;
   }
 
-  allocate(near?: { x: number; y: number }): { x: number; y: number } {
-    // pick the queued position closest to `near`, or just shift() if no hint
-    while (near && this.queue.length > 0) {
-      let best = 0;
-      let bestDist = Infinity;
-      for (let i = 0; i < this.queue.length; i++) {
-        const p = this.queue[i];
-        const d = ((p.x * GRID_SIZE) - near.x) ** 2 + ((p.y * GRID_SIZE) - near.y) ** 2;
-        if (d < bestDist) { bestDist = d; best = i; }
-      }
-      const [pos] = this.queue.splice(best, 1);
-      const k = PositionAllocator.key(pos.x, pos.y);
-      this.inQueue.delete(k);
-
-      if (this.occupied.has(k)) continue; // race: already taken, skip
-      this.occupied.add(k);
-
-      // Enqueue all unvisited neighbours
+  findNearestFree(
+    start: { x: number; y: number },
+    occupied: Set<string>
+  ): { x: number; y: number } {
+    const visited = new Set<string>();
+    const queue = [start];
+  
+    while (queue.length > 0) {
+      const p = queue.shift()!;
+      const k = PositionAllocator.key(p.x, p.y);
+  
+      if (!occupied.has(k)) return p;
+      if (visited.has(k)) continue;
+  
+      visited.add(k);
+  
       for (let dx = -1; dx <= 1; dx++) {
         for (let dy = -1; dy <= 1; dy++) {
           if (dx === 0 && dy === 0) continue;
-          const nx = pos.x + dx;
-          const ny = pos.y + dy;
+          queue.push({ x: p.x + dx, y: p.y + dy });
+        }
+      }
+    }
+  
+    return start; // fallback (should never happen)
+  }
+
+  allocate(near?: { x: number; y: number }): { x: number; y: number } {
+    while (this.queue.length > 0) {
+      let best = 0;
+      let bestDist = Infinity;
+  
+      if (near) {
+        for (let i = 0; i < this.queue.length; i++) {
+          const p = this.queue[i];
+          const d =
+            ((p.x * GRID_SIZE) - near.x) ** 2 +
+            ((p.y * GRID_SIZE) - near.y) ** 2;
+  
+          if (d < bestDist) {
+            bestDist = d;
+            best = i;
+          }
+        }
+      }
+  
+      // Always consume from queue (prevents infinite growth)
+      const [bestPos] = this.queue.splice(best, 1);
+      const bestKey = PositionAllocator.key(bestPos.x, bestPos.y);
+      this.inQueue.delete(bestKey);
+  
+      let pos = bestPos;
+
+      if (near) {
+        const maxDist = (4 * GRID_SIZE) ** 2;
+      
+        if (bestDist > maxDist) {
+          const snapped = {
+            x: Math.round(near.x / GRID_SIZE),
+            y: Math.round(near.y / GRID_SIZE),
+          };
+      
+          pos = this.findNearestFree(snapped, this.occupied);
+        }
+      }
+  
+      const k = PositionAllocator.key(pos.x, pos.y);
+  
+      if (this.occupied.has(k)) continue;
+  
+      this.occupied.add(k);
+  
+      // Only expand from the BFS position (NOT the overridden one)
+      for (let dx = -1; dx <= 1; dx++) {
+        for (let dy = -1; dy <= 1; dy++) {
+          if (dx === 0 && dy === 0) continue;
+  
+          const nx = bestPos.x + dx;
+          const ny = bestPos.y + dy;
           const nk = PositionAllocator.key(nx, ny);
+  
           if (!this.occupied.has(nk) && !this.inQueue.has(nk)) {
             this.inQueue.add(nk);
             this.queue.push({ x: nx, y: ny });
           }
         }
       }
-
+  
       return pos;
     }
-    // Theoretically unreachable — the queue grows unboundedly
+  
     return { x: 0, y: 0 };
   }
 

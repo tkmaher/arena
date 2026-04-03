@@ -31,7 +31,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
         <div className="node-parent" style={{
             border: selected
             ? `1.5px dashed #1c1c24`
-            : `0.5px solid #1c1c24`,
+            : `1.5px dashed #1c1c2400`,
             position: "relative"
         }}>
             <div className="node-body" style={{opacity: imageLoaded ? 1 : 0}}>

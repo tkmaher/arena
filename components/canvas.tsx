@@ -95,6 +95,7 @@ function CanvasInner() {
         childrenFetcher={engine.fetchMoreChildren}
         checkNodeVisible={id => engine.visibleIds.has(id)}
         makeNodeVisible={makeNodeVisible}
+        closePanel={() => setInfoOpen(false)}
       />
 
       {menuOrigin && (

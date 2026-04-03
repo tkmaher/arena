@@ -148,6 +148,7 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const onNodeDrag = useCallback(
     (_event: React.MouseEvent, node: CanvasNode) => {
+      console.log("hello");
       const g = graph.current;
       const n = g.get(node.id);
       if (!n) return;
