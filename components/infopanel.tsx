@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
 import Image from "next/image";
@@ -62,7 +62,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
 
     useEffect(() => {
         setImageLoaded(current.hasOwnProperty("thumbnailUrl") ? false : true);
-    }, [current.id]);
+    }, [current.id]);        
     
     function BlockDisplay() {
         return (
@@ -89,19 +89,21 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                     />
                 }
                 {current.type === "Text" &&
-                    <p className="p-text">
+                    <div className="p-text">
                         <HTMLDecode rawHTML={current.content}/>
-                    </p>
+                    </div>
                 }
                 {current.type == "Attachment" &&
-                    <iframe 
-                        className="p-iframe" 
-                        src={current.url}
-                    />
+                    <div className="p-iframe" >
+                        <iframe src={current.url}/>
+                    </div>
                 }
                 
                 {current.type == "Embed" &&
-                    <script>{current.embed}</script>
+                    <div 
+                        className="p-iframe" 
+                        dangerouslySetInnerHTML={{__html: current.embed}}
+                    />
                 }
             </>
         );
@@ -192,17 +194,15 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
 }
 
 export default function InfoPanel({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelPropsNull) {
-    return (
+    if (current) return (
         <Panel position="top-right" className="react-flow__controls info-box">
-            {current ? <InfoPanelInner 
+            <InfoPanelInner 
                     current={current} 
                     connectionFetcher={connectionFetcher}
                     childrenFetcher={childrenFetcher}
                     checkNodeVisible={checkNodeVisible}
                     makeNodeVisible={makeNodeVisible}
-                /> : 
-                <div>Select a block or channel.</div>
-            }
+                />
         </Panel>
     )
 }

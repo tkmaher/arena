@@ -102,6 +102,7 @@ function CanvasInner() {
           origin={menuOrigin}
           onClose={() => setMenuOrigin(null)}
           onAdd={engine.addNode}
+          onRandom={engine.addRandom}
         />
       )}
     </GraphContext.Provider>

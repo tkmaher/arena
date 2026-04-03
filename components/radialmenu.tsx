@@ -8,9 +8,10 @@ interface RadialMenuProps {
     origin: { x: number; y: number } | null;
     onClose: () => void;
     onAdd: (id: string) => void;
+    onRandom: () => void;
 }
   
-export default function RadialMenu({ origin, onClose, onAdd }: RadialMenuProps) {
+export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialMenuProps) {
     const [input, setInput] = useState("");
     const [inputOpen, setInputOpen] = useState(false);
   
@@ -39,6 +40,13 @@ export default function RadialMenu({ origin, onClose, onAdd }: RadialMenuProps) 
       setInput("");
       setInputOpen(false);
       onClose();
+    };
+
+    const submitRandom = () => {
+        onRandom();
+        setInput("");
+        setInputOpen(false);
+        onClose();
     };
   
     return (
@@ -131,7 +139,7 @@ export default function RadialMenu({ origin, onClose, onAdd }: RadialMenuProps) 
                         cursor: "pointer",
                     }}
                     className="popup-menu"
-                    onClick={() => setInputOpen(true)}
+                    onClick={submitRandom}
                 >
                     <span className="menu-title">
                         Random

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState, useEffect } from "react";
+import { useCallback, useRef, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -15,6 +15,8 @@ import { getBlock, getChannel, getConnections, getChildren } from "@/scripts/get
 import type { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
+import { RandomChannels } from "@/lib/random";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 /** Always compare / store IDs as strings — the API returns numbers at runtime. */
@@ -28,13 +30,8 @@ export interface GraphEngineAPI {
   visibleIds: Set<string>;
   onNodesChange: OnNodesChange<CanvasNode>;
   onEdgesChange: OnEdgesChange<Edge>;
-
   addNode: (idOrPath: string) => Promise<void>;
-  /**
-   * Toggle a node on/off the canvas.
-   * Pass `linkedToId` to wire an edge between the toggled node and the
-   * currently-selected node when it comes ON.
-   */
+  addRandom: () => Promise<void>;
   toggleNode: (id: string | number, body: Block | Channel, linkedToId?: string) => Promise<void>;
   removeNode: (id: string) => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
@@ -42,46 +39,84 @@ export interface GraphEngineAPI {
   onNodeDrag: (_event: React.MouseEvent, node: CanvasNode) => void;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
 export function useGraphEngine(): GraphEngineAPI {
-  const graph     = useRef(new Graph());
+  const graph = useRef(new Graph());
   const positions = useRef(new PositionAllocator());
 
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<CanvasNode>([]);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
 
-  // ── Flush graph → React state ─────────────────────────────────────────────
-
-  const { setViewport } = useReactFlow();
+  // ── PARTIAL FLUSH (no graph diffs required) ────────────────────────────────
+  // Strategy:
+  // 1. Compute next canvas IDs
+  // 2. Remove nodes/edges that disappeared
+  // 3. Add ONLY new nodes/edges
+  // 4. Do NOT recreate existing ones
 
   const flush = useCallback(() => {
     const g = graph.current;
-    const freshNodes = g.toReactFlowNodes(); 
-    const freshEdges = g.toReactFlowEdges();
-    setViewport(v => ({ ...v }));
+    const nextIds = g.canvasIds();
   
+    // --- NODES ---
     setRfNodes(prev => {
-      const prevMap = new Map(prev.map(n => [n.id, n]));
-      return freshNodes.map(n => {
-        const existing = prevMap.get(n.id);
-        if (!existing) return n; 
-        return {
-          ...n,
-          position: existing.position,
-          selected: existing.selected,
-        };
-      });
+      const nextIdSet = new Set(g.canvasIds());
+      const fresh = g.toReactFlowNodes();
+      const freshMap = new Map(fresh.map(n => [n.id, n]));
+    
+      const result: CanvasNode[] = [];
+    
+      for (const prevNode of prev) {
+        if (!nextIdSet.has(prevNode.id)) continue;
+    
+        const freshNode = freshMap.get(prevNode.id);
+    
+        if (!freshNode) continue;
+    
+        result.push({
+          ...prevNode,
+          data: freshNode.data,
+        });
+      }
+    
+      // Add new nodes
+      for (const n of fresh) {
+        if (!prev.find(p => p.id === n.id)) {
+          result.push(n);
+        }
+      }
+    
+      return result;
     });
   
+    // --- EDGES ---
     setRfEdges(prev => {
-      const prevMap = new Map(prev.map(e => [e.id, e]));
-      return freshEdges.map(e => prevMap.get(e.id) ?? e);
+      const fresh = g.toReactFlowEdges();
+      const freshMap = new Map(fresh.map(e => [e.id, e]));
+  
+      const result: Edge[] = [];
+  
+      // 1. Keep existing edges
+      for (const e of prev) {
+        if (freshMap.has(e.id)) {
+          result.push(e);
+        }
+      }
+  
+      const prevIds = new Set(prev.map(e => e.id));
+  
+      // 2. Add new edges
+      for (const e of fresh) {
+        if (!prevIds.has(e.id)) {
+          result.push(e);
+        }
+      }
+  
+      return result;
     });
   
-    setVisibleIds(g.canvasIds());
-  }, [setRfNodes, setRfEdges]); 
+    setVisibleIds(new Set(nextIds));
+  }, []);
 
   // ── Position helpers ──────────────────────────────────────────────────────
 
@@ -194,12 +229,21 @@ export function useGraphEngine(): GraphEngineAPI {
         const ok = idOrPath.includes("/block/")
           ? await addBlockNode(slug)
           : await addChannelNode(slug);
-        if (!ok) alert("Couldn't add that node — check the URL.");
+        if (!ok) alert(`Error adding block or channel with URL ${idOrPath}.`);
         return;
       }
       if (await addBlockNode(idOrPath)) return;
       if (await addChannelNode(idOrPath)) return;
-      alert("Couldn't find a block or channel with that ID.");
+      alert(`Couldn't find a block or channel with ID ${idOrPath}.`);
+    },
+    [addBlockNode, addChannelNode]
+  );
+
+  const addRandom = useCallback(
+    async (): Promise<void> => {
+      console.log("Adding random node...");
+      const randomID = RandomChannels[Math.floor(Math.random() * RandomChannels.length)];
+      await addNode(randomID);
     },
     [addBlockNode, addChannelNode]
   );
@@ -252,18 +296,18 @@ export function useGraphEngine(): GraphEngineAPI {
     async (nodeId: string, status: ConnectionStatus, type: string): Promise<void> => {
       if (status.complete) return;
 
+      
       const g = graph.current;
       const node = g.get(sid(nodeId));
-      // Guard: stub nodes (created by link() with no object) can't be updated
       if (!node?.object) return;
-
+      
       const result = await getConnections(nodeId, type, status.page);
-
+      
       const merged = Array.from(
         new Map(
           [...status.connections, ...result.connections].map(c => [sid(c.id), c])
-        ).values()
-      );
+          ).values()
+          );
 
       g.updateObject(sid(nodeId), {
         ...node.object,
@@ -327,6 +371,7 @@ export function useGraphEngine(): GraphEngineAPI {
     onNodesChange,
     onEdgesChange,
     addNode,
+    addRandom,
     toggleNode,
     removeNode,
     onNodeDrag,
