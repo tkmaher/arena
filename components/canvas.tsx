@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -51,7 +51,9 @@ function CanvasInner() {
   );
 
   return (
-    <GraphContext.Provider value={{ removeNode: engine.removeNode }}>
+    <GraphContext.Provider 
+      value={{ removeNode: engine.removeNode }}
+    >
 
       <ReactFlow<CanvasNode, Edge>
         nodes={engine.nodes}
@@ -102,8 +104,8 @@ function CanvasInner() {
         <RadialMenu
           origin={menuOrigin}
           onClose={() => setMenuOrigin(null)}
-          onAdd={engine.addNode}
-          onRandom={engine.addRandom}
+          onAdd={(id) => engine.addNode(id, menuOrigin)}
+          onRandom={() => engine.addRandom(menuOrigin)}
         />
       )}
     </GraphContext.Provider>

@@ -17,6 +17,8 @@ export interface Channel {
     title?: string;
     description?: string;
 
+    type: string;
+
     state: string;
     visibility: string;
     itemCount: number;
