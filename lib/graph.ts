@@ -126,6 +126,7 @@ export class PositionAllocator {
       this.queue.unshift({ x, y });
     }
   }
+
 }
 
 // ─── Graph ────────────────────────────────────────────────────────────────────

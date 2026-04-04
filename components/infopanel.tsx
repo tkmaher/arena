@@ -130,7 +130,15 @@ function InfoPanelInner({
         )
     }
 
+    const toggleNode = (e: React.ChangeEvent, node: Channel | Block) => {
+        e.stopPropagation();
+        console.log("toggling");
+        makeNodeVisible(node.id, node)
+    }
+
     const handleListClick = (node: Channel | Block) => {
+        console.log("listClick");
+
         if (visibleIds.has(node.id.toString())) {
             setSelected(String(node.id));
         } else {
@@ -164,14 +172,13 @@ function InfoPanelInner({
                         {current.childrenStatus.children.map((node: Block | Channel) => (
                             <div
                                 key={node.id}
-                                className="checklist"
-                                onClick={() => handleListClick(node)}
+                                className="checklist" 
                             >
-                                <a>{node.title || node.id}</a>
+                                <a onClick={() => handleListClick(node)}>{node.title || node.id}</a>
                                 <input 
                                     type="checkbox" 
                                     checked={visibleIds.has(node.id.toString())}
-                                    onChange={() => makeNodeVisible(node.id, node)}
+                                    onChange={(e) => toggleNode(e, node)}
                                 />
                             </div>
                         ))}
@@ -191,13 +198,12 @@ function InfoPanelInner({
                             <div
                                 key={channel.id}
                                 className="checklist"
-                                onClick={() => handleListClick(channel)}
                             >
-                                <a>{channel.title || channel.id}</a>
+                                <a onClick={() => handleListClick(channel)}>{channel.title || channel.id}</a>
                                 <input 
                                     type="checkbox" 
                                     checked={visibleIds.has(channel.id.toString())}
-                                    onChange={() => makeNodeVisible(channel.id, channel)}
+                                    onChange={(e) => toggleNode(e, channel)}
                                 />
                             </div>
                         ))}
@@ -231,21 +237,28 @@ export default function InfoPanel({
         <Panel position="top-right" className="info-container">
             <div className="react-flow__controls info-box">
                 <InfoPanelInner 
-                        current={current} 
-                        connectionFetcher={connectionFetcher}
-                        childrenFetcher={childrenFetcher}
-                        checkNodeVisible={checkNodeVisible}
-                        makeNodeVisible={makeNodeVisible}
-                        setSelected={setSelected}
-                    />
-                
+                    current={current} 
+                    connectionFetcher={connectionFetcher}
+                    childrenFetcher={childrenFetcher}
+                    checkNodeVisible={checkNodeVisible}
+                    makeNodeVisible={makeNodeVisible}
+                    setSelected={setSelected}
+                />
             </div>
-            <button 
-                onClick={() => closePanel()} 
-                className="node-toolbar-button react-flow__controls popup-menu menu-title"
-            >
-                ✕
-            </button>
+            <div className="info-toolbar">
+                <button 
+                    onClick={() => closePanel()} 
+                    className="node-toolbar-button react-flow__controls popup-menu menu-title"
+                >
+                    Close ✕
+                </button>
+                <button 
+                    onClick={() => makeNodeVisible(current.id, current)} 
+                    className="node-toolbar-button react-flow__controls popup-menu menu-title"
+                >
+                    Remove ✕
+                </button>
+            </div>
         </Panel>
     )
 }

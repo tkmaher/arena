@@ -76,13 +76,19 @@ body {
     
 }
 
-
+.info-toolbar {
+  display: flex;
+  gap: 1.6em;
+  justify-content: center;
+  width: 100%;
+}
 
 .info-container {
   pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   height: calc(100vh - 2.4em);
   gap: 1.6em;
   button {

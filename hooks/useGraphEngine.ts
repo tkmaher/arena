@@ -10,7 +10,7 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 
-import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT } from "@/lib/graph";
+import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT, GRID_SIZE } from "@/lib/graph";
 import { getBlock, getChannel, getConnections, getChildren } from "@/scripts/getBlock";
 import type { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
@@ -34,6 +34,7 @@ export interface GraphEngineAPI {
   addRandom: (mousePos: MousePos) => Promise<string | null>;
   toggleNode: (id: string | number, body: Block | Channel, linkedToId?: string) => Promise<void>;
   removeNode: (id: string) => void;
+  removeAllNodes: () => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
   fetchMoreChildren: (id: string, status: ChildrenStatus) => Promise<void>;
   onNodeDrag: (node: CanvasNode) => void;
@@ -127,11 +128,10 @@ export function useGraphEngine(): GraphEngineAPI {
       const g = graph.current;
       if (g.isOnCanvas(id)) return false;
       
-  
       const centerFlow = mousePos
         ? screenToFlowPosition(mousePos)
         : screenToFlowPosition({
-            x: window.innerWidth / 2,
+            x: (window.innerWidth / 2) - (window.innerWidth * 0.25),
             y: window.innerHeight / 2,
           });
   
@@ -158,12 +158,9 @@ export function useGraphEngine(): GraphEngineAPI {
       const g = graph.current;
       const n = g.get(node.id);
       if (!n) return;
-  
       if (!n.manualPos) {
         positions.current.release(n.gridPos.x, n.gridPos.y);
       }
-  
-     
       n.manualPos = node.position;
     },
   []);
@@ -266,6 +263,14 @@ export function useGraphEngine(): GraphEngineAPI {
     },
     [unmountNode, flush]
   );
+
+  const removeAllNodes = useCallback(() => {
+    const g = graph.current;
+    for (const id of g.canvasIds()) {
+      unmountNode(id);
+    }
+    flush();
+  }, [flush, unmountNode]);
 
   const toggleNode = useCallback(
     async (
@@ -394,6 +399,7 @@ export function useGraphEngine(): GraphEngineAPI {
     addRandom,
     toggleNode,
     removeNode,
+    removeAllNodes,
     onNodeDrag,
     fetchMoreConnections,
     fetchMoreChildren,

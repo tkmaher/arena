@@ -9,6 +9,8 @@ import {
   Controls,
   useReactFlow,
   type Edge,
+  Panel,
+  ControlButton,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
@@ -82,11 +84,11 @@ function CanvasInner() {
   const onDrag = (event: React.MouseEvent, node: CanvasNode) => {
     if (dragging) {
       setDragging(false);
+      engine.onNodeDrag(node);
     } else {
       setDragging(true);
       setSelectedId(node.id);
       setInfoOpen(true);
-      engine.onNodeDrag(node);
     }
   };
 
@@ -108,7 +110,7 @@ function CanvasInner() {
           panOnDrag
           zoomOnScroll
           zoomOnPinch
-          zoomOnDoubleClick={false}
+          zoomOnDoubleClick={true}
           multiSelectionKeyCode="Shift"
           style={{ background: "#e8e8e8" }}
           proOptions={{ hideAttribution: true }}
@@ -119,7 +121,9 @@ function CanvasInner() {
           }}
           connectionLineComponent={FloatingConnectionLine}
           onNodeDragStart={onDrag}
+          onNodeDragStop={onDrag}
           autoPanOnNodeFocus={true}
+          autoPanOnNodeDrag={false}
         >
           <Background
             variant={BackgroundVariant.Cross}
@@ -128,7 +132,15 @@ function CanvasInner() {
             lineWidth={0.5}
             color="rgba(0,0,0,0.5)"
           />
-          <Controls showInteractive={false} />
+          <Controls showInteractive={false}>
+            <ControlButton position="bottom-left">
+              <button onClick={engine.removeAllNodes}>
+                <img src="deleteallhover.svg" style={{maxHeight: 18}}/>
+                <img src="deleteall.svg" style={{maxHeight: 18}}/>
+
+              </button>
+            </ControlButton>
+          </Controls>
         </ReactFlow>
 
       <InfoPanel
