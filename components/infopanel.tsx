@@ -10,6 +10,7 @@ interface InfoPanelType {
     childrenFetcher: (id: string, s: ChildrenStatus) => Promise<void>;
     checkNodeVisible: (id: string) => boolean;
     makeNodeVisible: (id: string, body: Block | Channel) => void;
+    setSelected: (id: string) => void;
   }
 
 interface InfoPanelProps extends InfoPanelType {
@@ -21,7 +22,14 @@ interface InfoPanelPropsNull extends InfoPanelType {
     closePanel: () => void;
 }
 
-function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible }: InfoPanelProps) {
+function InfoPanelInner({ 
+    current, 
+    connectionFetcher, 
+    childrenFetcher, 
+    checkNodeVisible, 
+    makeNodeVisible,
+    setSelected,
+}: InfoPanelProps) {
     const [imageLoaded, setImageLoaded] = useState(current.hasOwnProperty("thumbnailUrl") ? false : true);
 
     const visibleIds = useMemo(() => {
@@ -122,6 +130,14 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
         )
     }
 
+    const handleListClick = (node: Channel | Block) => {
+        if (visibleIds.has(node.id.toString())) {
+            setSelected(String(node.id));
+        } else {
+            makeNodeVisible(node.id, node);
+        }
+    }
+
     const linkOut = current.type == "Channel" ? 
         `https://www.are.na/${current.owner.slug}/${current.id}`
         : `https://www.are.na/block/${current.id}`;
@@ -149,10 +165,14 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                             <div
                                 key={node.id}
                                 className="checklist"
-                                onClick={() => makeNodeVisible(node.id, node)}
+                                onClick={() => handleListClick(node)}
                             >
                                 <a>{node.title || node.id}</a>
-                                <input type="checkbox" readOnly checked={visibleIds.has(node.id.toString())}/>
+                                <input 
+                                    type="checkbox" 
+                                    checked={visibleIds.has(node.id.toString())}
+                                    onChange={() => makeNodeVisible(node.id, node)}
+                                />
                             </div>
                         ))}
                     </div>
@@ -171,10 +191,14 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                             <div
                                 key={channel.id}
                                 className="checklist"
-                                onClick={() => makeNodeVisible(channel.id, channel)}
+                                onClick={() => handleListClick(channel)}
                             >
                                 <a>{channel.title || channel.id}</a>
-                                <input type="checkbox" readOnly checked={visibleIds.has(channel.id.toString())}/>
+                                <input 
+                                    type="checkbox" 
+                                    checked={visibleIds.has(channel.id.toString())}
+                                    onChange={() => makeNodeVisible(channel.id, channel)}
+                                />
                             </div>
                         ))}
                     </div>
@@ -200,7 +224,8 @@ export default function InfoPanel({
     childrenFetcher, 
     checkNodeVisible, 
     makeNodeVisible,
-    closePanel
+    closePanel,
+    setSelected
 }: InfoPanelPropsNull) {
     if (current) return (
         <Panel position="top-right" className="info-container">
@@ -211,6 +236,7 @@ export default function InfoPanel({
                         childrenFetcher={childrenFetcher}
                         checkNodeVisible={checkNodeVisible}
                         makeNodeVisible={makeNodeVisible}
+                        setSelected={setSelected}
                     />
                 
             </div>

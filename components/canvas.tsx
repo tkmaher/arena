@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
   Background,
   BackgroundVariant,
   Controls,
+  useReactFlow,
   type Edge,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -32,8 +33,10 @@ function CanvasInner() {
   const [menuOrigin, setMenuOrigin] = useState<{ x: number; y: number } | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
   const selectedNode = useMemo(
+    
     () => engine.nodes.find(n => n.id === selectedId),
     [engine.nodes, selectedId]
   );
@@ -50,46 +53,83 @@ function CanvasInner() {
     [engine, selectedId]
   );
 
+  const { setCenter, getZoom } = useReactFlow();
+
+  useEffect(() => {
+    if (!selectedId || dragging) return;
+  
+    const node = engine.nodes.find(n => n.id === selectedId);
+    if (!node) return;
+  
+    const zoom = getZoom();
+  
+    let { x, y } = node.position;
+  
+    if (infoOpen) {
+      const screenOffset = window.innerWidth * 0.25;
+      const flowOffset = screenOffset / zoom;
+  
+      x = x + flowOffset;
+    }
+  
+    setCenter(x, y, {
+      zoom,
+      duration: 300,
+    });
+  
+  }, [selectedId, infoOpen, engine.nodes]);
+
+  const onDrag = (event: React.MouseEvent, node: CanvasNode) => {
+    if (dragging) {
+      setDragging(false);
+    } else {
+      setDragging(true);
+      setSelectedId(node.id);
+      setInfoOpen(true);
+      engine.onNodeDrag(node);
+    }
+  };
+
   return (
     <GraphContext.Provider 
       value={{ removeNode: engine.removeNode }}
     >
-
-      <ReactFlow<CanvasNode, Edge>
-        nodes={engine.nodes}
-        edges={engine.edges}
-        onNodesChange={engine.onNodesChange}
-        onEdgesChange={engine.onEdgesChange}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
-        onPaneClick={onPaneClick}
-        fitView
-        minZoom={0.1}
-        maxZoom={4}
-        panOnDrag
-        zoomOnScroll
-        zoomOnPinch
-        zoomOnDoubleClick={false}
-        multiSelectionKeyCode="Shift"
-        style={{ background: "#e8e8e8" }}
-        proOptions={{ hideAttribution: true }}
-        nodeOrigin={[0.5, 0.5]}
-        onNodeClick={(_event, node) => {
-          setSelectedId(node.id);
-          setInfoOpen(true);
-        }}
-        connectionLineComponent={FloatingConnectionLine}
-        onNodeDrag={engine.onNodeDrag}
-      >
-        <Background
-          variant={BackgroundVariant.Cross}
-          gap={GRID_SIZE}
-          size={10}
-          lineWidth={0.5}
-          color="rgba(0,0,0,0.5)"
-        />
-        <Controls showInteractive={false} />
-      </ReactFlow>
+        <ReactFlow<CanvasNode, Edge>
+          nodes={engine.nodes}
+          edges={engine.edges}
+          onNodesChange={engine.onNodesChange}
+          onEdgesChange={engine.onEdgesChange}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          onPaneClick={onPaneClick}
+          fitView
+          minZoom={0.1}
+          maxZoom={4}
+          panOnDrag
+          zoomOnScroll
+          zoomOnPinch
+          zoomOnDoubleClick={false}
+          multiSelectionKeyCode="Shift"
+          style={{ background: "#e8e8e8" }}
+          proOptions={{ hideAttribution: true }}
+          nodeOrigin={[0.5, 0.5]}
+          onNodeClick={(_event, node) => {
+            setSelectedId(node.id);
+            setInfoOpen(true);
+          }}
+          connectionLineComponent={FloatingConnectionLine}
+          onNodeDragStart={onDrag}
+          autoPanOnNodeFocus={true}
+        >
+          <Background
+            variant={BackgroundVariant.Cross}
+            gap={GRID_SIZE}
+            size={10}
+            lineWidth={0.5}
+            color="rgba(0,0,0,0.5)"
+          />
+          <Controls showInteractive={false} />
+        </ReactFlow>
 
       <InfoPanel
         current={infoOpen ? selectedNode?.data.object : undefined}
@@ -98,14 +138,24 @@ function CanvasInner() {
         checkNodeVisible={id => engine.visibleIds.has(id)}
         makeNodeVisible={makeNodeVisible}
         closePanel={() => setInfoOpen(false)}
+        setSelected={(id: string) => { 
+          setSelectedId(id); 
+          engine.setSelectedNode(id);
+        }}
       />
 
       {menuOrigin && (
         <RadialMenu
           origin={menuOrigin}
           onClose={() => setMenuOrigin(null)}
-          onAdd={(id) => engine.addNode(id, menuOrigin)}
-          onRandom={() => engine.addRandom(menuOrigin)}
+          onAdd={async (id) => {
+            const res = await engine.addNode(id, menuOrigin);
+            if (res) setSelectedId(res);
+          }}
+          onRandom={async () => {
+            const res = await engine.addRandom(menuOrigin);
+            if (res) setSelectedId(res);
+          }}
         />
       )}
     </GraphContext.Provider>

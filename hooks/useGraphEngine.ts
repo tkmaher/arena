@@ -30,13 +30,14 @@ export interface GraphEngineAPI {
   visibleIds: Set<string>;
   onNodesChange: OnNodesChange<CanvasNode>;
   onEdgesChange: OnEdgesChange<Edge>;
-  addNode: (idOrPath: string, mousePos: MousePos) => Promise<void>;
-  addRandom: (mousePos: MousePos) => Promise<void>;
+  addNode: (idOrPath: string, mousePos: MousePos) => Promise<string | null>;
+  addRandom: (mousePos: MousePos) => Promise<string | null>;
   toggleNode: (id: string | number, body: Block | Channel, linkedToId?: string) => Promise<void>;
   removeNode: (id: string) => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
   fetchMoreChildren: (id: string, status: ChildrenStatus) => Promise<void>;
-  onNodeDrag: (_event: React.MouseEvent, node: CanvasNode) => void;
+  onNodeDrag: (node: CanvasNode) => void;
+  setSelectedNode: (id: string | null) => void;
 }
 
 export interface MousePos {
@@ -152,8 +153,8 @@ export function useGraphEngine(): GraphEngineAPI {
   }, []);
 
   const onNodeDrag = useCallback(
-    (_event: React.MouseEvent, node: CanvasNode) => {
-      console.log("hello");
+    (node: CanvasNode) => {
+      console.log("dragging");
       const g = graph.current;
       const n = g.get(node.id);
       if (!n) return;
@@ -170,13 +171,13 @@ export function useGraphEngine(): GraphEngineAPI {
   // ── Node operations ───────────────────────────────────────────────────────
 
   const addBlockNode = useCallback(
-    async (id: string, mousePos?: MousePos, data?: Block): Promise<boolean> => {
+    async (id: string, mousePos?: MousePos, data?: Block): Promise<string | null> => {
       const g = graph.current;
       const nodeId = sid(id);
-      if (g.isOnCanvas(nodeId)) return false;
+      if (g.isOnCanvas(nodeId)) return null;
 
       const block = data ?? (await getBlock(nodeId));
-      if (!block) return false;
+      if (!block) return null;
 
       mountNode(nodeId, block, mousePos);
 
@@ -192,19 +193,19 @@ export function useGraphEngine(): GraphEngineAPI {
       }
 
       flush();
-      return true;
+      return nodeId;
     },
     [mountNode, flush]
   );
 
   const addChannelNode = useCallback(
-    async (id: string, mousePos?: MousePos, data?: Channel): Promise<boolean> => {
+    async (id: string, mousePos?: MousePos, data?: Channel): Promise<string | null> => {
       const g = graph.current;
       const channel = data ?? (await getChannel(sid(id)));
-      if (!channel) return false;
+      if (!channel) return null;
 
       const nodeId = sid(channel.id);
-      if (g.isOnCanvas(nodeId)) return false;
+      if (g.isOnCanvas(nodeId)) return null;
 
       mountNode(nodeId, channel, mousePos);
 
@@ -223,33 +224,37 @@ export function useGraphEngine(): GraphEngineAPI {
       }
 
       flush();
-      return true;
+      return nodeId;
     },
     [mountNode, flush]
   );
 
   const addNode = useCallback(
-    async (idOrPath: string, mousePos: MousePos): Promise<void> => {
+    async (idOrPath: string, mousePos: MousePos): Promise<string | null> => {
+      let res;
       if (idOrPath.includes("/")) {
         const slug = idOrPath.slice(idOrPath.lastIndexOf("/") + 1);
         const ok = idOrPath.includes("/block/")
-          ? await addBlockNode(slug, mousePos)
-          : await addChannelNode(slug, mousePos);
-        if (!ok) alert(`Error adding block or channel with URL ${idOrPath}.`);
-        return;
+          ? res = await addBlockNode(slug, mousePos)
+          : res = await addChannelNode(slug, mousePos);
+        if (!ok) {
+          alert(`Error adding block or channel with URL ${idOrPath}.`);
+          return null;
+        }
+        return res;
       }
-      if (await addBlockNode(idOrPath, mousePos)) return;
-      if (await addChannelNode(idOrPath, mousePos)) return;
+      if (res = await addBlockNode(idOrPath, mousePos)) return res;
+      if (res = await addChannelNode(idOrPath, mousePos)) return res;
       alert(`Couldn't find a block or channel with ID ${idOrPath}.`);
+      return null;
     },
     [addBlockNode, addChannelNode]
   );
 
   const addRandom = useCallback(
-    async (mousePos: MousePos): Promise<void> => {
-      console.log("Adding random node...");
+    async (mousePos: MousePos): Promise<string | null> => {
       const randomID = RandomChannels[Math.floor(Math.random() * RandomChannels.length)];
-      await addNode(randomID, mousePos);
+      return await addNode(randomID, mousePos);
     },
     [addBlockNode, addChannelNode]
   );
@@ -295,6 +300,15 @@ export function useGraphEngine(): GraphEngineAPI {
     },
     [unmountNode, addChannelNode, addBlockNode, flush]
   );
+
+  const setSelectedNode = useCallback((id: string | null) => {
+    setRfNodes(nodes =>
+      nodes.map(n => ({
+        ...n,
+        selected: id !== null && n.id === id,
+      }))
+    );
+  }, []);
 
   // ── Pagination ────────────────────────────────────────────────────────────
 
@@ -383,5 +397,6 @@ export function useGraphEngine(): GraphEngineAPI {
     onNodeDrag,
     fetchMoreConnections,
     fetchMoreChildren,
+    setSelectedNode
   };
 }
