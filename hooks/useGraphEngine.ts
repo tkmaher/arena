@@ -229,8 +229,13 @@ export function useGraphEngine(): GraphEngineAPI {
   const addNode = useCallback(
     async (idOrPath: string, mousePos: MousePos): Promise<string | null> => {
       let res;
+      const g = graph.current;
       if (idOrPath.includes("/")) {
         const slug = idOrPath.slice(idOrPath.lastIndexOf("/") + 1);
+        if (g.isOnCanvas(sid(slug))) {
+          alert(`Node ${idOrPath} already exists.`);
+          return null;
+        }
         const ok = idOrPath.includes("/block/")
           ? res = await addBlockNode(slug, mousePos)
           : res = await addChannelNode(slug, mousePos);
@@ -239,6 +244,10 @@ export function useGraphEngine(): GraphEngineAPI {
           return null;
         }
         return res;
+      }
+      if (g.isOnCanvas(sid(idOrPath))) {
+        alert(`Node ${idOrPath} already exists.`);
+        return null;
       }
       if (res = await addBlockNode(idOrPath, mousePos)) return res;
       if (res = await addChannelNode(idOrPath, mousePos)) return res;
@@ -314,6 +323,7 @@ export function useGraphEngine(): GraphEngineAPI {
       }))
     );
   }, []);
+
 
   // ── Pagination ────────────────────────────────────────────────────────────
 

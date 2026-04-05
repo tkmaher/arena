@@ -82,6 +82,18 @@ function CanvasInner() {
   
   }, [selectedId, infoOpen, engine.nodes]);
 
+  const keyDownEvent = useCallback((e: any) => {
+    if (e.key === "Escape") {
+      setSelectedId(null);
+      setInfoOpen(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener("keydown", keyDownEvent);
+    return () => window.removeEventListener("keydown", keyDownEvent);
+  }, [keyDownEvent]);
+
   const onDrag = (event: React.MouseEvent, node: CanvasNode) => {
     if (dragging) {
       setDragging(false);
@@ -95,7 +107,10 @@ function CanvasInner() {
 
   return (
     <GraphContext.Provider 
-      value={{ removeNode: engine.removeNode }}
+      value={{ 
+        removeNode: engine.removeNode,
+        selectedOnGraph: selectedId,
+      }}
     >
       <ReactFlow<CanvasNode, Edge>
         nodes={engine.nodes}
@@ -125,6 +140,7 @@ function CanvasInner() {
         onNodeDragStop={onDrag}
         autoPanOnNodeFocus={true}
         autoPanOnNodeDrag={false}
+        deleteKeyCode={null} 
       >
         <Background
           variant={BackgroundVariant.Cross}
@@ -173,11 +189,19 @@ function CanvasInner() {
           onClose={() => setMenuOrigin(null)}
           onAdd={async (id) => {
             const res = await engine.addNode(id, menuOrigin);
-            if (res) setSelectedId(res);
+            if (res) {
+              setSelectedId(res);
+              engine.setSelectedNode(res);
+              setInfoOpen(true);
+            }
           }}
           onRandom={async () => {
             const res = await engine.addRandom(menuOrigin);
-            if (res) setSelectedId(res);
+            if (res) {
+              setSelectedId(res);
+              engine.setSelectedNode(res);
+              setInfoOpen(true);
+            }
           }}
         />
       )}

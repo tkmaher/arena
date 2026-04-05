@@ -112,7 +112,6 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
                                 cursor: "pointer",
                                 fontSize: 18,
                                 lineHeight: 1,
-                                color: "#6b7280",
                                 padding: 0,
                             }}
                         >

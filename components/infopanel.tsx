@@ -1,6 +1,6 @@
 "use client";
-import { useEffect, useState, useMemo, useRef } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useState, useCallback } from "react";
+import { AnimatePresence, motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, EmbedBlock, TextBlock } from "@/types/arena";
 import Image from "next/image";
@@ -62,7 +62,13 @@ function NodeList({
     nodeId
   }: NodeListProps) {
     const animKey = `${nodeId}-${flavorText}`;
-  
+    const [hovered, setHovered] = useState<string | null>(null);
+    const [fetching, setFetching] = useState(false);
+
+    useEffect(() => {
+        setFetching(false);
+    }, [status, list]);
+
     return (
         <motion.div
             className="half"
@@ -70,36 +76,57 @@ function NodeList({
             animate={{ opacity: 1, y: 0, height: "auto" }}
             transition={{ duration: 0.2 }}
             onAnimationComplete={() => didAnimate.add(animKey)}
+            
         >
-        <div className="check-header info-subheader">{flavorText}</div>
-        <div className="check-header info-subheader">⇣</div>
-  
-        <div className="list-container">
-          {list.map((node) => (
-            <div key={node.id} className="checklist">
-              <a onClick={() => onToggle(node)}>
-                {node.title ?? node.id}
-              </a>
-  
-              <input
-                type="checkbox"
-                checked={checkNodeVisible(node.id)}
-                onChange={() => onToggle(node)}
-              />
-                <button onClick={() => onSelect(node)}>
-                    ↗
-                </button>
+            <div className="check-header info-subheader">{flavorText}</div>
+            <div className="check-header info-subheader">⇣</div>
+    
+            <div className="list-container">
+            {list.map((node) => (
+                <div 
+                    key={node.id} 
+                    className="checklist" 
+                    onMouseEnter={() => setHovered(node.id)}
+                    onMouseLeave={() => setHovered(null)}
+                >
+                    <a onClick={() => onSelect(node)}>
+                        {node.title ?? node.id}
+                    </a>
+        
+                    <input
+                        type="checkbox"
+                        checked={checkNodeVisible(node.id)}
+                        onChange={() => onToggle(node)}
+                    />
+                    
+                    <div 
+                        className="tooltip info-subheader"
+                        style={{opacity: node.id == hovered ? 1 : 0,
+                        visibility: node.id == hovered ? "visible" : "hidden"}}
+                        
+                    >
+                        {hasImage(node) && 
+                            <div className="tooltip-img" style={{backgroundImage: `url(${node.thumbnailUrl})`}}/>
+                        }
+                        <div className="list-container">
+                            <div>{node.title ?? node.id}</div> 
+                            <div className="icon">{checkNodeVisible(node.id) ? "⇢" : "+"}</div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+            {(list.length === 0) && <em>[No connections found]</em>}
             </div>
-          ))}
-          {(list.length === 0) && <em>[No connections found.]</em>}
-        </div>
-  
-        {!status.complete && (
-          <button className="loader" onClick={loadMore}>
-            Load more...
-          </button>
-        )}
-      </motion.div>
+    
+            {!status.complete && (
+            <button className= {fetching ? "loader disabled" : "loader"} onClick={() => {
+                loadMore();
+                setFetching(true);
+            }}>
+                {fetching ? "Loading..." : "Load more..."}
+            </button>
+            )}
+        </motion.div>
     );
   }
 
@@ -136,7 +163,22 @@ function InfoPanelInner({
         ) {
           childrenFetcher(current.id, current.childrenStatus);
         }
-    }, [current.id]); // ✅ only depend on ID
+    }, [current.id]);
+
+    const keyDownEvent = useCallback((e: any) => {
+        if (e.key === "Backspace" || e.key === "Delete") {
+            if (!current) return;
+            console.log(current.id);
+            if (checkNodeVisible(current.id)) {
+                makeNodeVisible(current.id, current);
+            }
+        }
+    }, [current]);
+
+    useEffect(() => {
+        window.addEventListener("keydown", keyDownEvent);
+        return () => window.removeEventListener("keydown", keyDownEvent);
+    }, [keyDownEvent, current]);
   
     const toggleNode = (node: Block | Channel) => {
       makeNodeVisible(node.id, node);
@@ -158,9 +200,9 @@ function InfoPanelInner({
         <div className="info-body">
           {!isChannel(current) && 
 
-            <div onClick={() => window.open(linkOut)}>
-            {hasImage(current) && !isAttachment(current) && (
-                <motion.div
+            <div>
+                {hasImage(current) && !isAttachment(current) && (
+                    <motion.div
                             key={current.id}                         
                             initial={{ opacity: 0, y: -8 }}
                             animate={{ opacity: imageLoaded ? 1 : 0, y: imageLoaded ? 0 : -8 }}
@@ -171,7 +213,8 @@ function InfoPanelInner({
                                 alt={current.title ?? current.id}
                                 fill
                                 onLoad={() => setImageLoaded(true)}
-                                className="image"
+                                className="image box"
+                                onClick={() => window.open(linkOut)}
                             />
                         </motion.div>
                     )}
@@ -183,14 +226,14 @@ function InfoPanelInner({
                     )}
 
                     {isAttachment(current) && (
-                    <div className="p-iframe">
+                    <div className="p-iframe box">
                         <iframe src={current.url} />
                     </div>
                     )}
 
                     {isEmbed(current) && (
                     <div
-                        className="p-iframe"
+                        className="p-iframe box"
                         dangerouslySetInnerHTML={{ __html: current.embed }}
                     />
                     )}
@@ -198,14 +241,16 @@ function InfoPanelInner({
             }
     
           <a className="h info-title" href={linkOut} target="_blank">
-            {current.title ?? (isChannel(current) ? current.id : "")}
+            {current.title ?? (isChannel(current) ? current.id : "")} ↗
           </a>
     
-          <div className="h info-subheader">
+          <a className="h info-subheader" target="_blank" href={`https://www.are.na/${current.owner.slug}`}>
             {current.owner.name} • {current.date}
-          </div>
+          </a>
 
-          <a className="info-id" href={linkOut} target="_blank">{current.id}</a>
+          <a className="info-id" href={linkOut} target="_blank">{current.id} • 
+            {isChannel(current) ? " Channel" : " Block"}
+          </a>
     
           <div className="collections-children">
             {isChannel(current) && current.childrenStatus.children.length > 0 && (
@@ -255,6 +300,7 @@ export default function InfoPanel({
     closePanel,
     setSelected
 }: InfoPanelPropsNull) {
+    
     if (current) return (
         <Panel position="top-right" className="info-container">
             <div className="react-flow__controls info-box">
@@ -269,17 +315,18 @@ export default function InfoPanel({
             </div>
             <div className="info-toolbar">
                 <button 
-                    onClick={() => closePanel()} 
-                    className="node-toolbar-button react-flow__controls popup-menu menu-title"
-                >
-                    Close info ✕
-                </button>
-                <button 
                     onClick={() => makeNodeVisible(current.id, current)} 
                     className="node-toolbar-button react-flow__controls popup-menu menu-title"
                 >
-                    Remove node ✕
+                    Remove {isChannel(current) ? "channel" : "block"} ✕
                 </button>
+                <button 
+                    onClick={() => closePanel()} 
+                    className="node-toolbar-button react-flow__controls popup-menu menu-title"
+                >
+                    Close ✕
+                </button>
+
             </div>
         </Panel>
     )
