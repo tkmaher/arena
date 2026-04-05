@@ -36,6 +36,7 @@ function CanvasInner() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
+  const [confirmRemoveAll, setConfirmRemoveAll] = useState(false);
 
   const selectedNode = useMemo(
     
@@ -96,63 +97,73 @@ function CanvasInner() {
     <GraphContext.Provider 
       value={{ removeNode: engine.removeNode }}
     >
-        <ReactFlow<CanvasNode, Edge>
-          nodes={engine.nodes}
-          edges={engine.edges}
-          onNodesChange={engine.onNodesChange}
-          onEdgesChange={engine.onEdgesChange}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          onPaneClick={onPaneClick}
-          fitView
-          minZoom={0.1}
-          maxZoom={4}
-          panOnDrag
-          zoomOnScroll
-          zoomOnPinch
-          zoomOnDoubleClick={true}
-          multiSelectionKeyCode="Shift"
-          style={{ background: "#e8e8e8" }}
-          proOptions={{ hideAttribution: true }}
-          nodeOrigin={[0.5, 0.5]}
-          onNodeClick={(_event, node) => {
-            setSelectedId(node.id);
-            setInfoOpen(true);
-          }}
-          connectionLineComponent={FloatingConnectionLine}
-          onNodeDragStart={onDrag}
-          onNodeDragStop={onDrag}
-          autoPanOnNodeFocus={true}
-          autoPanOnNodeDrag={false}
-        >
-          <Background
-            variant={BackgroundVariant.Cross}
-            gap={GRID_SIZE}
-            size={10}
-            lineWidth={0.5}
-            color="rgba(0,0,0,0.5)"
-          />
-          <Controls showInteractive={false}>
-            <ControlButton position="bottom-left">
-              <button onClick={engine.removeAllNodes}>
-                <img src="deleteallhover.svg" style={{maxHeight: 18}}/>
-                <img src="deleteall.svg" style={{maxHeight: 18}}/>
-
-              </button>
-            </ControlButton>
-          </Controls>
-        </ReactFlow>
+      <ReactFlow<CanvasNode, Edge>
+        nodes={engine.nodes}
+        edges={engine.edges}
+        onNodesChange={engine.onNodesChange}
+        onEdgesChange={engine.onEdgesChange}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
+        onPaneClick={onPaneClick}
+        fitView
+        minZoom={0.1}
+        maxZoom={4}
+        panOnDrag
+        zoomOnScroll
+        zoomOnPinch
+        zoomOnDoubleClick={true}
+        multiSelectionKeyCode="Shift"
+        style={{ background: "#e8e8e8" }}
+        proOptions={{ hideAttribution: true }}
+        nodeOrigin={[0.5, 0.5]}
+        onNodeClick={(_event, node) => {
+          setSelectedId(node.id);
+          setInfoOpen(true);
+        }}
+        connectionLineComponent={FloatingConnectionLine}
+        onNodeDragStart={onDrag}
+        onNodeDragStop={onDrag}
+        autoPanOnNodeFocus={true}
+        autoPanOnNodeDrag={false}
+      >
+        <Background
+          variant={BackgroundVariant.Cross}
+          gap={GRID_SIZE}
+          size={10}
+          lineWidth={0.5}
+          color="rgba(0,0,0,0.5)"
+        />
+        <Controls showInteractive={false}>
+          <ControlButton>
+            <img 
+              className="delete-all svg" 
+              onClick={() => setConfirmRemoveAll(true)}
+            />
+          </ControlButton>
+        </Controls>
+      </ReactFlow>
+      {confirmRemoveAll && <div className="confirm" onClick={() => setConfirmRemoveAll(false)}>
+        <p className="info-title">Remove all nodes?</p>
+        <div className="confirm-toolbar">
+          <button onClick={engine.removeAllNodes} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+            Yes
+          </button>
+          <button onClick={() => setConfirmRemoveAll(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+            No
+          </button>
+        </div>
+      </div>}
 
       <InfoPanel
         current={infoOpen ? selectedNode?.data.object : undefined}
         connectionFetcher={engine.fetchMoreConnections}
         childrenFetcher={engine.fetchMoreChildren}
-        checkNodeVisible={id => engine.visibleIds.has(id)}
+        checkNodeVisible={id => engine.visibleIds.has(String(id))}
         makeNodeVisible={makeNodeVisible}
         closePanel={() => setInfoOpen(false)}
         setSelected={(id: string) => { 
-          setSelectedId(id); 
-          engine.setSelectedNode(id);
+          setSelectedId(String(id)); 
+          engine.setSelectedNode(String(id));
         }}
       />
 

@@ -50,6 +50,41 @@ body {
   background: none !important;
 }
 
+.svg {
+  max-height: 18px;
+  padding: 0 !important;
+  height: auto !important;
+  width: auto !important;
+}
+
+.delete-all {
+  cursor: pointer;
+  content: url("../public/deleteall.svg");
+  &:hover {
+    content: url("../public/deleteallhover.svg");
+  }
+}
+
+.confirm {
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  background-color: var(--foreground-trans);
+  backdrop-filter: blur(2px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: var(--background);
+  gap: 0.8em;
+  z-index: 1000;
+  .confirm-toolbar {
+    display: flex;
+    gap: 8;
+  }
+}
+
 .popup-menu {
   transition: padding 0.15s;
   white-space: nowrap;
@@ -167,6 +202,9 @@ body {
       flex-grow: 0;
       flex-shrink: 0;
       gap: 0.5em;
+      input, button {
+        cursor: pointer;
+      }
       a {
         flex-grow: 1;
         text-overflow: ellipsis;
@@ -197,6 +235,12 @@ body {
     border: 0.5px solid var(--background);
     width: 100%;
     padding: 0.5em;
+    em {
+      width: 100%;
+      text-align: center;
+      display: block;
+      padding: 1em;
+    }
   }
 
   
@@ -275,7 +319,6 @@ body {
 
 .menu-title {
   font-size: 13px; 
-  font-weight: 600; 
   color: rgb(55, 65, 81); 
   letter-spacing: 0.2px;
 
