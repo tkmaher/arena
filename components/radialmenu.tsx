@@ -161,17 +161,14 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
   
             <style>{`
                 @keyframes radial-top {
-                from { opacity: 0; transform: translate( -50%, calc(-50% + 80px)) scale(0.7); }
-                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                from { opacity: 0; transform: translate( -50%, calc(-50% + 80px)) scale(0.7); pointer-events: none  }
+                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto  }
                 }
                 @keyframes radial-bottom {
-                from { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.7); }
-                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+                from { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.7); pointer-events: none  }
+                to   { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto  }
                 }
-                @keyframes radial-dot {
-                from { opacity: 0; transform: translate(-50%,-50%) scale(0); }
-                to   { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-                }
+               
             `}
             </style>
       </div>

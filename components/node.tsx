@@ -18,6 +18,8 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
 
   const handleRemove = () => removeNode(id);
 
+  const isSelected = selectedOnGraph === id;
+
   const edges = useStore((state) => state.edges);
 
   const isConnectedToSelected = useMemo(() => {
@@ -37,7 +39,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
       <div
         className="node-parent"
         style={{
-          border: selected ? `2px solid #1c1c24` : isConnectedToSelected ? `2px dashed #1c1c24` : `2px dashed #1c1c2400`,
+          border: isSelected ? `2px solid #1c1c24` : isConnectedToSelected ? `2px dashed #1c1c24` : `2px dashed #1c1c2400`,
           position: "relative",
         }}
       >
@@ -63,7 +65,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
         </div>
       </div>
 
-      {selected && (
+      {isSelected && (
         <div
           style={{
             position: "absolute",

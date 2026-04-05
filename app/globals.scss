@@ -392,3 +392,23 @@ body {
   width: fit-content;
 
 }
+
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  flex-shrink: 0;
+  border: 0.5px solid var(--background);
+  background-color: var(--foreground);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: 0.1s all ease-in-out;
+}
+
+/* 2. Styling for the checked state */
+input[type="checkbox"]:checked {
+  background-color: var(--background);
+  border-color: var(--background);
+}
