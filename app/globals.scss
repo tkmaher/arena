@@ -1,467 +1,330 @@
 @import "tailwindcss";
 
 :root {
-  --foreground: #f9f9f9;
-  --foreground-trans: #f9f9f956;
-  --foreground-ultralight: #565656;
-
-  --secondary: #cfcfcf;
-  --background: #1c1c24;
-  --link: #3b82f6;
+  --fg:        #f9f9f9;
+  --fg-dim:    #f9f9f956;
+  --fg-muted:  #565656;
+  --fg-sec:    #cfcfcf;
+  --bg:        #1c1c24;
+  --link:      #3b82f6;
 }
 
-
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--fg);
   font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
 }
 
+/* ─── ReactFlow overrides ─────────────────────────── */
 
-/* Controls buttons */
-.react-flow__controls, .node-parent {
+.react-flow__controls,
+.node-parent {
   fill: rgba(255,255,255,0.5) !important;
-
-  background: var(--foreground-trans) !important;
-  // border: 0.5px solid var(--foreground-ultralight) !important;
-  //border-radius: 10px !important;
-  color: var(--background) !important;
+  background: var(--fg-dim) !important;
+  color: var(--bg) !important;
   backdrop-filter: blur(10px);
-  box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.384) !important;
+  box-shadow: 0 0 2px rgba(0,0,0,.38) !important;
 }
 
-.react-flow__handle {
-  opacity: 0;
-  visibility: hidden; 
-}
-
-.react-flow__edge-path {
-  stroke: var(--background) !important;
-  stroke-width: 0.5px !important;
-}
-
-.react-flow__panel {
-  margin: 0.8em !important;
-}
+.react-flow__handle        { opacity: 0; visibility: hidden; }
+.react-flow__edge-path     { stroke: var(--bg) !important; stroke-width: 0.5px !important; }
+.react-flow__panel         { margin: 0em !important; }
+.react-flow__minimap-node  { stroke: none !important; }
 
 .react-flow__controls-button {
-  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+  border-bottom: 1px solid rgba(255,255,255,.06) !important;
   background: none !important;
 }
 
-.svg {
-  max-height: 18px;
-  padding: 0 !important;
-  height: auto !important;
-  width: auto !important;
+/* ─── Node ────────────────────────────────────────── */
+
+.node-parent {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  overflow: hidden; box-sizing: border-box;
+  transition: border 0.1s;
 }
+
+.node-body {
+  flex: 1;
+  margin: 0.4em;
+  background-size: cover; background-position: center; background-repeat: no-repeat;
+  transition: opacity 0.1s;
+  text-overflow: ellipsis; overflow: hidden;
+  position: relative;
+}
+
+.node-toolbar-button {
+  background: var(--fg);
+  padding: 3px 10px;
+  color: var(--bg);
+  cursor: pointer !important;
+  flex-grow: 1;
+  display: flex;
+  
+}
+
+.image {
+  transition: opacity 0.1s;
+  object-fit: cover;
+}
+
+.adder     { font-size: 20px; text-align: center; }
+
+.button {
+  transition: transform 0.2s;
+  &:hover { transform: scale(1.2); cursor: pointer; }
+}
+
+/* ─── Misc UI ─────────────────────────────────────── */
 
 .delete-all {
   cursor: pointer;
   content: url("../public/deleteall.svg");
-  &:hover {
-    content: url("../public/deleteallhover.svg");
-  }
+  &:hover { content: url("../public/deleteallhover.svg"); }
 }
 
+.svg { max-height: 18px; padding: 0 !important; height: auto !important; width: auto !important; }
+
 .confirm {
-  width: 100vw;
-  height: 100vh;
-  position: fixed;
-  top: 0;
-  background-color: var(--foreground);
+  width: 100vw; height: 100vh;
+  position: fixed; top: 0;
+  background-color: var(--fg);
   backdrop-filter: blur(2px);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  color: var(--background);
-  gap: 0.8em;
-  z-index: 1000;
-  .confirm-toolbar {
-    display: flex;
-    gap: 8;
-  }
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  color: var(--bg); gap: 0.8em; z-index: 1000;
+
+  .confirm-toolbar { display: flex; gap: 8px; }
 }
 
 .about {
   padding: 3em 20vw;
-  
-  text-align: left;
-  align-items: flex-start !important;
-  a {
-    border-bottom: 0.5px dashed var(--background);
-  }
-  b {
-    font-weight: 600;
-  }
-  .examples {
-    margin: 5em;
-    display: flex;
-    gap: 5em;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    .example-box {
-      height: 10em;
-      width: 10em;
-      background-color: var(--foreground);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.384) !important;
+  text-align: left; align-items: flex-start !important;
+  a  { border-bottom: 0.5px dashed var(--bg); }
+  b  { font-weight: 600; }
 
+  .examples {
+    margin: 5em; display: flex; gap: 5em;
+    align-items: center; justify-content: center; width: 100%;
+
+    .example-box {
+      height: 10em; width: 10em;
+      background-color: var(--fg);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 2px rgba(0,0,0,.38) !important;
     }
-    .solid {
-      border: 2px solid #1c1c24;
-    }
-    .dotted {
-      border: 2px dashed #1c1c24
-    }
-    
+    .solid  { border: 2px solid #1c1c24; }
+    .dotted { border: 2px dashed #1c1c24; }
   }
 }
 
 .popup-menu {
-  transition: padding 0.15s;
-  white-space: nowrap;
-  cursor: default;
-  display: flex;
-  align-items: center;
-  gap: 6;
-  flex-direction: row !important;
-  transition: background-color 0.1s ease-in-out;
-  //border-radius: 10px;
-  &:hover {
-    background-color: var(--secondary) !important;
-  }
+  white-space: nowrap; cursor: default;
+  display: flex; align-items: center; gap: 6px; flex-direction: row !important;
+  transition: background-color 0.1s;
+  &:hover { background-color: var(--fg-sec) !important; }
 }
 
 .popup-menu-input {
-  font-size: 13;
-  border: none;
-  outline: none;
-  width: 90;
-  background: transparent;
-  color: var(--background)
-                
-    
-}
-
-.info-toolbar {
-  display: flex;
-  gap: 1.6em;
-  justify-content: center;
-  width: 100%;
-}
-
-.info-container {
-  pointer-events: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: calc(100vh - 2.4em);
-  gap: 1.6em;
-  button {
-    pointer-events: auto;
-    flex-shrink: 0;
-  }
-
-}
-
-.info-box {
-  pointer-events: auto;
-  width: 50vw;
-  overflow: hidden;
-  flex-shrink: 1;
-  flex-grow: 0;
-  padding: 1em;
-}
-
-.tooltip {
-  position: fixed !important;
-  pointer-events: none;
-  right: 1.7em;
-  bottom: 1.7em;
-  display: flex;
-  flex-direction: column;
-  opacity: 0;
-  transition: opacity 0.1s ease-in-out, right 0.1s ease-in-out;
-  .tooltip-img {
-    background-size: cover;
-    background-position: center;
-    height: 10em;
-  }
-  width: 15vw;
-  max-width: 15vw;
-  min-width: 15vw;
-  max-height: calc(100% - 3.4em);
-
-  background-color: var(--secondary) !important;
-  .list-container {
-    width: 15vw;
-    display: flex;
-    div {
-      text-overflow: ellipsis;
-      overflow: hidden;
-      white-space: nowrap;
-    }
-    .icon {
-      flex-grow: 1;
-      justify-content: right;
-      flex-shrink: 0;
-      width: 2em;
-      text-align: right;
-    }
-  }
-
-}
-
-.info-body {
-  transition: opacity 0.1s ease-in-out;
-  overflow-y: auto;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  position: relative;
-
-  .box {
-    width: 100%;
-    max-height: 50vh;
-    position: relative !important;
-    object-fit: contain;
-    height: auto !important;
-    padding: 1.7em;
-    cursor: pointer;
-    filter: drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.384));
-  }
-
-  .p-text {
-    width: 100%;
-    text-align: justify;
-    font-size: 16px;
-    padding: 1.7em;
-  }
-
-  .p-iframe {
-    height: 50vh !important;
-    min-height: 50vh;
-    padding: 1.7em;
-    iframe {
-      width: 100% !important;
-      min-height: 100%;
-      max-height: 100%;
-      border: none !important;
-    }
-  }
-
-  a {
-    cursor: pointer;
-  }
-
-  .collections-children {
-    justify-self: center;
-    margin-top: 1.6em;
-    display: flex;
-    gap: 1em;
-    .half {
-      flex-basis: 50%;
-      max-width: calc(50% - 0.5em);
-    }
-    .check-header {
-      width: 100%;
-      text-align: center;
-    }
-    .checklist {
-      display: flex;
-      width: 100%;
-      flex-basis: 50%;
-      flex-grow: 0;
-      flex-shrink: 0;
-      gap: 0.5em;
-      input, button {
-        cursor: pointer;
-      }
-      a {
-        flex-grow: 1;
-        text-overflow: ellipsis;
-        overflow: hidden;
-        white-space: nowrap;
-        &:hover {
-          background-color: var(--secondary);
-        }
-      }
-      #visible {
-        align-self: flex-end;
-      }
-      
-    }
-
-    .loader {
-      cursor: pointer;
-      justify-self: center;
-      text-align: center;
-      margin-top: 1em;
-      padding: 0.2em 0.5em 0.2em 0.5em;
-      border: 0.5px solid var(--background);
-      width: 100%;
-      transition: background-color 0.1s ease-in-out;
-      &:hover {
-        background-color: var(--secondary);
-      }
-    }
-
-    .disabled {
-      cursor: not-allowed;
-      opacity: 0.5;
-      pointer-events: none;
-    }
-  }
-
-  .list-container {
-    border: 0.5px solid var(--background);
-    width: 100%;
-    padding: 0.5em;
-    em {
-      width: 100%;
-      text-align: center;
-      display: block;
-      padding: 1em;
-    }
-  }
-
-  
-}
-
-/* MiniMap node */
-.react-flow__minimap-node {
-  stroke: none !important;
-}
-
-.node-toolbar-button {
-  background: var(--foreground);
-  padding: 3px 10px;
-  color: var(--background);
-  cursor: pointer;
-}
-
-.node-parent {
-  width: 100%;
-  height: 100%;
-  
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  box-sizing: border-box;
-  transition: border 0.1s;
-}
-
-
-.node-body {
-  flex: 1;
-  margin: 1em;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  transition: opacity 0.1s ease-in-out;
-  text-overflow: ellipsis;
-  overflow: hidden;
-  position: relative;
-}
-
-.image {
-  padding: 0.8em;
-  transition: opacity 0.1s ease-in-out;
-  object-fit: cover;
-  
-}
-
-.adder {
-  font-size: 20px;
-  vertical-align: center;
-  text-align: center;
-}
-
-.button {
-  transition: transform 0.2s ease-in-out;
-  transform: scale(1);
-
-  &:hover {
-    transform: scale(1.2);
-    cursor: pointer;
-  }
+  font-size: 13px; border: none; outline: none;
+  width: 90px; background: transparent; color: var(--bg);
 }
 
 .search-input {
-  color: var(--background);
-  transition: opacity 0.1s ease-in-out;
+  color: var(--bg);
+  transition: opacity 0.1s;
   pointer-events: none;
-  margin: 0 !important;
-  margin-right: 1em !important;
-  input {
-    padding: 0.5em;
-    width: 100%;
+  margin: 0 !important; margin-right: 1em !important;
+  input { padding: 0.5em; width: 100%; }
+}
+
+.menu-title { font-size: 13px; letter-spacing: 0.2px; }
+
+/* ─── Tooltip ─────────────────────────────────────── */
+
+.tooltip {
+  position: fixed !important; pointer-events: none;
+  right: 1.7em; bottom: 1.7em;
+  display: flex; flex-direction: column;
+  opacity: 0; transition: opacity 0.1s, right 0.1s;
+  width: 15vw; max-width: 15vw; min-width: 15vw;
+  max-height: calc(100% - 3.4em);
+  background-color: var(--fg-sec) !important;
+
+  .tooltip-img { background-size: cover; background-position: center; height: 10em; }
+
+  .list-container {
+    width: 15vw; display: flex;
+    div { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+  }
+}
+.icon { flex-grow: 1; font-size: 12px; opacity: 0.8; justify-content: right; flex-shrink: 0; width: 2em; text-align: right; }
+
+/* ─── Info Panel ──────────────────────────────────── */
+
+/* Outer container — full height column, toolbar pinned at bottom */
+.info-container {
+  pointer-events: none;
+  display: flex; flex-direction: column;
+  align-items: center;
+  align-self: center;
+  height: 100vh;
+  button { pointer-events: auto; flex-shrink: 0; }
+}
+
+/* Panel card — grows to fill available height, clips overflow */
+.info-box {
+  pointer-events: auto;
+  width: 30vw;
+  flex: 1 1 0;          /* grow into container height */
+  min-height: 0;        /* allow shrinking below content size */
+  display: flex; flex-direction: column;
+  overflow: hidden;
+
+}
+
+/* Main body column — fills the card */
+.info-body {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex; flex-direction: column;
+  padding-left: 0.4em;
+  overflow: hidden;
+
+  /* Fixed sections — never shrink */
+  & > .info-section {
+    flex-shrink: 0;
+    padding: 0.8em;
+    pointer-events: all;
+  }
+
+  & > .info-section-scroll {
+    flex: 1 1 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0.8em;
+    height: 100%;   /* fills the motion.div wrapper */
   }
 }
 
-.menu-title {
-  font-size: 13px; 
-  color: rgb(55, 65, 81); 
-  letter-spacing: 0.2px;
-
+/* Image wrapper — explicit height so Next Image fill has a box */
+.info-media-wrap {
+  position: relative;
+  width: 100%;
+  height: 50vh;
+  cursor: pointer;
+  overflow: hidden;
+  padding: 0.8em;
+  box-sizing: border-box;
 }
 
-.info-title {
-  font-size: 18px;
-  font-weight: 50;
-  line-height: 1.5;
-  width: fit-content;
-  word-break: break-all;
+/* The Next/Image itself */
+.info-media {
+  object-fit: contain;
 }
 
-.info-subheader {
-  font-size: 14px;
-  font-weight: 300;
-  width: fit-content;
-
+.info-media-iframe {
+  height: 50vh;
+  overflow-y: auto;
+  iframe { width: 100% !important; height: 100%; border: none !important; }
 }
 
-.info-id {
-  font-size: 12px;
-  color: var(--background);
-  opacity: 0.5;
-  width: fit-content;
-
+.info-text-content {
+  width: 100%; text-align: justify;
+  font-size: 14px; padding: 1.2em;
+  max-height: 50vh; overflow-y: auto;
 }
 
-.info-text {
-  font-size: 12px;
-  width: fit-content;
-  color: var(--background);
+/* Meta block — title / owner / id */
+.info-meta {
+  display: flex; flex-direction: column; gap: 4px;
 }
+
+.info-title    { font-size: 16px; font-weight: 400; line-height: 1.5 }
+.info-sub      { font-size: 12px; font-weight: 300; }
+.info-id       { font-size: 11px; opacity: 0.5; }
+.info-text     { font-size: 12px; color: var(--bg); }
+
+/* Collections area — two collapsible columns side-by-side */
+.collections-grid {
+  display: flex; gap: 1em;
+  height: 100%;
+  overflow: hidden;
+}
+
+.collection-col {
+  flex: 1; min-width: 0; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+.collection-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 0 0.4em;
+  cursor: pointer; user-select: none;
+  font-size: 12px; font-weight: 500; color: var(--bg);
+  flex-shrink: 0;
+  .collapse-icon { font-size: 10px; opacity: 0.6; transition: transform 0.15s; }
+  &[data-open="false"] .collapse-icon { transform: rotate(-90deg); }
+}
+
+/* Wrapper that collapses — transitions flex-grow so sibling expands to fill */
+.collection-body {
+  flex: 1 1 0; min-height: 0;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: flex 0.15s ease, opacity 0.15s ease;
+  &.closed { flex: 0 0 0; opacity: 0; pointer-events: none; }
+}
+
+.collection-list {
+  flex: 1 1 0; min-height: 0;
+  overflow-y: auto; overflow-x: hidden;
+  border: 0.5px solid var(--bg);
+  padding: 0.4em;
+  em { display: block; text-align: center; padding: 1em; width: 100%; }
+}
+
+.checklist {
+  display: flex; align-items: center; gap: 0.5em; width: 100%;
+  a {
+    flex-grow: 1; cursor: pointer;
+    text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
+    &:hover { background-color: var(--fg-sec); }
+  }
+  input, button { cursor: pointer; }
+}
+
+.loader {
+  cursor: pointer; text-align: center; margin-top: 0.6em;
+  padding: 0.2em 0.5em; border: 0.5px solid var(--bg);
+  flex-shrink: 0;
+  transition: background-color 0.1s;
+  &:hover { background-color: var(--fg-sec); }
+  &.disabled { cursor: not-allowed; opacity: 0.5; pointer-events: none; }
+}
+
+/* Toolbar below panel */
+.info-toolbar {
+  display: flex; 
+  justify-content: center; width: 100%;
+  padding-left: 0.4em;
+  .node-toolbar-button {
+    max-width: 50%;
+  }
+}
+
+/* ─── Checkbox ────────────────────────────────────── */
 
 input[type="checkbox"] {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
-  flex-shrink: 0;
-  border: 0.5px solid var(--background);
-  background-color: var(--foreground);
-  cursor: pointer;
-  display: grid;
-  place-content: center;
-  transition: 0.1s all ease-in-out;
-  align-self: center;
-  &:hover {
-    background-color: var(--secondary);
-  }
-}
-
-/* 2. Styling for the checked state */
-input[type="checkbox"]:checked {
-  background-color: var(--background);
-  border-color: var(--background);
+  appearance: none; -webkit-appearance: none;
+  width: 10px; height: 10px; flex-shrink: 0;
+  border: 0.5px solid var(--bg);
+  background-color: var(--fg);
+  cursor: pointer; display: grid; place-content: center;
+  transition: all 0.1s; align-self: center;
+  &:hover { background-color: var(--fg-sec); }
+  &:checked { background-color: var(--bg); border-color: var(--bg); }
 }
