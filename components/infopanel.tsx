@@ -102,7 +102,9 @@ function NodeList({
                     <div 
                         className="tooltip info-subheader"
                         style={{opacity: node.id == hovered ? 1 : 0,
-                        visibility: node.id == hovered ? "visible" : "hidden"}}
+                        visibility: node.id == hovered ? "visible" : "hidden",
+                        right: node.id == hovered ? "1.7em": "5em"
+                    }}
                         
                     >
                         {hasImage(node) && 

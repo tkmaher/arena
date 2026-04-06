@@ -9,7 +9,6 @@ import {
   Controls,
   useReactFlow,
   type Edge,
-  Panel,
   ControlButton,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
@@ -18,6 +17,7 @@ import { useGraphEngine } from "@/hooks/useGraphEngine";
 import { GRID_SIZE } from "@/lib/graph";
 
 import BlockProp from "@/components/node";
+import About from "@/components/about";
 import FloatingEdge from "@/components/flow/FloatingEdge";
 import FloatingConnectionLine from "@/components/flow/FloatingConnectionLine";
 import RadialMenu from "@/components/radialmenu";
@@ -36,7 +36,8 @@ function CanvasInner() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [infoOpen, setInfoOpen] = useState(false);
   const [dragging, setDragging] = useState(false);
-  const [confirmRemoveAll, setConfirmRemoveAll] = useState(false);
+  const [deleteAll, setDeleteAll] = useState(false);
+  const [about, setAbout] = useState(false);
 
   const selectedNode = useMemo(
     
@@ -84,10 +85,15 @@ function CanvasInner() {
 
   const keyDownEvent = useCallback((e: any) => {
     if (e.key === "Escape") {
+      if (deleteAll) {
+        console.log("test")
+        setDeleteAll(false);
+        return;
+      }
       setSelectedId(null);
       setInfoOpen(false);
     }
-  }, []);
+  }, [deleteAll]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -128,7 +134,7 @@ function CanvasInner() {
         zoomOnPinch
         zoomOnDoubleClick={true}
         multiSelectionKeyCode="Shift"
-        style={{ background: "#e8e8e8" }}
+        style={{ background: "#efefef" }}
         proOptions={{ hideAttribution: true }}
         nodeOrigin={[0.5, 0.5]}
         onNodeClick={(_event, node) => {
@@ -153,22 +159,31 @@ function CanvasInner() {
           <ControlButton>
             <img 
               className="delete-all svg" 
-              onClick={() => setConfirmRemoveAll(true)}
+              onClick={() => setDeleteAll(true)}
+            />
+          </ControlButton>
+          <ControlButton>
+            <img 
+              src="info.svg"
+              className="svg" 
+              onClick={() => setAbout(true)}
             />
           </ControlButton>
         </Controls>
       </ReactFlow>
-      {confirmRemoveAll && <div className="confirm" onClick={() => setConfirmRemoveAll(false)}>
+      {deleteAll && <div className="confirm" onClick={() => setDeleteAll(false)}>
         <p className="info-title">Remove all nodes?</p>
         <div className="confirm-toolbar">
           <button onClick={engine.removeAllNodes} className="node-toolbar-button react-flow__controls popup-menu menu-title">
             Yes
           </button>
-          <button onClick={() => setConfirmRemoveAll(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+          <button onClick={() => setDeleteAll(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
             No
           </button>
         </div>
       </div>}
+
+      {about && <About setAbout={(val: boolean) => setAbout(val)}/>}
 
       <InfoPanel
         current={infoOpen ? selectedNode?.data.object : undefined}

@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 :root {
-  --foreground: #ffffff;
-  --foreground-trans: #ffffff56;
+  --foreground: #f9f9f9;
+  --foreground-trans: #f9f9f956;
   --foreground-ultralight: #565656;
 
   --secondary: #cfcfcf;
@@ -70,7 +70,7 @@ body {
   height: 100vh;
   position: fixed;
   top: 0;
-  background-color: var(--foreground-trans);
+  background-color: var(--foreground);
   backdrop-filter: blur(2px);
   display: flex;
   flex-direction: column;
@@ -82,6 +82,44 @@ body {
   .confirm-toolbar {
     display: flex;
     gap: 8;
+  }
+}
+
+.about {
+  padding: 3em 20vw;
+  
+  text-align: left;
+  align-items: flex-start !important;
+  a {
+    border-bottom: 0.5px dashed var(--background);
+  }
+  b {
+    font-weight: 600;
+  }
+  .examples {
+    margin: 5em;
+    display: flex;
+    gap: 5em;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    .example-box {
+      height: 10em;
+      width: 10em;
+      background-color: var(--foreground);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0px 0px 2px rgba(0, 0, 0, 0.384) !important;
+
+    }
+    .solid {
+      border: 2px solid #1c1c24;
+    }
+    .dotted {
+      border: 2px dashed #1c1c24
+    }
+    
   }
 }
 
@@ -130,13 +168,16 @@ body {
     pointer-events: auto;
     flex-shrink: 0;
   }
-  .info-box {
-    pointer-events: auto;
-    width: 50vw;
-    overflow: hidden;
-    flex-shrink: 1;
-    flex-grow: 0;
-  }
+
+}
+
+.info-box {
+  pointer-events: auto;
+  width: 50vw;
+  overflow: hidden;
+  flex-shrink: 1;
+  flex-grow: 0;
+  padding: 1em;
 }
 
 .tooltip {
@@ -144,11 +185,10 @@ body {
   pointer-events: none;
   right: 1.7em;
   bottom: 1.7em;
-  filter: drop-shadow(0px 0px 10px rgba(0, 0, 0, 0.384));
   display: flex;
   flex-direction: column;
   opacity: 0;
-  transition: opacity 0.1s ease-in-out;
+  transition: opacity 0.1s ease-in-out, right 0.1s ease-in-out;
   .tooltip-img {
     background-size: cover;
     background-position: center;
@@ -159,7 +199,7 @@ body {
   min-width: 15vw;
   max-height: calc(100% - 3.4em);
 
-  background-color: var(--foreground) !important;
+  background-color: var(--secondary) !important;
   .list-container {
     width: 15vw;
     display: flex;
@@ -183,7 +223,6 @@ body {
   transition: opacity 0.1s ease-in-out;
   overflow-y: auto;
   height: 100%;
-  padding: 1em;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -207,7 +246,7 @@ body {
   }
 
   .p-iframe {
-    height: 50vh;
+    height: 50vh !important;
     min-height: 50vh;
     padding: 1.7em;
     iframe {
@@ -250,10 +289,14 @@ body {
         text-overflow: ellipsis;
         overflow: hidden;
         white-space: nowrap;
+        &:hover {
+          background-color: var(--secondary);
+        }
       }
       #visible {
         align-self: flex-end;
       }
+      
     }
 
     .loader {
@@ -393,6 +436,12 @@ body {
 
 }
 
+.info-text {
+  font-size: 12px;
+  width: fit-content;
+  color: var(--background);
+}
+
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
@@ -405,6 +454,10 @@ input[type="checkbox"] {
   display: grid;
   place-content: center;
   transition: 0.1s all ease-in-out;
+  align-self: center;
+  &:hover {
+    background-color: var(--secondary);
+  }
 }
 
 /* 2. Styling for the checked state */
