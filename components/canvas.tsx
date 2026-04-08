@@ -70,7 +70,7 @@ function CanvasInner() {
     let { x, y } = node.position;
   
     if (infoOpen) {
-      const screenOffset = window.innerWidth * 0.25;
+      const screenOffset = window.innerWidth * -0.15;
       const flowOffset = screenOffset / zoom;
   
       x = x + flowOffset;
@@ -78,7 +78,7 @@ function CanvasInner() {
   
     setCenter(x, y, {
       zoom,
-      duration: 300,
+      duration: 150,
     });
   
   }, [selectedId, infoOpen, engine.nodes]);
@@ -92,8 +92,34 @@ function CanvasInner() {
       }
       setSelectedId(null);
       setInfoOpen(false);
+    } else if (e.key === "ArrowRight" 
+      || e.key === "ArrowLeft"
+      || e.key === "ArrowUp"
+      || e.key === "ArrowDown") 
+    {
+      if (!selectedId) return;
+      let direction = { lat: 0, long: 0 };
+      switch (e.key) {
+        case "ArrowRight":
+          direction = { lat: 1, long: 0 };
+          break;
+        case "ArrowLeft":
+          direction = { lat: -1, long: 0 };
+          break;
+        case "ArrowUp":
+          direction = { lat: 0, long: -1 };
+          break;
+        case "ArrowDown":
+          direction = { lat: 0, long: 1 };
+          break;
+      }
+      const newId = engine.selectNodeByDirection(selectedId, direction);
+      if (newId) {
+        setSelectedId(newId);
+        setInfoOpen(true);
+      }
     }
-  }, [deleteAll]);
+  }, [deleteAll, selectedId]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -117,6 +143,7 @@ function CanvasInner() {
         removeNode: engine.removeNode,
         selectedOnGraph: selectedId,
       }}
+      
     >
       <ReactFlow<CanvasNode, Edge>
         nodes={engine.nodes}
@@ -147,6 +174,7 @@ function CanvasInner() {
         autoPanOnNodeFocus={true}
         autoPanOnNodeDrag={false}
         deleteKeyCode={null} 
+        disableKeyboardA11y={true}
       >
         <Background
           variant={BackgroundVariant.Cross}
@@ -154,8 +182,9 @@ function CanvasInner() {
           size={10}
           lineWidth={0.5}
           color="rgba(0,0,0,0.5)"
+
         />
-        <Controls showInteractive={false}>
+        <Controls showInteractive={false} position="bottom-right">
           <ControlButton>
             <img 
               className="delete-all svg" 
@@ -230,7 +259,6 @@ export default function InfiniteCanvasFlow() {
       style={{
         width: "100vw",
         height: "100vh",
-        borderRadius: 12,
         overflow: "hidden",
         position: "relative",
       }}

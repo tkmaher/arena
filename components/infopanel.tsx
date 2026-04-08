@@ -291,19 +291,42 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
   );
 }
 
+function InfoPanelNull() {
+
+  return (
+    <div className="info-body">
+      <motion.div
+        aria-hidden
+        animate={{ flex: 1 }}
+        initial={false}
+        transition={sectionTransition}
+        style={{ minHeight: 0, pointerEvents: "none" }}
+      />
+      <div className="info-section react-flow__controls info-meta">
+        <a className="info-title">
+          [No node selected]
+        </a>
+        <a className="info-sub" style={{opacity: 0.5}}>
+          Select a node to see details
+        </a>
+
+      </div>
+    </div>
+  );
+}
+
 // ─── Exported panel ──────────────────────────────────────────────────────────
 
 export default function InfoPanel({
   current, connectionFetcher, childrenFetcher,
   checkNodeVisible, makeNodeVisible, setSelected,
 }: InfoPanelPropsNull) {
-  const [collapsed, setCollapsed] = useState(false);
-  if (!current) return null;
+  const [collapsed, setCollapsed] = useState<boolean>(false);
 
   return (
-    <Panel position="bottom-right" className="info-container">
-      <div className="info-box" style={{pointerEvents: collapsed ? "none" : "auto"}}>
-        <InfoPanelInner
+    <Panel position="bottom-left" className="info-container">
+      <div className="info-box" style={{pointerEvents: (collapsed || current === undefined) ? "none" : "auto"}}>
+        {(current != null) ? <InfoPanelInner
           current={current}
           connectionFetcher={connectionFetcher}
           childrenFetcher={childrenFetcher}
@@ -311,15 +334,15 @@ export default function InfoPanel({
           setSelected={setSelected}
           checkNodeVisible={checkNodeVisible}
           collapsed={collapsed}
-        />
+        /> : <InfoPanelNull/>}
       </div>
 
-      <div className="info-toolbar">
+      <div className={current ? "info-toolbar" : "info-toolbar info-null"}>
         <button
-          onClick={() => makeNodeVisible(current.id, current)}
+          onClick={() => {if (current) makeNodeVisible(current.id, current)}}
           className="node-toolbar-button react-flow__controls popup-menu menu-title"
         >
-          Remove {isChannel(current) ? "channel" : "block"} <div className="icon">✕</div>
+          {current ? `Remove ${isChannel(current) ? "channel" : "block"}` : "No node selected"} <div className="icon">✕</div>
         </button>
         <button
           onClick={() => setCollapsed(c => !c)}

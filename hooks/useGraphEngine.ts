@@ -39,6 +39,7 @@ export interface GraphEngineAPI {
   fetchMoreChildren: (id: string, status: ChildrenStatus) => Promise<void>;
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
+  selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
 }
 
 export interface MousePos {
@@ -131,7 +132,7 @@ export function useGraphEngine(): GraphEngineAPI {
       const centerFlow = mousePos
         ? screenToFlowPosition(mousePos)
         : screenToFlowPosition({
-            x: (window.innerWidth / 2) - (window.innerWidth * 0.25),
+            x: window.innerWidth - (window.innerWidth * 0.25),
             y: window.innerHeight / 2,
           });
   
@@ -324,6 +325,39 @@ export function useGraphEngine(): GraphEngineAPI {
     );
   }, []);
 
+  const selectNodeByDirection = useCallback((id: string, direction: {lat: number, long: number}) => {
+    const g = graph.current;
+    let currPos = g.get(id)?.gridPos;
+    let bestDist = Infinity;
+    let bestNode = null;
+    if (!currPos) return null;
+    const scaledPos = {
+      x: currPos.x * GRID_SIZE,
+      y: currPos.y * GRID_SIZE,
+    };
+    const candidates = g.toReactFlowNodes().filter(n => {
+      if (n.id === id) return false;
+      const dx = n.position.x - scaledPos.x;
+      const dy = n.position.y - scaledPos.y;
+      const dot = dx * direction.lat + dy * direction.long;
+      return dot > 0;
+    });
+    
+    for (const node of candidates) {
+      const dist = Math.sqrt(
+        Math.pow(node.position.x - scaledPos.x, 2) +
+        Math.pow(node.position.y - scaledPos.y, 2)
+      );
+      if (dist < bestDist) {
+        bestDist = dist;
+        bestNode = node.id;
+      }
+    }
+
+    if (bestNode) setSelectedNode(bestNode);
+    return bestNode;
+  }, []);
+
 
   // ── Pagination ────────────────────────────────────────────────────────────
 
@@ -413,6 +447,7 @@ export function useGraphEngine(): GraphEngineAPI {
     onNodeDrag,
     fetchMoreConnections,
     fetchMoreChildren,
-    setSelectedNode
+    setSelectedNode,
+    selectNodeByDirection
   };
 }

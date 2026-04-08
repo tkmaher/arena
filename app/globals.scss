@@ -31,6 +31,7 @@ body {
 .react-flow__edge-path     { stroke: var(--bg) !important; stroke-width: 0.5px !important; }
 .react-flow__panel         { margin: 0em !important; }
 .react-flow__minimap-node  { stroke: none !important; }
+.cancel-radius             { border-radius: 0 !important; }
 
 .react-flow__controls-button {
   border-bottom: 1px solid rgba(255,255,255,.06) !important;
@@ -115,8 +116,8 @@ body {
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 2px rgba(0,0,0,.38) !important;
     }
-    .solid  { border: 2px solid #1c1c24; }
-    .dotted { border: 2px dashed #1c1c24; }
+    .solid  { border: 0.5px solid #1c1c24; }
+    .dotted { border: 0.5px dashed #1c1c24; }
   }
 }
 
@@ -190,7 +191,7 @@ body {
   flex: 1 1 0;
   min-height: 0;
   display: flex; flex-direction: column;
-  padding-left: 0.4em;
+  padding-right: 0.4em;
   overflow: hidden;
 
   /* Fixed sections — never shrink */
@@ -242,7 +243,7 @@ body {
   display: flex; flex-direction: column; gap: 4px;
 }
 
-.info-title    { font-size: 16px; font-weight: 400; line-height: 1.5 }
+.info-title    { font-size: 16px; font-weight: 400; line-height: 1.5; word-wrap: break-word; }
 .info-sub      { font-size: 12px; font-weight: 300; }
 .info-id       { font-size: 11px; opacity: 0.5; }
 .info-text     { font-size: 12px; color: var(--bg); }
@@ -310,9 +311,16 @@ body {
 .info-toolbar {
   display: flex; 
   justify-content: center; width: 100%;
-  padding-left: 0.4em;
+  padding-right: 0.4em;
   .node-toolbar-button {
     max-width: 50%;
+  }
+}
+
+.info-null {
+  button {
+    color: var(--fg-muted) !important;
+    pointer-events: none;
   }
 }
 
