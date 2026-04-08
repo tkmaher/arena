@@ -1,6 +1,21 @@
+"use client";
+import { useCallback, useEffect } from "react";
+
 export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
+    const keyDownEvent = useCallback((e: any) => {
+        if (e.key === "Escape") {
+            setAbout(false);
+        }
+        
+    }, [setAbout]);
+    
+    useEffect(() => {
+        window.addEventListener("keydown", keyDownEvent);
+        return () => window.removeEventListener("keydown", keyDownEvent);
+    }, [keyDownEvent]);
+
     return (
-        <div className="confirm about" onClick={() => setAbout(false)}>
+        <div className="confirm about">
             <p className="info-title">
                 <b>neighborhoods.na</b> is a <a href="https://en.wikipedia.org/wiki/Directed_graph">directed graph</a> of <b><a href="https://are.na">are.na</a></b>.
             </p>

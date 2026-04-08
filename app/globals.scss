@@ -97,7 +97,7 @@ body {
   justify-content: center; align-items: center;
   color: var(--bg); gap: 0.8em; z-index: 1000;
 
-  .confirm-toolbar { display: flex; gap: 8px; }
+  .confirm-toolbar { display: flex; gap: 8px; align-self: center; }
 }
 
 .about {
@@ -147,18 +147,22 @@ body {
 
 .tooltip {
   position: fixed !important; pointer-events: none;
-  right: 1.7em; bottom: 1.7em;
+  right: 0.8em; bottom: 0.8em;
   display: flex; flex-direction: column;
   opacity: 0; transition: opacity 0.1s, right 0.1s;
-  width: 15vw; max-width: 15vw; min-width: 15vw;
+  width: calc(15vw - 1.4em - 1px); // IDK why this works
   max-height: calc(100% - 3.4em);
+  border: 0.5px solid var(--bg);
   background-color: var(--fg-sec) !important;
 
   .tooltip-img { background-size: cover; background-position: center; height: 10em; }
 
   .list-container {
-    width: 15vw; display: flex;
+    border-top: 0.5px solid var(--bg);
+    display: flex;
+    padding: 0.2em 0.5em;
     div { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+    font-size: 11px !important;
   }
 }
 .icon { flex-grow: 1; font-size: 12px; opacity: 0.8; justify-content: right; flex-shrink: 0; width: 2em; text-align: right; }
@@ -181,7 +185,7 @@ body {
   width: 30vw;
   flex: 1 1 0;          /* grow into container height */
   min-height: 0;        /* allow shrinking below content size */
-  display: flex; flex-direction: column;
+  display: flex; flex-direction: column; align-self: flex-start;
   overflow: hidden;
 
 }
@@ -219,6 +223,11 @@ body {
   overflow: hidden;
   padding: 0.8em;
   box-sizing: border-box;
+}
+
+.viewer {
+  height: 75vh !important;
+  cursor: auto !important;
 }
 
 /* The Next/Image itself */

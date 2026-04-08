@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Panel } from "@xyflow/react";
-import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, EmbedBlock, TextBlock } from "@/types/arena";
+import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock } from "@/types/arena";
 import Image from "next/image";
 import { HTMLDecode } from "@/scripts/utility";
+import ImageViewer from "@/components/imageviewer";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -14,6 +15,7 @@ interface InfoPanelType {
   makeNodeVisible:   (id: string, body: Block | Channel) => void;
   setSelected:       (id: string) => void;
   checkNodeVisible:  (id: string) => boolean;
+  setImageOpen:      (val: boolean) => void;
 }
 
 interface InfoPanelProps      extends InfoPanelType { current: Block | Channel; collapsed: boolean; }
@@ -37,6 +39,7 @@ const hasImage     = (n: Block): n is ImageBlock             => "imageUrl" in n;
 const isText       = (n: Block): n is TextBlock              => n.type === "Text";
 const isAttachment = (n: Block): n is AttachmentBlock        => n.type === "Attachment";
 const isEmbed      = (n: Block): n is EmbedBlock             => n.type === "Embed";
+const isLink       = (n: Block): n is LinkBlock             => n.type === "Link";
 
 // ─── Collapsible section wrapper ─────────────────────────────────────────────
 //
@@ -139,10 +142,16 @@ function NodeList({ list, status, checkNodeVisible, onToggle, onSelect, loadMore
 
 // ─── Inner panel ─────────────────────────────────────────────────────────────
 
-function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible, setSelected, collapsed }: InfoPanelProps) {
+function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNodeVisible, makeNodeVisible, setSelected, collapsed, setImageOpen }: InfoPanelProps) {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [viewerOpen, setViewerOpen] = useState(false);
 
   useEffect(() => { setImageLoaded(false); }, [current.id]);
+
+  const handleViewerOpen = useCallback((val: boolean) => {
+    setViewerOpen(val);
+    setImageOpen(val);
+  }, [setImageOpen]);
 
   useEffect(() => {
     if (!current.connectionStatus.complete && current.connectionStatus.connections.length === 0)
@@ -168,7 +177,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
 
   const linkOut = isChannel(current)
     ? `https://www.are.na/${current.owner.slug}/${current.id}`
-    : `https://www.are.na/block/${current.id}`;
+    : ((isLink(current) || isAttachment(current) || isEmbed(current)) ? `${current.url}` : `https://www.are.na/block/${current.id}`);
 
   const block          = current as Block;
   const hasConnections = current.connectionStatus.connections.length > 0 || current.connectionStatus.complete;
@@ -177,6 +186,14 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
 
   return (
     <div className="info-body">
+      {hasImage(block) && !isAttachment(block) && viewerOpen && (
+        <ImageViewer 
+          setViewerOpen={handleViewerOpen}
+          title={current.title ?? current.id}
+          imageUrl={block.imageUrl}
+          linkOut={linkOut}
+        />
+      )}
 
       {/* ── Media section — shrinks to nothing when collapsed ── */}
       {!isChannel(current) && (
@@ -195,7 +212,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: imageLoaded ? 1 : 0, y: imageLoaded ? 0 : -8 }}
                 transition={{ duration: 0.3 }}
-                onClick={() => window.open(linkOut)}
+                onClick={() => handleViewerOpen(true)} 
               >
                 <Image
                   src={block.imageUrl}
@@ -243,7 +260,17 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
           {current.owner.name} · {current.date}
         </a>
         <span className="info-id">
-          {current.id} · {isChannel(current) ? "Channel" : "Block"}
+          <a 
+            href={(isLink(current) || 
+              isAttachment(current) || 
+              isEmbed(current)) ? 
+              `https://are.na/block/${current.id}` : 
+              linkOut} 
+            target="_blank"
+          >
+            {current.id}
+          </a> · 
+          {isChannel(current) ? "Channel" : "Block"}
         </span>
       </div>
 
@@ -320,6 +347,7 @@ function InfoPanelNull() {
 export default function InfoPanel({
   current, connectionFetcher, childrenFetcher,
   checkNodeVisible, makeNodeVisible, setSelected,
+  setImageOpen
 }: InfoPanelPropsNull) {
   const [collapsed, setCollapsed] = useState<boolean>(false);
 
@@ -334,6 +362,7 @@ export default function InfoPanel({
           setSelected={setSelected}
           checkNodeVisible={checkNodeVisible}
           collapsed={collapsed}
+          setImageOpen={setImageOpen}
         /> : <InfoPanelNull/>}
       </div>
 

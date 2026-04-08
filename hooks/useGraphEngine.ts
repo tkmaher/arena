@@ -331,7 +331,7 @@ export function useGraphEngine(): GraphEngineAPI {
     let bestDist = Infinity;
     let bestNode = null;
     if (!currPos) return null;
-    const scaledPos = {
+    const scaledPos = g.get(id)?.manualPos ?? {
       x: currPos.x * GRID_SIZE,
       y: currPos.y * GRID_SIZE,
     };
@@ -348,15 +348,17 @@ export function useGraphEngine(): GraphEngineAPI {
         Math.pow(node.position.x - scaledPos.x, 2) +
         Math.pow(node.position.y - scaledPos.y, 2)
       );
+      console.log(`candidate ${node.id} at (${node.position.x}, ${node.position.y}) has dist ${dist}`);
       if (dist < bestDist) {
         bestDist = dist;
         bestNode = node.id;
       }
     }
 
+    console.log("select by direction:", { id, direction, candidates: candidates.map(n => n.id), bestNode });
     if (bestNode) setSelectedNode(bestNode);
     return bestNode;
-  }, []);
+  }, [positions, setSelectedNode]);
 
 
   // ── Pagination ────────────────────────────────────────────────────────────

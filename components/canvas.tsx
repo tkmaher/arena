@@ -38,6 +38,7 @@ function CanvasInner() {
   const [dragging, setDragging] = useState(false);
   const [deleteAll, setDeleteAll] = useState(false);
   const [about, setAbout] = useState(false);
+  const [imageViewerOpen, setImageViewerOpen] = useState(false);
 
   const selectedNode = useMemo(
     
@@ -56,6 +57,11 @@ function CanvasInner() {
     },
     [engine, selectedId]
   );
+
+  const handleViewerOpen = useCallback((val: boolean) => {
+    console.log("viewer open:");
+    setImageViewerOpen(val);
+  }, [setImageViewerOpen]);
 
   const { setCenter, getZoom } = useReactFlow();
 
@@ -84,14 +90,12 @@ function CanvasInner() {
   }, [selectedId, infoOpen, engine.nodes]);
 
   const keyDownEvent = useCallback((e: any) => {
+    if (imageViewerOpen) return; // ← viewer handles its own keys
+    
     if (e.key === "Escape") {
-      if (deleteAll) {
-        console.log("test")
-        setDeleteAll(false);
-        return;
-      }
-      setSelectedId(null);
-      setInfoOpen(false);
+        if (deleteAll) { setDeleteAll(false); return; }
+        setSelectedId(null);
+        setInfoOpen(false);
     } else if (e.key === "ArrowRight" 
       || e.key === "ArrowLeft"
       || e.key === "ArrowUp"
@@ -119,7 +123,7 @@ function CanvasInner() {
         setInfoOpen(true);
       }
     }
-  }, [deleteAll, selectedId]);
+  }, [deleteAll, selectedId, imageViewerOpen]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -225,6 +229,7 @@ function CanvasInner() {
           setSelectedId(String(id)); 
           engine.setSelectedNode(String(id));
         }}
+        setImageOpen={handleViewerOpen}
       />
 
       {menuOrigin && (
