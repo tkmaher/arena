@@ -34,7 +34,7 @@ const sectionVariants = {
   collapsed: { height: 0,      opacity: 0, pointerEvents: "none"  as const },
 };
 
-function EmbedBlock({ html }: { html: string }) {
+function EmbedBlockRef({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => { if (ref.current) ref.current.innerHTML = html; }, [html]);
   return <div className="info-media-iframe" ref={ref} />;
@@ -129,7 +129,7 @@ export default function InfoPanel({
               )}
               {isText(block)       && <div className="info-text-content"><HTMLDecode rawHTML={block.content} /></div>}
               {isAttachment(block) && <div className="info-media-iframe"><iframe src={block.url} /></div>}
-              {isEmbed(block)      && <EmbedBlock html={block.embed} />}
+              {isEmbed(block)      && <EmbedBlockRef html={block.embed} />}
             </motion.div>
           )}
 
