@@ -33,7 +33,6 @@ const sectionVariants = {
   open:      { height: "auto", opacity: 1, pointerEvents: "auto"  as const },
   collapsed: { height: 0,      opacity: 0, pointerEvents: "none"  as const },
 };
-const sectionTransition = { duration: 0.28, ease: [0.4, 0, 0.2, 1] };
 
 function EmbedBlock({ html }: { html: string }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -101,7 +100,7 @@ export default function InfoPanel({
           {block && !isChannel(current!) && (
             <motion.div
               variants={sectionVariants} animate={animState} initial={false}
-              transition={sectionTransition}
+              transition={{duration: 0.28, ease: [0.4, 0, 0.2, 1]}}
               style={{ overflow: "hidden", flexShrink: 0 }}
               className="info-section react-flow__controls"
             >
@@ -136,7 +135,9 @@ export default function InfoPanel({
 
           {/* Spacer */}
           <motion.div aria-hidden animate={{ flex: collapsed ? 1 : 0 }} initial={false}
-            transition={sectionTransition} style={{ minHeight: 0, pointerEvents: "none" }} />
+            transition={{duration: 0.28, ease: [0.4, 0, 0.2, 1]}}
+            style={{ minHeight: 0, pointerEvents: "none" }} 
+          />
 
           {/* Meta — always visible */}
           <div className="info-section react-flow__controls info-meta">
@@ -167,7 +168,7 @@ export default function InfoPanel({
           {(hasChildren || hasConnections) && current && (
             <motion.div
               variants={sectionVariants} animate={animState} initial={false}
-              transition={sectionTransition}
+              transition={{duration: 0.28, ease: [0.4, 0, 0.2, 1]}}
               style={{ overflow: "hidden", flex: collapsed ? 0 : "1 1 0", minHeight: 0, padding: collapsed ? 0 : undefined }}
               className="info-section-scroll react-flow__controls"
             >
