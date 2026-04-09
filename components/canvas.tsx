@@ -17,14 +17,17 @@ import { useGraphEngine } from "@/hooks/useGraphEngine";
 import { GRID_SIZE } from "@/lib/graph";
 
 import BlockProp from "@/components/node";
-import About from "@/components/about";
+import About from "@/components/ui/about";
 import FloatingEdge from "@/components/flow/FloatingEdge";
 import FloatingConnectionLine from "@/components/flow/FloatingConnectionLine";
-import RadialMenu from "@/components/radialmenu";
-import InfoPanel from "@/components/infopanel";
+import RadialMenu from "@/components/ui/radialmenu";
+import InfoPanel from "@/components/ui/infopanel";
 import type { CanvasNode } from "@/types/reactflow";
 import type { Block, Channel } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
+import NodeStats from "@/components/ui/nodestats";
+
+import { motion } from "framer-motion";
 
 const nodeTypes = { Canvas: BlockProp };
 const edgeTypes = { floating: FloatingEdge };
@@ -63,7 +66,7 @@ function CanvasInner() {
     setImageViewerOpen(val);
   }, [setImageViewerOpen]);
 
-  const { setCenter, getZoom } = useReactFlow();
+  const { setCenter, getZoom, zoomIn, zoomOut } = useReactFlow();
 
   useEffect(() => {
     if (!selectedId || dragging) return;
@@ -84,13 +87,14 @@ function CanvasInner() {
   
     setCenter(x, y, {
       zoom,
-      duration: 150,
+      duration: 300,
     });
   
-  }, [selectedId, infoOpen, engine.nodes]);
+  }, [selectedId, infoOpen]);
 
   const keyDownEvent = useCallback((e: any) => {
-    if (imageViewerOpen) return; // ← viewer handles its own keys
+    if (imageViewerOpen || about) return; // ← viewer handles its own keys
+    console.log("about");
     
     if (e.key === "Escape") {
         if (deleteAll) { setDeleteAll(false); return; }
@@ -122,8 +126,12 @@ function CanvasInner() {
         setSelectedId(newId);
         setInfoOpen(true);
       }
+    } else if (e.key === "=" || e.key === "+") {
+        zoomIn();
+    } else if (e.key === "-" || e.key === "_" ) {
+        zoomOut();
     }
-  }, [deleteAll, selectedId, imageViewerOpen]);
+  }, [deleteAll, selectedId, imageViewerOpen, about]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -179,6 +187,8 @@ function CanvasInner() {
         autoPanOnNodeDrag={false}
         deleteKeyCode={null} 
         disableKeyboardA11y={true}
+        selectionKeyCode={null} 
+        aria-multiselectable={false}
       >
         <Background
           variant={BackgroundVariant.Cross}
@@ -188,7 +198,7 @@ function CanvasInner() {
           color="rgba(0,0,0,0.5)"
 
         />
-        <Controls showInteractive={false} position="bottom-right">
+        <Controls showInteractive={false} showFitView={false} position="bottom-right">
           <ControlButton>
             <img 
               className="delete-all svg" 
@@ -202,9 +212,30 @@ function CanvasInner() {
               onClick={() => setAbout(true)}
             />
           </ControlButton>
+          <ControlButton>
+            <img 
+              src="download.svg"
+              className="svg" 
+              onClick={() => engine.exportGraph()}
+            />
+          </ControlButton>
+          <ControlButton>
+            <img 
+              src="upload.svg"
+              className="svg" 
+              onClick={() => engine.importGraph()}
+            />
+          </ControlButton>
         </Controls>
       </ReactFlow>
-      {deleteAll && <div className="confirm" onClick={() => setDeleteAll(false)}>
+      {deleteAll &&         
+        <motion.div
+          className="confirm"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+          onClick={() => setDeleteAll(false)}
+        >
         <p className="info-title">Remove all nodes?</p>
         <div className="confirm-toolbar">
           <button onClick={engine.removeAllNodes} className="node-toolbar-button react-flow__controls popup-menu menu-title">
@@ -214,7 +245,7 @@ function CanvasInner() {
             No
           </button>
         </div>
-      </div>}
+      </motion.div>}
 
       {about && <About setAbout={(val: boolean) => setAbout(val)}/>}
 
@@ -230,6 +261,16 @@ function CanvasInner() {
           engine.setSelectedNode(String(id));
         }}
         setImageOpen={handleViewerOpen}
+      />
+
+      <NodeStats
+        checkNodeVisible={id => engine.visibleIds.has(String(id))}
+        makeNodeVisible={makeNodeVisible}
+        setSelected={(id: string) => { 
+          setSelectedId(String(id)); 
+          engine.setSelectedNode(String(id));
+        }}
+        engine={engine}
       />
 
       {menuOrigin && (

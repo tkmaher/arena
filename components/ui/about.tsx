@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
     const keyDownEvent = useCallback((e: any) => {
@@ -15,7 +16,12 @@ export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
     }, [keyDownEvent]);
 
     return (
-        <div className="confirm about">
+        <motion.div
+            className="confirm about"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+        >
             <p className="info-title">
                 <b>neighborhoods.na</b> is a <a href="https://en.wikipedia.org/wiki/Directed_graph">directed graph</a> of <b><a href="https://are.na">are.na</a></b>.
             </p>
@@ -35,9 +41,30 @@ export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
                 <div className="info-title">→</div>
                 <div className="example-box box">Unselected</div>
             </div>
-            <p className="info-text">
-                See also:
-            </p>
-        </div>
+            <div className="info-text">
+                
+                <div className="example-links">
+                    <div>See also:</div>
+                    <a href="https://nemocake.github.io/website/graph/index.html" target="_blank">
+                        https://nemocake.github.io/website/graph
+                    </a>
+                    <a href="https://goby.garden/arena/index/" target="_blank">
+                        https://goby.garden/arena/index/
+                    </a>
+                    <a href="https://www.are.na/block/42631273" target="_blank">
+                        https://www.are.na/block/42631273
+                    </a>
+                    <a href="https://github.com/nicschumann/arena-connectome" target="_blank">
+                        https://github.com/nicschumann/arena-connectome
+                    </a>
+                </div>
+            </div>
+            <br/>
+            <div className="confirm-toolbar">
+                <button onClick={() => setAbout(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+                    Close
+                </button>
+            </div>
+        </motion.div>
     )
 }

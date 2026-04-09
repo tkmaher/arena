@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   useNodesState,
   useEdgesState,
@@ -40,6 +40,9 @@ export interface GraphEngineAPI {
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
   selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
+  exportGraph: () => void;
+  importGraph: () => void;
+
 }
 
 export interface MousePos {
@@ -50,10 +53,34 @@ export interface MousePos {
 export function useGraphEngine(): GraphEngineAPI {
   const graph = useRef(new Graph());
   const positions = useRef(new PositionAllocator());
+  const fetchLimiter = useRef<number[]>([]);
 
   const [rfNodes, setRfNodes, onNodesChange] = useNodesState<CanvasNode>([]);
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
+
+  const freeFetchList = useCallback(() => {
+    const now = new Date();
+    fetchLimiter.current = fetchLimiter.current.filter((time: number) => now.getTime() - time < 60000);
+  }, [fetchLimiter]);
+
+  useEffect(() => {
+    const timerId = setInterval(() => {
+      freeFetchList();
+    }, 1000);
+
+    return () => clearTimeout(timerId);
+  }, [freeFetchList]); 
+
+  function fetchOK() {
+    console.log(fetchLimiter.current);
+    if (fetchLimiter.current.length < 30) {
+      fetchLimiter.current.push(new Date().getTime());
+      return true;
+    }
+    alert("Request limit reached. Please wait a moment before trying again.");
+    return false;
+  }
 
   // Align nodes and edges to state
 
@@ -174,7 +201,7 @@ export function useGraphEngine(): GraphEngineAPI {
       const nodeId = sid(id);
       if (g.isOnCanvas(nodeId)) return null;
 
-      const block = data ?? (await getBlock(nodeId));
+      const block = data ?? (fetchOK() ? await getBlock(nodeId) : null);
       if (!block) return null;
 
       mountNode(nodeId, block, mousePos);
@@ -199,7 +226,7 @@ export function useGraphEngine(): GraphEngineAPI {
   const addChannelNode = useCallback(
     async (id: string, mousePos?: MousePos, data?: Channel): Promise<string | null> => {
       const g = graph.current;
-      const channel = data ?? (await getChannel(sid(id)));
+      const channel = data ?? (fetchOK() ? await getChannel(sid(id)) : null);
       if (!channel) return null;
 
       const nodeId = sid(channel.id);
@@ -215,8 +242,9 @@ export function useGraphEngine(): GraphEngineAPI {
         for (const child of channel.childrenStatus.children) {
           const childId = sid(child.id);
           g.link(nodeId, childId);
-          if (shown++ < INITIAL_CANVAS_LIMIT) {
+          if (shown + 1 < INITIAL_CANVAS_LIMIT && Math.random() < 0.5) { 
             mountNode(childId, child, mousePos);
+            shown++;
           }
         }
       }
@@ -238,8 +266,8 @@ export function useGraphEngine(): GraphEngineAPI {
           return null;
         }
         const ok = idOrPath.includes("/block/")
-          ? res = await addBlockNode(slug, mousePos)
-          : res = await addChannelNode(slug, mousePos);
+          ? res = (fetchOK() ? await addBlockNode(slug, mousePos) : null)
+          : res = (fetchOK() ? await addChannelNode(slug, mousePos) : null);
         if (!ok) {
           alert(`Error adding block or channel with URL ${idOrPath}.`);
           return null;
@@ -250,8 +278,8 @@ export function useGraphEngine(): GraphEngineAPI {
         alert(`Node ${idOrPath} already exists.`);
         return null;
       }
-      if (res = await addBlockNode(idOrPath, mousePos)) return res;
-      if (res = await addChannelNode(idOrPath, mousePos)) return res;
+      if (res = fetchOK() ? await addBlockNode(idOrPath, mousePos) : null) return res;
+      if (res = fetchOK() ? await addChannelNode(idOrPath, mousePos) : null) return res;
       alert(`Couldn't find a block or channel with ID ${idOrPath}.`);
       return null;
     },
@@ -261,7 +289,9 @@ export function useGraphEngine(): GraphEngineAPI {
   const addRandom = useCallback(
     async (mousePos: MousePos): Promise<string | null> => {
       const randomID = RandomChannels[Math.floor(Math.random() * RandomChannels.length)];
-      return await addNode(randomID, mousePos);
+      RandomChannels.splice(RandomChannels.indexOf(randomID), 1);
+      console.log(RandomChannels);
+      return (fetchOK() ? await addNode(randomID, mousePos) : null);
     },
     [addBlockNode, addChannelNode]
   );
@@ -328,34 +358,37 @@ export function useGraphEngine(): GraphEngineAPI {
   const selectNodeByDirection = useCallback((id: string, direction: {lat: number, long: number}) => {
     const g = graph.current;
     let currPos = g.get(id)?.gridPos;
-    let bestDist = Infinity;
-    let bestNode = null;
     if (!currPos) return null;
+  
     const scaledPos = g.get(id)?.manualPos ?? {
       x: currPos.x * GRID_SIZE,
       y: currPos.y * GRID_SIZE,
     };
-    const candidates = g.toReactFlowNodes().filter(n => {
-      if (n.id === id) return false;
-      const dx = n.position.x - scaledPos.x;
-      const dy = n.position.y - scaledPos.y;
-      const dot = dx * direction.lat + dy * direction.long;
-      return dot > 0;
-    });
-    
-    for (const node of candidates) {
-      const dist = Math.sqrt(
-        Math.pow(node.position.x - scaledPos.x, 2) +
-        Math.pow(node.position.y - scaledPos.y, 2)
-      );
-      console.log(`candidate ${node.id} at (${node.position.x}, ${node.position.y}) has dist ${dist}`);
-      if (dist < bestDist) {
-        bestDist = dist;
+  
+    const LATERAL_PENALTY = 10;
+  
+    let bestScore = Infinity;
+    let bestNode = null;
+  
+    for (const node of g.toReactFlowNodes()) {
+      if (node.id === id) continue;
+  
+      const dx = node.position.x - scaledPos.x;
+      const dy = node.position.y - scaledPos.y;
+  
+      const axial = dx * direction.lat + dy * direction.long;
+      if (axial <= 0) continue;
+  
+      const distSq = dx * dx + dy * dy;
+      const lateral = Math.sqrt(Math.max(0, distSq - axial * axial));
+      const score = lateral * LATERAL_PENALTY + axial;
+  
+      if (score < bestScore) {
+        bestScore = score;
         bestNode = node.id;
       }
     }
-
-    console.log("select by direction:", { id, direction, candidates: candidates.map(n => n.id), bestNode });
+  
     if (bestNode) setSelectedNode(bestNode);
     return bestNode;
   }, [positions, setSelectedNode]);
@@ -372,7 +405,8 @@ export function useGraphEngine(): GraphEngineAPI {
       const node = g.get(sid(nodeId));
       if (!node?.object) return;
       
-      const result = await getConnections(nodeId, type, status.page);
+      const result = fetchOK() ? await getConnections(nodeId, type, status.page) : null;
+      if (!result) return;
       
       const merged = Array.from(
         new Map(
@@ -407,7 +441,8 @@ export function useGraphEngine(): GraphEngineAPI {
       // Guard: stub or non-channel nodes can't be updated
       if (!node?.object || node.object.type !== "Channel") return;
 
-      const result = await getChildren(nodeId, status.page);
+      const result = fetchOK() ? await getChildren(nodeId, status.page) : null;
+      if (!result) return;
 
       const merged = Array.from(
         new Map(
@@ -433,6 +468,19 @@ export function useGraphEngine(): GraphEngineAPI {
     [flush]
   );
 
+  // -- Upload/download
+
+  const exportGraph = useCallback(() => {
+    graph.current.exportGraph();
+  }, [])
+
+  const importGraph = useCallback(() => {
+    graph.current.exportGraph();
+    
+    flush();
+  }, [])
+
+
   // ── Return ────────────────────────────────────────────────────────────────
 
   return {
@@ -450,6 +498,8 @@ export function useGraphEngine(): GraphEngineAPI {
     fetchMoreConnections,
     fetchMoreChildren,
     setSelectedNode,
-    selectNodeByDirection
+    selectNodeByDirection,
+    exportGraph,
+    importGraph
   };
 }

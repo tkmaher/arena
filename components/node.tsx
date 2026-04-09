@@ -3,7 +3,6 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { HTMLDecode } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
-import { motion } from "framer-motion";
 import { Position, Handle, useStore } from "@xyflow/react";
 
 interface NodeProps {
@@ -58,9 +57,9 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
               className="image"
             />
           ) : data.object.content ? (
-            <HTMLDecode rawHTML={data.object.content} />
+            <div><HTMLDecode rawHTML={data.object.content} /></div>
           ) : (
-            <>{data.object.title}</>
+            <div>{data.object.title}</div>
           )}
         </div>
       </div>
@@ -72,7 +71,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
             bottom: "-40px",
             left: "50%",
             transform: "translateX(-50%)",
-            animation: "radial-bottom 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
+            animation: "radial-x 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
             zIndex: 10,
           }}
         >
@@ -86,7 +85,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
       )}
 
       <style>{`
-        @keyframes radial-bottom {
+        @keyframes radial-x {
           from { opacity: 0; transform: translate(-50%, -50%) scale(0.7); }
           to   { opacity: 1; transform: translate(-50%, 0%) scale(1); }
         }

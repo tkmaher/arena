@@ -271,4 +271,73 @@ export class Graph {
     n.object = object;
     return true;
   }
+
+  exportGraph() {
+    const nodes = [];
+    for (const [id, n] of this.nodes) {
+      nodes.push({
+        id,
+        object: n.object,
+        gridPos: n.gridPos,
+        onCanvas: n.onCanvas,
+        children: Array.from(n.children),
+        parents: Array.from(n.parents),
+      });
+    }
+
+    const jsonString = JSON.stringify(nodes, null, 2);
+    
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const filename =  `neighbors-archive-${new Date}.json`;
+    
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  importGraph() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const content = event.target?.result as string;
+          const nodes: Array<{
+            id: string;
+            object: Block | Channel;
+            gridPos: { x: number; y: number };
+            onCanvas: boolean;
+            children: string[];
+            parents: string[];
+          }> = JSON.parse(content);
+
+          this.nodes.clear();
+          for (const n of nodes) {
+            this.nodes.set(n.id, {
+              object: n.object,
+              gridPos: n.gridPos,
+              onCanvas: n.onCanvas,
+              children: new Set(n.children),
+              parents: new Set(n.parents),
+            });
+          }
+        } catch (err) {
+          console.error("Failed to import graph:", err);
+        }
+      };
+
+      reader.readAsText(file);
+    };
+
+    input.click();
+  }
 }

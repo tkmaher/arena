@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useCallback, use } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState, useCallback, useRef } from "react";
+import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock } from "@/types/arena";
 import Image from "next/image";
 import { HTMLDecode } from "@/scripts/utility";
-import ImageViewer from "@/components/imageviewer";
+import ImageViewer from "@/components/ui/imageviewer";
+import NodeList from "@/components/ui/nodelist";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -20,17 +21,6 @@ interface InfoPanelType {
 
 interface InfoPanelProps      extends InfoPanelType { current: Block | Channel; collapsed: boolean; }
 interface InfoPanelPropsNull  extends InfoPanelType { current: Block | Channel | undefined; closePanel: () => void; }
-
-interface NodeListProps {
-  list:            (Block | Channel)[];
-  status:          ConnectionStatus | ChildrenStatus;
-  checkNodeVisible:(id: string) => boolean;
-  onToggle:        (node: Block | Channel) => void;
-  onSelect:        (node: Block | Channel) => void;
-  loadMore:        () => void;
-  label:           string;
-  nodeId:          string;
-}
 
 // ─── Type guards ─────────────────────────────────────────────────────────────
 
@@ -54,90 +44,15 @@ const sectionVariants = {
 
 const sectionTransition = { duration: 0.28, ease: [0.4, 0, 0.2, 1] };
 
-// ─── Collapsible scrollable column ───────────────────────────────────────────
 
-const didAnimate = new Set<string>();
-
-function NodeList({ list, status, checkNodeVisible, onToggle, onSelect, loadMore, label, nodeId }: NodeListProps) {
-  const animKey = `${nodeId}-${label}`;
-  const [open,     setOpen]     = useState(true);
-  const [hovered,  setHovered]  = useState<string | null>(null);
-  const [fetching, setFetching] = useState(false);
-
-  useEffect(() => { setFetching(false); }, [status, list]);
-
-  return (
-    <motion.div
-      className="collection-col"
-      initial={didAnimate.has(animKey) ? false : { opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      onAnimationComplete={() => didAnimate.add(animKey)}
-    >
-      {/* Collapsible header */}
-      <div
-        className="collection-header"
-        data-open={String(open)}
-        onClick={() => setOpen(o => !o)}
-      >
-        <span className="info-sub">{label} ({list.length}{status.complete ? "" : "+"})</span>
-        <span className="collapse-icon">▾</span>
-      </div>
-
-      {/* Body collapses via CSS flex transition — no height animation conflict */}
-      <div className={`collection-body${open ? "" : " closed"}`}>
-        <div className="collection-list">
-          {list.length === 0
-            ? <em>[No {label.toLowerCase()} found]</em>
-            : list.map(node => (
-                <div
-                  key={node.id}
-                  className="checklist"
-                  onMouseEnter={() => setHovered(node.id)}
-                  onMouseLeave={() => setHovered(null)}
-                >
-                  <a onClick={() => onSelect(node)}>
-                    {node.title ?? node.id}
-                  </a>
-
-                  <input
-                    type="checkbox"
-                    checked={checkNodeVisible(node.id)}
-                    onChange={() => onToggle(node)}
-                  />
-
-                  <div
-                    className="tooltip info-sub"
-                    style={{
-                      opacity:    node.id === hovered ? 1 : 0,
-                      visibility: node.id === hovered ? "visible" : "hidden",
-                      right:      node.id === hovered ? "0.8em" : "5em",
-                    }}
-                  >
-                    {hasImage(node as Block) &&
-                      <div className="tooltip-img" style={{ backgroundImage: `url(${(node as ImageBlock).thumbnailUrl})` }} />
-                    }
-                    <div className="list-container">
-                      <div>{node.title ?? node.id}</div>
-                      <div className="icon">{checkNodeVisible(node.id) ? "⇢" : "+"}</div>
-                    </div>
-                  </div>
-                </div>
-              ))
-          }
-        </div>
-
-        {!status.complete && (
-          <button
-            className={`loader ${fetching ? "disabled" : ""}`}
-            onClick={() => { loadMore(); setFetching(true); }}
-          >
-            {fetching ? "Loading…" : "Load more…"}
-          </button>
-        )}
-      </div>
-    </motion.div>
-  );
+function EmbedBlock({ html }: { html: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (ref.current) ref.current.innerHTML = html; 
+  }, [html]); 
+  
+  return <div className="info-media-iframe" ref={ref} />;
 }
 
 // ─── Inner panel ─────────────────────────────────────────────────────────────
@@ -237,7 +152,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
             )}
 
             {isEmbed(block) && (
-              <div className="info-media-iframe" dangerouslySetInnerHTML={{ __html: block.embed }} />
+              <EmbedBlock html={block.embed}/>
             )}
         </motion.div>
       )}
@@ -270,7 +185,7 @@ function InfoPanelInner({ current, connectionFetcher, childrenFetcher, checkNode
           >
             {current.id}
           </a> · 
-          {isChannel(current) ? "Channel" : "Block"}
+          {isChannel(current) ? ` Channel · ${current.itemCount} children` : "Block"}
         </span>
       </div>
 
@@ -331,12 +246,11 @@ function InfoPanelNull() {
       />
       <div className="info-section react-flow__controls info-meta">
         <a className="info-title">
-          [No node selected]
+          No node selected.
         </a>
         <a className="info-sub" style={{opacity: 0.5}}>
-          Select a node to see details
+          Select or add a node to see details.
         </a>
-
       </div>
     </div>
   );
@@ -371,13 +285,23 @@ export default function InfoPanel({
           onClick={() => {if (current) makeNodeVisible(current.id, current)}}
           className="node-toolbar-button react-flow__controls popup-menu menu-title"
         >
-          {current ? `Remove ${isChannel(current) ? "channel" : "block"}` : "No node selected"} <div className="icon">✕</div>
+          <div className="icon-left">
+            {current && `Remove ${isChannel(current) ? "channel" : "block"}`}
+          </div>
+          <div className="icon">
+            ✕
+          </div>
         </button>
         <button
           onClick={() => setCollapsed(c => !c)}
           className="node-toolbar-button react-flow__controls popup-menu menu-title"
         >
-          {collapsed ? "Expand" : "Collapse"} <div className="icon">{collapsed ? "▴" : "✕"}</div>
+          <div className="icon-left">
+            {current && (collapsed ? "Expand" : "Collapse")}
+          </div> 
+          <div className={collapsed ? "icon up" : "icon down"}>
+            ▲
+          </div>
         </button>
       </div>
     </Panel>

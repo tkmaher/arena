@@ -29,7 +29,13 @@ export default function ImageViewer({
     }, [keyDownEvent]);
 
     return (
-        <div className="confirm about" onClick={() => setViewerOpen(false)}>
+        <motion.div
+        className="confirm about"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={() => setViewerOpen(false)}
+        >
             <motion.div
                 key={imageUrl}
                 className="info-media-wrap viewer"
@@ -53,6 +59,11 @@ export default function ImageViewer({
                     </a>
                 </button>
             </div>
-        </div>
+            <div className="confirm-toolbar">
+                <button onClick={() => setViewerOpen(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+                    Close
+                </button>
+            </div>
+        </motion.div>
     );
 }
