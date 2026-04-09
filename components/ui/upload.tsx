@@ -20,7 +20,8 @@ export default function Upload({setUpload, uploadHandler}: {
 
     const handleFileUpload = (e: React.SubmitEvent) => {
         e.preventDefault();
-        const fileInput = e.target.querySelector('input[type="file"]');
+        const fileInput = e.target.querySelector('input[type="file"]') as HTMLInputElement;
+        if (!fileInput || !fileInput.files) return;
         const file = fileInput.files[0];
         if (!file) return;
         console.log("Selected file:", file);
@@ -28,6 +29,7 @@ export default function Upload({setUpload, uploadHandler}: {
         const reader = new FileReader();
         reader.onload = (event) => {
             try {
+                if (!event.target || typeof event.target.result !== "string") return;
                 const json = JSON.parse(event.target.result);
                 console.log("Parsed JSON:", json);
                 uploadHandler(json);
