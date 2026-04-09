@@ -318,7 +318,7 @@ export default function InfiniteCanvasFlow() {
     <div
       style={{
         width: "100vw",
-        height: "100vh",
+        height: "100dvh",
         overflow: "hidden",
         position: "relative",
       }}
