@@ -84,7 +84,10 @@ function CanvasInner() {
       const screenOffset = window.innerWidth * -0.15;
       const flowOffset = screenOffset / zoom;
   
-      x = x + flowOffset;
+      if (window.innerWidth >= 768)
+        x = x + flowOffset;
+      else
+        y = y - flowOffset;
     }
   
     setCenter(x, y, {
@@ -268,7 +271,6 @@ function CanvasInner() {
           engine.setSelectedNode(String(id));
         }}
         setImageOpen={handleViewerOpen}
-        collapsed={collapsed}
       />
 
       <NodeStats

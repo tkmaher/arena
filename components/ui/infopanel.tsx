@@ -15,11 +15,11 @@ interface InfoPanelType {
   setSelected:       (id: string) => void;
   checkNodeVisible:  (id: string) => boolean;
   setImageOpen:      (val: boolean) => void;
+  closePanel:          () => void;
 }
 
 interface InfoPanelProps extends InfoPanelType {
   current: Block | Channel | undefined;
-  collapsedIn: boolean;
 }
 
 const isChannel    = (n: Block | Channel): n is Channel    => n.type === "Channel";
@@ -44,14 +44,15 @@ function EmbedBlock({ html }: { html: string }) {
 export default function InfoPanel({
   current, connectionFetcher, childrenFetcher,
   checkNodeVisible, makeNodeVisible, setSelected, setImageOpen,
-  collapsedIn
 }: InfoPanelProps) {
-  const [collapsed, setCollapsed] = useState<boolean>(collapsedIn);
+  const [collapsed, setCollapsed] = useState<boolean>(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
 
   // Collapse whenever current disappears
-  useEffect(() => { if (!current) setCollapsed(true); }, [current]);
+  useEffect(() => { 
+    if (!current) setCollapsed(true); 
+  }, [current]);
   useEffect(() => { setImageLoaded(false); }, [current?.id]);
 
   useEffect(() => {
@@ -97,7 +98,6 @@ export default function InfoPanel({
       <div className="info-box" style={{ pointerEvents: collapsed ? "none" : "auto" }}>
         <div className="info-body">
 
-          {/* Media — collapses with details */}
           {block && !isChannel(current!) && (
             <motion.div
               variants={sectionVariants} animate={animState} initial={false}
