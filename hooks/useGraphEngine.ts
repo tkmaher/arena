@@ -40,6 +40,7 @@ export interface GraphEngineAPI {
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
   selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
+  getNearestNode: (id: string) => string | null;
   exportGraph: () => void;
   importGraph: (data: any) => void;
 
@@ -393,6 +394,34 @@ export function useGraphEngine(): GraphEngineAPI {
     return bestNode;
   }, [positions, setSelectedNode]);
 
+  const getNearestNode = useCallback((id: string): string | null => {
+    const g = graph.current;
+    const targetPos = g.get(id)?.gridPos;
+    if (!targetPos) return null;
+
+    let bestDist = Infinity;
+    let bestNode = null;
+
+    for (const node of g.toReactFlowNodes()) {
+      if (node.id === id) continue;
+
+      const nodePos = g.get(node.id)?.gridPos;
+      if (!nodePos) continue;
+
+      const dx = nodePos.x - targetPos.x;
+      const dy = nodePos.y - targetPos.y;
+      const distSq = dx * dx + dy * dy;
+
+      if (distSq < bestDist) {
+        bestDist = distSq;
+        bestNode = node.id;
+      }
+    }
+
+    if (bestNode) setSelectedNode(bestNode);
+    return bestNode;
+  }, [positions, setSelectedNode]);
+
 
   // ── Pagination ────────────────────────────────────────────────────────────
 
@@ -510,6 +539,7 @@ export function useGraphEngine(): GraphEngineAPI {
     fetchMoreChildren,
     setSelectedNode,
     selectNodeByDirection,
+    getNearestNode,
     exportGraph,
     importGraph
   };

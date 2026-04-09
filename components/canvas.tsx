@@ -266,7 +266,9 @@ function CanvasInner() {
         checkNodeVisible={id => engine.visibleIds.has(String(id))}
         makeNodeVisible={makeNodeVisible}
         closePanel={() => setInfoOpen(false)}
-        setSelected={(id: string) => { 
+        setSelected={(id: string | null) => { 
+          if (id == "nearest" && selectedId)
+            id = engine.getNearestNode(selectedId) ?? null;
           setSelectedId(String(id)); 
           engine.setSelectedNode(String(id));
         }}
