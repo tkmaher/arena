@@ -65,11 +65,11 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
                     {node.title ?? node.id}
                   </a>
 
-                  <input
+                  {!limitSize && (<input
                     type="checkbox"
                     checked={checkNodeVisible(node.id)}
                     onChange={() => onToggle(node)}
-                  />
+                  />)}
 
                   <div
                     className="tooltip info-sub"

@@ -160,7 +160,7 @@ export function useGraphEngine(): GraphEngineAPI {
       const centerFlow = mousePos
         ? screenToFlowPosition(mousePos)
         : screenToFlowPosition({
-            x: window.innerWidth / 2,
+            x: window.innerWidth > 768 ? window.innerWidth * 0.6 : window.innerWidth / 2,
             y: window.innerHeight / 2,
           });
   

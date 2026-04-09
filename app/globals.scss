@@ -95,7 +95,7 @@ body {
 .svg { max-height: 18px; padding: 0 !important; height: auto !important; width: auto !important; }
 
 .confirm {
-  width: 100vw; height: 100vh;
+  width: 100vw; height: 100dvh;
   position: fixed; top: 0;
   background-color: var(--fg);
   backdrop-filter: blur(2px);
@@ -108,6 +108,8 @@ body {
 
 .about {
   padding: 3em 20vw;
+  left: 0;
+  pointer-events: all;
   text-align: left; align-items: flex-start !important;
   a  { border-bottom: 0.5px dashed var(--bg); }
   b  { font-weight: 600; }
@@ -166,7 +168,8 @@ body {
   margin-right: 0.6em; bottom: 1.2em;
   display: flex; flex-direction: column;
   opacity: 0; transition: opacity 0.1s, right 0.1s;
-  width: calc(15vw - 1.4em - 1.2em - 1px); // IDK why this works
+  width: calc(50% - 1.4em - 1.2em - 1px); // IDK why this works
+  min-width: calc(15vw - 1.4em - 1.2em - 1px);;
   max-height: calc(100% - 3.4em);
   border: 0.5px solid var(--bg);
   background-color: #f2f2f2 !important;
@@ -204,7 +207,7 @@ body {
   display: flex; flex-direction: column;
   align-items: center;
   align-self: center;
-  height: 100vh;
+  height: 100dvh;
   button { pointer-events: auto; flex-shrink: 0; }
 }
 
@@ -268,7 +271,7 @@ body {
 .info-media-wrap {
   position: relative;
   width: 100%;
-  height: 50vh;
+  height: 50dvh;
   cursor: pointer;
   overflow: hidden;
   padding: 0.8em;
@@ -276,7 +279,7 @@ body {
 }
 
 .viewer {
-  height: 75vh !important;
+  height: 75dvh !important;
   cursor: auto !important;
 }
 
@@ -286,7 +289,7 @@ body {
 }
 
 .info-media-iframe {
-  height: 50vh;
+  height: 50dvh;
   overflow-y: auto;
   iframe { width: 100% !important; height: 100%; border: none !important; }
 }
@@ -294,7 +297,7 @@ body {
 .info-text-content {
   width: 100%; text-align: justify;
   font-size: 14px; padding: 1.2em;
-  max-height: 50vh; overflow-y: auto;
+  max-height: 50dvh; overflow-y: auto;
 }
 
 /* Meta block — title / owner / id */
@@ -404,7 +407,7 @@ input[type="checkbox"] {
   .info-body { padding: 0; }
   .info-toolbar { padding: 0em; }
   .info-box { width: 100vw; }
-  .info-stats { display: none; }
+  .info-stats { display: none; .tooltip { width: auto; } }
   .collections-grid { flex-direction: column; }
 
   .stat-label, .info-stats { width: 50vw; max-width: 50vw; }

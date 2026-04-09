@@ -78,7 +78,7 @@ export default function InfoPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [current]);
 
-  const toggleNode   = (node: Block | Channel) => makeNodeVisible(node.id, node);
+  const toggleNode   = (node: Block | Channel) => { makeNodeVisible(node.id, node); setSelected("nearest"); }
   const handleSelect = (node: Block | Channel) =>
     checkNodeVisible(node.id) ? setSelected(node.id) : makeNodeVisible(node.id, node);
 
@@ -96,6 +96,14 @@ export default function InfoPanel({
 
   return (
     <Panel position="bottom-left" className="info-container">
+      {block && hasImage(block) && !isAttachment(block) && viewerOpen && (
+        <ImageViewer
+          setViewerOpen={handleViewerOpen}
+          title={current!.title ?? current!.id}
+          imageUrl={block.imageUrl}
+          linkOut={linkOut}
+        />
+      )}
       <div className="info-box" style={{ pointerEvents: collapsed ? "none" : "auto" }}>
         <div className="info-body">
 
@@ -108,14 +116,7 @@ export default function InfoPanel({
             >
               {hasImage(block) && !isAttachment(block) && (
                 <>
-                  {viewerOpen && (
-                    <ImageViewer
-                      setViewerOpen={handleViewerOpen}
-                      title={current!.title ?? current!.id}
-                      imageUrl={block.imageUrl}
-                      linkOut={linkOut}
-                    />
-                  )}
+                  
                   <motion.div
                     key={current!.id}
                     className="info-media-wrap"
@@ -194,7 +195,11 @@ export default function InfoPanel({
       </div>
 
       <div className={current ? "info-toolbar" : "info-toolbar info-null"}>
-        <button onClick={() => current && makeNodeVisible(current.id, current)}
+        <button onClick={() => {
+          if (!current) return;
+          makeNodeVisible(current.id, current);
+          setSelected("nearest");
+        }}
           className="node-toolbar-button react-flow__controls popup-menu menu-title">
           <div className="icon-left">{current && `Remove ${isChannel(current) ? "channel" : "block"}`}</div>
           <div className="icon">✕</div>
