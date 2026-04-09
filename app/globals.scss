@@ -100,8 +100,11 @@ body {
   background-color: var(--fg);
   backdrop-filter: blur(2px);
   display: flex; flex-direction: column;
-  justify-content: center; align-items: center;
+  align-items: center;
   color: var(--bg); gap: 0.8em; z-index: 1000;
+  overflow-y: auto;
+  padding-top: 3em;
+  justify-content: center;
 
   .confirm-toolbar { display: flex; gap: 8px; align-self: center; margin-bottom: 2em; }
 }
@@ -207,7 +210,7 @@ body {
   display: flex; flex-direction: column;
   align-items: center;
   align-self: center;
-  height: 100dvh;
+  height: 100%;
   button { pointer-events: auto; flex-shrink: 0; }
 }
 
@@ -415,4 +418,6 @@ input[type="checkbox"] {
   .controls { left: 0 !important; top: 0 !important; width: fit-content; height: fit-content;}
 
   .hide-display {display: none !important; }
+  .about { padding: 3em 3em;}
+  .confirm { justify-content: flex-start; }
 }
