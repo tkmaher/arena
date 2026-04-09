@@ -2,34 +2,39 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
-export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
+export default function Upload({setUpload, uploadHandler}: {
+    setUpload: (val: boolean) => void,
+    uploadHandler: (data: any) => void
+}) {
     const keyDownEvent = useCallback((e: any) => {
         if (e.key === "Escape") {
-            setAbout(false);
+            setUpload(false);
         }
         
-    }, [setAbout]);
+    }, [setUpload]);
     
     useEffect(() => {
         window.addEventListener("keydown", keyDownEvent);
         return () => window.removeEventListener("keydown", keyDownEvent);
     }, [keyDownEvent]);
 
-    const [jsonData, setJsonData] = useState(null);
-
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
+    const handleFileUpload = (e: React.SubmitEvent) => {
+        e.preventDefault();
+        const fileInput = e.target.querySelector('input[type="file"]');
+        const file = fileInput.files[0];
         if (!file) return;
+        console.log("Selected file:", file);
 
         const reader = new FileReader();
         reader.onload = (event) => {
-        try {
-            const json = JSON.parse(event.target.result);
-            setJsonData(json);
-            console.log("Parsed JSON:", json);
-        } catch (error) {
-            alert("Invalid JSON file!");
-        }
+            try {
+                const json = JSON.parse(event.target.result);
+                console.log("Parsed JSON:", json);
+                uploadHandler(json);
+                setUpload(false);
+            } catch (error) {
+                alert("Invalid JSON file!");
+            }
         };
         reader.readAsText(file);
     };
@@ -41,7 +46,21 @@ export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
-            <input type="file" accept=".json" onChange={handleFileUpload} />
+            <form onSubmit={handleFileUpload} className=" confirm-toolbar">
+                <input 
+                    type="file" 
+                    accept=".json" 
+                    className="node-toolbar-button react-flow__controls popup-menu menu-title"
+                    id="file-upload"
+                />
+                <button  className="node-toolbar-button react-flow__controls popup-menu menu-title" type="submit">
+                    Submit
+                </button>
+                <button onClick={() => setUpload(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+                    Cancel
+                </button>
+            </form>
+            <em>Import a JSON file. This will replace the current graph.</em>
         </motion.div>
     )
 }

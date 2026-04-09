@@ -127,6 +127,31 @@ export class PositionAllocator {
     }
   }
 
+
+  occupy(x: number, y: number): void {
+    const k = PositionAllocator.key(x, y);
+    if (this.occupied.has(k)) return;
+    this.occupied.add(k);
+    const idx = this.queue.findIndex(p => p.x === x && p.y === y);
+    if (idx !== -1) {
+      this.queue.splice(idx, 1);
+      this.inQueue.delete(k);
+    }
+    // Expand neighbours into the BFS queue so the allocator can
+    // still grow naturally around this reclaimed position.
+    for (let dx = -1; dx <= 1; dx++) {
+      for (let dy = -1; dy <= 1; dy++) {
+        if (dx === 0 && dy === 0) continue;
+        const nx = x + dx, ny = y + dy;
+        const nk = PositionAllocator.key(nx, ny);
+        if (!this.occupied.has(nk) && !this.inQueue.has(nk)) {
+          this.inQueue.add(nk);
+          this.queue.push({ x: nx, y: ny });
+        }
+      }
+    }
+  }
+
 }
 
 // ─── Graph ────────────────────────────────────────────────────────────────────
@@ -288,7 +313,9 @@ export class Graph {
     const jsonString = JSON.stringify(nodes, null, 2);
     
     const blob = new Blob([jsonString], { type: "application/json" });
-    const filename =  `neighbors-archive-${new Date}.json`;
+    const now = new Date();
+    const formatted = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+    const filename =  `neighbors-archive-${formatted}.json`;
     
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -298,46 +325,15 @@ export class Graph {
     URL.revokeObjectURL(link.href);
   }
 
-  importGraph() {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "application/json";
-
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const content = event.target?.result as string;
-          const nodes: Array<{
-            id: string;
-            object: Block | Channel;
-            gridPos: { x: number; y: number };
-            onCanvas: boolean;
-            children: string[];
-            parents: string[];
-          }> = JSON.parse(content);
-
-          this.nodes.clear();
-          for (const n of nodes) {
-            this.nodes.set(n.id, {
-              object: n.object,
-              gridPos: n.gridPos,
-              onCanvas: n.onCanvas,
-              children: new Set(n.children),
-              parents: new Set(n.parents),
-            });
-          }
-        } catch (err) {
-          console.error("Failed to import graph:", err);
-        }
-      };
-
-      reader.readAsText(file);
-    };
-
-    input.click();
+  importGraph(nodes: any) {
+    for (const n of nodes) {
+      this.nodes.set(n.id, {
+        object: n.object,
+        gridPos: n.gridPos,
+        onCanvas: n.onCanvas,
+        children: new Set(n.children),
+        parents: new Set(n.parents),
+      });
+    }
   }
 }

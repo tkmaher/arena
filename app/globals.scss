@@ -395,3 +395,21 @@ input[type="checkbox"] {
   &:hover { background-color: var(--fg-sec); }
   &:checked { background-color: var(--bg); border-color: var(--bg); }
 }
+
+/* ─── Mobile ────────────────────────────────────── */
+
+
+@media (max-width: 768px) {
+  .info-container { align-items: stretch; }
+  .info-body { padding: 0; }
+  .info-toolbar { padding: 0em; }
+  .info-box { width: 100vw; }
+  .info-stats { display: none; }
+  .collections-grid { flex-direction: column; }
+
+  .stat-label, .info-stats { width: 50vw; max-width: 50vw; }
+
+  .controls { left: 0 !important; top: 0 !important; width: fit-content; height: fit-content;}
+
+  .hide-display {display: none !important; }
+}

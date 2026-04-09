@@ -41,7 +41,7 @@ export interface GraphEngineAPI {
   setSelectedNode: (id: string | null) => void;
   selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
   exportGraph: () => void;
-  importGraph: () => void;
+  importGraph: (data: any) => void;
 
 }
 
@@ -159,7 +159,7 @@ export function useGraphEngine(): GraphEngineAPI {
       const centerFlow = mousePos
         ? screenToFlowPosition(mousePos)
         : screenToFlowPosition({
-            x: window.innerWidth - (window.innerWidth * 0.25),
+            x: window.innerWidth / 2,
             y: window.innerHeight / 2,
           });
   
@@ -474,11 +474,22 @@ export function useGraphEngine(): GraphEngineAPI {
     graph.current.exportGraph();
   }, [])
 
-  const importGraph = useCallback(() => {
-    graph.current.exportGraph();
-    
+  const importGraph = useCallback((data: any) => {
+    // 1. Restore graph structure
+    positions.current = new PositionAllocator();
+    graph.current = new Graph();
+    graph.current.importGraph(data);
+  
+    const alloc = positions.current;
+    for (const n of data) {
+      
+      if (n.onCanvas) {
+        alloc.occupy(n.gridPos.x, n.gridPos.y);
+      }
+    }
+  
     flush();
-  }, [])
+  }, [flush]);
 
 
   // ── Return ────────────────────────────────────────────────────────────────

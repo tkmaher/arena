@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { use, useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -28,6 +28,7 @@ import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
 
 import { motion } from "framer-motion";
+import Upload from "./ui/upload";
 
 const nodeTypes = { Canvas: BlockProp };
 const edgeTypes = { floating: FloatingEdge };
@@ -42,6 +43,7 @@ function CanvasInner() {
   const [deleteAll, setDeleteAll] = useState(false);
   const [about, setAbout] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
+  const [uploader, setUploader] = useState(false);
 
   const selectedNode = useMemo(
     
@@ -93,7 +95,7 @@ function CanvasInner() {
   }, [selectedId, infoOpen]);
 
   const keyDownEvent = useCallback((e: any) => {
-    if (imageViewerOpen || about) return; // ← viewer handles its own keys
+    if (imageViewerOpen || about || uploader) return;
     console.log("about");
     
     if (e.key === "Escape") {
@@ -131,7 +133,7 @@ function CanvasInner() {
     } else if (e.key === "-" || e.key === "_" ) {
         zoomOut();
     }
-  }, [deleteAll, selectedId, imageViewerOpen, about]);
+  }, [deleteAll, selectedId, imageViewerOpen, about, uploader]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -198,7 +200,7 @@ function CanvasInner() {
           color="rgba(0,0,0,0.5)"
 
         />
-        <Controls showInteractive={false} showFitView={false} position="bottom-right">
+        <Controls showInteractive={false} showFitView={false} position="bottom-right" className="controls">
           <ControlButton>
             <img 
               className="delete-all svg" 
@@ -212,18 +214,18 @@ function CanvasInner() {
               onClick={() => setAbout(true)}
             />
           </ControlButton>
-          <ControlButton>
+          <ControlButton className="hide-display">
             <img 
               src="download.svg"
               className="svg" 
               onClick={() => engine.exportGraph()}
             />
           </ControlButton>
-          <ControlButton>
+          <ControlButton className="hide-display">
             <img 
               src="upload.svg"
               className="svg" 
-              onClick={() => engine.importGraph()}
+              onClick={() => setUploader(true)}
             />
           </ControlButton>
         </Controls>
@@ -249,6 +251,11 @@ function CanvasInner() {
 
       {about && <About setAbout={(val: boolean) => setAbout(val)}/>}
 
+      {uploader && <Upload 
+        setUpload={(val: boolean) => setUploader(val)}
+        uploadHandler={(data: any) => engine.importGraph(data)}
+      />}
+
       <InfoPanel
         current={infoOpen ? selectedNode?.data.object : undefined}
         connectionFetcher={engine.fetchMoreConnections}
@@ -261,6 +268,7 @@ function CanvasInner() {
           engine.setSelectedNode(String(id));
         }}
         setImageOpen={handleViewerOpen}
+        collapsed={collapsed}
       />
 
       <NodeStats
