@@ -23,7 +23,7 @@ export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
             transition={{ duration: 0.3 }}
         >
             <p className="info-title">
-                <b>neighborhoods.na</b> is a <a href="https://en.wikipedia.org/wiki/Directed_graph" target="_blank">directed graph</a> of <b><a target="_blank" href="https://are.na">are.na</a></b>.
+                <b>arena-flow.org</b> is a <a href="https://en.wikipedia.org/wiki/Directed_graph" target="_blank">directed graph</a> of <b><a target="_blank" href="https://are.na">are.na</a></b>.
             </p>
             <p className="info-text">
                 <a target="_blank" href="https://are.na">are.na</a> is a content aggregation website made up of "blocks" and "channels". Blocks contain files uploaded by users,

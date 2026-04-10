@@ -5,7 +5,7 @@
   --fg-dim:    #f9f9f956;
   --fg-muted:  #565656;
   --fg-sec:    #cfcfcf;
-  --bg:        #1c1c24;
+  --bg:        #1f1f1f;
   --link:      #3b82f6;
 }
 
@@ -129,8 +129,8 @@ body {
       transition: transform 0.1s;
       &:hover { transform: scale(1.05); cursor: pointer; }
     }
-    .solid  { border: 0.5px solid #1c1c24; }
-    .dotted { border: 0.5px dashed #1c1c24; }
+    .solid  { border: 0.5px solid var(--bg); }
+    .dotted { border: 0.5px dashed var(--bg); }
   }
 
   .example-links {
@@ -261,6 +261,33 @@ body {
     transform: translateY(100%);
     margin-right: -1em;
   }
+}
+
+.logo-container {
+  height: 100%; width: 100%;
+  justify-self: flex-end;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  img { 
+    width: 100%; 
+    position: absolute; 
+    padding: 0.4em;
+    height: fit-content;
+    max-height: 100%;
+    padding-bottom: 1em;
+  }
+  .logo-hover {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.3s ease;
+    cursor: pointer;
+  }
+  &:hover {
+    .logo-hover {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  height: 5dvh;
 }
 
 .stat-label {

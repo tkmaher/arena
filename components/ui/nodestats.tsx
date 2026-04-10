@@ -37,6 +37,10 @@ export default function NodeStats({checkNodeVisible, makeNodeVisible, setSelecte
 
     return (
         <Panel position="top-right" style={{zIndex: 0}}>
+            <div className="logo-container react-flow__controls">
+                <img src="logotext.svg"/>
+                <img className="logo-hover" src="logostar.svg"/>
+            </div>  
             <div className="react-flow__controls popup-menu node-toolbar-button stat-label">
                 Nodes: <b>{engine.nodes.length}</b> | Edges: <b>{engine.edges.length}</b>
                 

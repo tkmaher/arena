@@ -38,7 +38,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
       <div
         className="node-parent"
         style={{
-          border: isSelected ? `0.5px solid #1c1c24` : isConnectedToSelected ? `0.5px dashed #1c1c24` : `0.5px dashed #1c1c2400`,
+          border: isSelected ? `0.5px solid #1f1f1f` : isConnectedToSelected ? `0.5px dashed #1f1f1f` : `0.5px dashed #1f1f1f00`,
           position: "relative",
         }}
       >
