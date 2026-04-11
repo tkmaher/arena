@@ -47,7 +47,7 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
             <>{data.object.title}</>
           ) : data.object.thumbnailUrl ? (
             <Image
-              src={data.object.imageUrl} // TODO: CHANGE THIS BACK
+              src={data.object.thumbnailUrl} 
               alt={data.object.title || "ImageBlock"}
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               fill
