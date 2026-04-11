@@ -45,5 +45,8 @@ export let RandomChannels: string[] = [
     "https://www.are.na/jordan-egstad/magic-the-gathering-cards-1993-2023",
     "https://www.are.na/desmond-wong/are-na-moments-bazvor6bmm8",
     "https://www.are.na/syzyzu/1373566",
+    "https://www.are.na/ben-jowett/dash-qx7dzedc0a8",
+    "https://www.are.na/jhean-leigue/visual-source",
+    "https://www.are.na/dima-litvinov/zero-zero-zero-one-dafgx9fzbrc",
 
 ]

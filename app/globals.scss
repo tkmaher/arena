@@ -238,6 +238,8 @@ body {
     flex-shrink: 0;
     padding: 0.8em;
     pointer-events: all;
+    max-height: 80dvh;
+    overflow-y: auto;
   }
 
   & > .info-section-scroll {

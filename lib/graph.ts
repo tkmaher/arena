@@ -315,7 +315,7 @@ export class Graph {
     const blob = new Blob([jsonString], { type: "application/json" });
     const now = new Date();
     const formatted = `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
-    const filename =  `neighbors-archive-${formatted}.json`;
+    const filename =  `arena-flow-archive-${formatted}.json`;
     
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);

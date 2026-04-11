@@ -40,6 +40,12 @@ function EmbedBlockRef({ html }: { html: string }) {
   return <div className="info-media-iframe" ref={ref} />;
 }
 
+function DescriptionRef({ html }: { html: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (ref.current) ref.current.innerHTML = html; }, [html]);
+  return <div className="info-sub" ref={ref} />;
+}
+
 export default function InfoPanel({
   current, connectionFetcher, childrenFetcher,
   checkNodeVisible, makeNodeVisible, setSelected, setImageOpen,
@@ -158,6 +164,7 @@ export default function InfoPanel({
                     {current.id}
                   </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : " Block"}
                 </span>
+                {current.description && <DescriptionRef html={current.description} />}
               </>
             ) : (
               <>
