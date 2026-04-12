@@ -1,6 +1,6 @@
 export let RandomChannels: string[] = [
     "https://www.are.na/one-one-one-one-one-one-one-one-one-one-one/images-hqcvawbqov0",
-    "https://www.are.na/tilde-colon-pipe-degrees-degrees-bullet-period-pipe-colon-tilde/dimensions-in-music-sounds",
+    "https://www.are.na/tilde-colon-pipe-degrees-degrees-bullet-period-pipe-colon-tilde/dimensions-in-sound-music",
     "https://www.are.na/other-seas/foldersfolders",
     "https://www.are.na/avoid-being/avoidlibrary",
     "https://www.are.na/november-rasmussen/cc-kwimblhdkhy",

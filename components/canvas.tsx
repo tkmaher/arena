@@ -23,7 +23,7 @@ import FloatingConnectionLine from "@/components/flow/FloatingConnectionLine";
 import RadialMenu from "@/components/ui/radialmenu";
 import InfoPanel from "@/components/ui/infopanel";
 import type { CanvasNode } from "@/types/reactflow";
-import type { Block, Channel } from "@/types/arena";
+import type { Block, Channel, User } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
 
@@ -57,14 +57,13 @@ function CanvasInner() {
 
   // Pass selectedId so the engine can wire the edge on toggle-on
   const makeNodeVisible = useCallback(
-    (id: string, body: Block | Channel) => {
+    (id: string, body: Block | Channel | User) => {
       engine.toggleNode(id, body, selectedId ?? undefined);
     },
     [engine, selectedId]
   );
 
   const handleViewerOpen = useCallback((val: boolean) => {
-    console.log("viewer open:");
     setImageViewerOpen(val);
   }, [setImageViewerOpen]);
 
@@ -99,7 +98,6 @@ function CanvasInner() {
 
   const keyDownEvent = useCallback((e: any) => {
     if (imageViewerOpen || about || uploader) return;
-    console.log("about");
     
     if (e.key === "Escape") {
         if (deleteAll) { setDeleteAll(false); return; }
@@ -263,15 +261,14 @@ function CanvasInner() {
         current={infoOpen ? selectedNode?.data.object : undefined}
         connectionFetcher={engine.fetchMoreConnections}
         childrenFetcher={engine.fetchMoreChildren}
+        followerFetcher={engine.fetchMoreFollowers}
+        followingFetcher={engine.fetchMoreFollowing}
         checkNodeVisible={id => engine.visibleIds.has(String(id))}
         makeNodeVisible={makeNodeVisible}
         closePanel={() => setInfoOpen(false)}
-        setSelected={(id: string | null) => { 
-          if (id == "nearest" && selectedId) {
-            id = engine.getNearestNode(selectedId) ?? null;
-            console.log("nearest")
-          }
-          setSelectedId(String(id)); 
+        setSelected={(id: string | null) => {
+          if (id == "nearest" && selectedId) id = engine.getNearestNode(selectedId) ?? null;
+          setSelectedId(String(id));
           engine.setSelectedNode(String(id));
         }}
         setImageOpen={handleViewerOpen}

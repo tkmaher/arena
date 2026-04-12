@@ -24,16 +24,38 @@ export interface Channel {
     itemCount: number;
     blockCount: number;
     channelCount: number;
-    collaborations: User[];
+    collaborations: User[] | null;
 
     connectionStatus: ConnectionStatus;
     childrenStatus: ChildrenStatus;
 }
 
 export interface User {
-    name: string;
-    id: number;
+    title: string;
+    id: string;
     slug: string;
+    thumbnailUrl?: string; // avatar
+    imageUrl?: string;  // avatar
+    description?: string;
+
+    type: string;
+
+    followersStatus: FollowersStatus;
+    followingStatus: FollowingStatus;
+    childrenStatus: ChildrenStatus;
+}
+
+export interface Group {
+    id: string;
+    title: string;
+    description?: string;
+    thumbnailUrl?: string;
+    imageUrl?: string;
+
+    type: string;
+
+    followersStatus: FollowersStatus;
+    childrenStatus: ChildrenStatus; // TODO: How to get group members/
 }
 
 export interface ConnectionStatus {
@@ -44,6 +66,18 @@ export interface ConnectionStatus {
 
 export interface ChildrenStatus {
     children: (Block | Channel)[];
+    complete: boolean;
+    page: number;
+}
+
+export interface FollowingStatus {
+    following: (User | Channel | Group)[];
+    complete: boolean;
+    page: number;
+}
+
+export interface FollowersStatus {
+    followers: (User)[];
     complete: boolean;
     page: number;
 }

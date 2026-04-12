@@ -1,21 +1,24 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock} from "@/types/arena";
+import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock } from "@/types/arena";
+
+type AnyNode = Block | Channel | User;
+type AnyStatus = ConnectionStatus | ChildrenStatus | FollowersStatus | FollowingStatus;
 
 interface NodeListProps {
-    list:            (Block | Channel)[];
-    status:          ConnectionStatus | ChildrenStatus;
-    checkNodeVisible:(id: string) => boolean;
-    onToggle:        (node: Block | Channel) => void;
-    onSelect:        (node: Block | Channel) => void;
-    loadMore:        () => void;
-    label:           string;
-    nodeId:          string;
-    limitSize?:      (val: boolean) => void;
+    list:             AnyNode[];
+    status:           AnyStatus;
+    checkNodeVisible: (id: string) => boolean;
+    onToggle:         (node: AnyNode) => void;
+    onSelect:         (node: AnyNode) => void;
+    loadMore:         () => void;
+    label:            string;
+    nodeId:           string;
+    limitSize?:       (val: boolean) => void;
 }
 
-const hasImage     = (n: Block): n is ImageBlock             => "imageUrl" in n;
+const hasImage = (n: AnyNode): n is ImageBlock => "imageUrl" in n && n.type !== "User";
 
 const didAnimate = new Set<string>();
 
@@ -26,10 +29,9 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
   const [fetching, setFetching] = useState(false);
 
   useEffect(() => { setFetching(false); }, [status, list]);
+  useEffect(() => { if (limitSize) limitSize(open); }, [open, limitSize]);
 
-  useEffect(() => { 
-    if (limitSize) limitSize(open);
-  }, [open, limitSize]);
+  const isComplete = "complete" in status ? status.complete : true;
 
   return (
     <motion.div
@@ -39,17 +41,15 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
       transition={{ duration: 0.2 }}
       onAnimationComplete={() => didAnimate.add(animKey)}
     >
-      {/* Collapsible header */}
       <div
         className="collection-header"
         data-open={String(open)}
         onClick={() => setOpen(o => !o)}
       >
-        <span className="info-sub">{label} ({list.length}{status.complete ? "" : "+"})</span>
+        <span className="info-sub">{label} ({list.length}{isComplete ? "" : "+"})</span>
         <span className="collapse-icon">▾</span>
       </div>
 
-      {/* Body collapses via CSS flex transition — no height animation conflict */}
       <div className={`collection-body${open ? "" : " closed"}`}>
         <div className="collection-list">
           {list.length === 0
@@ -65,11 +65,13 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
                     {node.title ?? node.id}
                   </a>
 
-                  {!limitSize && (<input
-                    type="checkbox"
-                    checked={checkNodeVisible(node.id)}
-                    onChange={() => onToggle(node)}
-                  />)}
+                  {!limitSize && (
+                    <input
+                      type="checkbox"
+                      checked={checkNodeVisible(node.id)}
+                      onChange={() => onToggle(node)}
+                    />
+                  )}
 
                   <div
                     className="tooltip info-sub"
@@ -92,7 +94,7 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
           }
         </div>
 
-        {!status.complete && (
+        {!isComplete && (
           <button
             className={`loader ${fetching ? "disabled" : ""}`}
             onClick={() => { loadMore(); setFetching(true); }}

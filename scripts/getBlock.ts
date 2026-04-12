@@ -7,7 +7,11 @@ import {
     Channel, 
     AttachmentBlock,
     ConnectionStatus,
-    ChildrenStatus
+    ChildrenStatus,
+    FollowersStatus,
+    FollowingStatus,
+    Group,
+    User
 } from "@/types/arena";
 
 const CONNECTIONS_PER_PAGE = 25;
@@ -89,8 +93,9 @@ export async function getConnections(
     }
 }
 
-export async function getChildren(id: string, page: number): Promise<ChildrenStatus> {
-    const url = new URL(`https://api.are.na/v3/channels/${id}/contents`);
+export async function getChildren(id: string, page: number, isUser: boolean): Promise<ChildrenStatus> {
+    const url = new URL(`https://api.are.na/v3/${isUser ? "users" : "channels"}/${id}/contents`);
+    console.log("Fetching children from URL:", url.toString());
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
 
@@ -105,7 +110,6 @@ export async function getChildren(id: string, page: number): Promise<ChildrenSta
                 )
             )
         ).filter((item): item is Block | Channel => item !== null);
-
         return { children, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         if (error instanceof ArenaApiError) {
@@ -114,6 +118,60 @@ export async function getChildren(id: string, page: number): Promise<ChildrenSta
             console.error(`[getChildren] Unexpected error for channel ${id}:`, error);
         }
         return { children: [], complete: true, page };
+    }
+}
+
+export async function getFollowing(id: string, page: number): Promise<FollowingStatus> {
+    const url = new URL(`https://api.are.na/v3/users/${id}/following`);
+    url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
+    url.searchParams.set("page", page.toString());
+
+    try {
+        const data = await arenaFetch(url);
+        const following: (Group | Channel | User)[] = (
+            await Promise.all(
+                data.data.map((child: any) => {
+                    if (child.type === "User")         return parseUser(child, false);
+                    else if (child.type === "Channel") return parseChannel(child, false);
+                    else if (child.type === "Group")   return parseGroup(child, false);
+                })
+            )
+        ).filter((item): item is User | Channel | Group => item !== null);
+
+        return { following, complete: !data.meta.has_more_pages, page: page + 1 };
+    } catch (error) {
+        if (error instanceof ArenaApiError) {
+            console.error(`[getFollowing] API error for user ${id} (page ${page}):`, error.message);
+        } else {
+            console.error(`[getFollowing] Unexpected error for user ${id}:`, error);
+        }
+        return { following: [], complete: true, page };
+    }
+}
+
+export async function getFollowers(id: string, page: number): Promise<FollowersStatus> {
+    const url = new URL(`https://api.are.na/v3/users/${id}/followers`);
+    url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
+    url.searchParams.set("page", page.toString());
+
+    try {
+        const data = await arenaFetch(url);
+        const followers: (User)[] = (
+            await Promise.all(
+                data.data.map((child: any) =>
+                    parseUser(child, false)
+                )
+            )
+        ).filter((item): item is User => item !== null);
+
+        return { followers, complete: !data.meta.has_more_pages, page: page + 1 };
+    } catch (error) {
+        if (error instanceof ArenaApiError) {
+            console.error(`[getFollowers] API error for user ${id} (page ${page}):`, error.message);
+        } else {
+            console.error(`[getFollowers] Unexpected error for user ${id}:`, error);
+        }
+        return { followers: [], complete: true, page };
     }
 }
 
@@ -149,18 +207,35 @@ export async function getChannel(id: string): Promise<Channel | null> {
     }
 }
 
+export async function getUser(id: string): Promise<User | null> {
+    try {
+        const data = await arenaFetch(`https://api.are.na/v3/users/${id}`);
+        return parseUser(data, true);
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 404) {
+            console.warn(`[getUser] User "${id}" not found.`);
+        } else if (error instanceof ArenaApiError) {
+            console.error(`[getUser] API error for user "${id}":`, error.message);
+        } else {
+            console.error(`[getUser] Unexpected error for user "${id}":`, error);
+        }
+        return null;
+    }
+}
+
 // ─── Parsers ───────────────────────────────────────────────────────────────────
 
 async function parseBlock(data: any, performFetch: boolean): Promise<Block | null> {
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
     if (performFetch) conn = await getConnections(data.id, "blocks", 1);
+    const owner = await parseUser(data.user, false);
 
     const block: Block = {
         id: data.id,
         date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: { name: data.user.name, id: data.user.id, slug: data.user.slug },
+        owner: owner,
         type: data.type,
         connectionStatus: conn,
     };
@@ -210,10 +285,11 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
 async function parseChannel(data: any, performFetch: boolean): Promise<Channel> {
     let children: ChildrenStatus = { children: [], complete: false, page: 1 };
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
+    const owner = await parseUser(data.owner, false);
 
     if (performFetch) {
         [children, conn] = await Promise.all([
-            getChildren(data.id, 1),
+            getChildren(data.id, 1, false),
             getConnections(data.id, "channels", 1),
         ]);
     }
@@ -223,7 +299,7 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: { name: data.owner.name, id: data.owner.id, slug: data.owner.slug },
+        owner: owner,
         type: "Channel",
         state: data.state,
         visibility: data.visibility,
@@ -231,9 +307,40 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         blockCount: data.counts.blocks,
         channelCount: data.counts.channels,
         collaborations: data.collaborators
-            ? data.collaborators.map((c: any) => ({ name: c.name, id: c.id, slug: c.slug }))
+            ? data.collaborators.map((c: any) => (parseUser(c, false)))
             : null,
         connectionStatus: conn,
         childrenStatus: children,
+    };
+}
+
+async function parseUser(data: any, performFetch: boolean): Promise<User> {
+    let children: ChildrenStatus = { children: [], complete: false, page: 1 };
+    let followers: FollowersStatus = { followers: [], complete: false, page: 1 };
+    let following: FollowingStatus = { following: [], complete: false, page: 1 };
+
+    if (performFetch) {
+        [children, followers, following] = await Promise.all([
+            getChildren(data.id, 1, true),
+            getFollowers(data.id, 1),
+            getFollowing(data.id, 1),
+        ]);
+    }
+
+    console.log("avatar:", data.avatar);
+
+    return {
+        id: data.id,
+        title: data.name,
+        slug: data.slug,
+        thumbnailUrl: data.avatar ? data.avatar : null,
+        imageUrl: data.avatar ? data.avatar : null,
+        description: data.bio ? data.bio.html : null,
+
+        type: "User",
+        
+        followingStatus: following,
+        childrenStatus: children,
+        followersStatus: followers,
     };
 }

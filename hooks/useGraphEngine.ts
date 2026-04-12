@@ -11,8 +11,8 @@ import {
 } from "@xyflow/react";
 
 import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT, GRID_SIZE } from "@/lib/graph";
-import { getBlock, getChannel, getConnections, getChildren } from "@/scripts/getBlock";
-import type { Block, Channel, ChildrenStatus, ConnectionStatus } from "@/types/arena";
+import { getBlock, getChannel, getUser, getConnections, getChildren, getFollowing, getFollowers } from "@/scripts/getBlock";
+import type { Block, Channel, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, User } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
@@ -32,11 +32,13 @@ export interface GraphEngineAPI {
   onEdgesChange: OnEdgesChange<Edge>;
   addNode: (idOrPath: string, mousePos: MousePos) => Promise<string | null>;
   addRandom: (mousePos: MousePos) => Promise<string | null>;
-  toggleNode: (id: string | number, body: Block | Channel, linkedToId?: string) => Promise<void>;
+  toggleNode: (id: string | number, body: Block | Channel | User, linkedToId?: string) => Promise<void>;
   removeNode: (id: string) => void;
   removeAllNodes: () => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
-  fetchMoreChildren: (id: string, status: ChildrenStatus) => Promise<void>;
+  fetchMoreChildren: (id: string, status: ChildrenStatus, isUser: boolean) => Promise<void>;
+  fetchMoreFollowers: (id: string, status: FollowersStatus) => Promise<void>;
+  fetchMoreFollowing: (id: string, status: FollowingStatus) => Promise<void>;
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
   selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
@@ -74,7 +76,6 @@ export function useGraphEngine(): GraphEngineAPI {
   }, [freeFetchList]); 
 
   function fetchOK() {
-    console.log(fetchLimiter.current);
     if (fetchLimiter.current.length < 30) {
       fetchLimiter.current.push(new Date().getTime());
       return true;
@@ -153,7 +154,7 @@ export function useGraphEngine(): GraphEngineAPI {
   const { screenToFlowPosition } = useReactFlow();
 
   const mountNode = useCallback(
-    (id: string, object: Block | Channel, mousePos?: MousePos) => {
+    (id: string, object: Block | Channel | User, mousePos?: MousePos) => {
       const g = graph.current;
       if (g.isOnCanvas(id)) return false;
       
@@ -183,7 +184,6 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const onNodeDrag = useCallback(
     (node: CanvasNode) => {
-      console.log("dragging");
       const g = graph.current;
       const n = g.get(node.id);
       if (!n) return;
@@ -256,6 +256,22 @@ export function useGraphEngine(): GraphEngineAPI {
     [mountNode, flush]
   );
 
+  const addUserNode = useCallback(
+    async (id: string, mousePos?: MousePos, data?: User): Promise<string | null> => {
+      const g = graph.current;
+      const nodeId = sid(id);
+      if (g.isOnCanvas(nodeId)) return null;
+  
+      const user = data ?? (fetchOK() ? await getUser(nodeId) : null);
+      if (!user) return null;
+  
+      mountNode(nodeId, user, mousePos);
+      flush();
+      return nodeId;
+    },
+    [mountNode, flush]
+  );
+
   const addNode = useCallback(
     async (idOrPath: string, mousePos: MousePos): Promise<string | null> => {
       let res;
@@ -291,7 +307,6 @@ export function useGraphEngine(): GraphEngineAPI {
     async (mousePos: MousePos): Promise<string | null> => {
       const randomID = RandomChannels[Math.floor(Math.random() * RandomChannels.length)];
       RandomChannels.splice(RandomChannels.indexOf(randomID), 1);
-      console.log(RandomChannels);
       return (fetchOK() ? await addNode(randomID, mousePos) : null);
     },
     [addBlockNode, addChannelNode]
@@ -316,7 +331,7 @@ export function useGraphEngine(): GraphEngineAPI {
   const toggleNode = useCallback(
     async (
       id: string | number,
-      body: Block | Channel,
+      body: Block | Channel | User,
       linkedToId?: string
     ): Promise<void> => {
       const g = graph.current;
@@ -327,6 +342,8 @@ export function useGraphEngine(): GraphEngineAPI {
       } else {
         if (body.type === "Channel") {
           await addChannelNode(nodeId, undefined, body as Channel);
+        } else if (body.type === "User") {
+          await addUserNode(nodeId, undefined, body as User);
         } else {
           await addBlockNode(nodeId, undefined, body as Block);
         }
@@ -462,15 +479,15 @@ export function useGraphEngine(): GraphEngineAPI {
   );
 
   const fetchMoreChildren = useCallback(
-    async (nodeId: string, status: ChildrenStatus): Promise<void> => {
+    async (nodeId: string, status: ChildrenStatus, isUser: boolean): Promise<void> => {
       if (status.complete) return;
 
       const g = graph.current;
       const node = g.get(sid(nodeId));
-      // Guard: stub or non-channel nodes can't be updated
-      if (!node?.object || node.object.type !== "Channel") return;
+      // Guard: stub or non-channel/user nodes can't be updated
+      if (!node?.object || node.object.type === "Block") return;
 
-      const result = fetchOK() ? await getChildren(nodeId, status.page) : null;
+      const result = fetchOK() ? await getChildren(nodeId, status.page, isUser) : null;
       if (!result) return;
 
       const merged = Array.from(
@@ -486,12 +503,56 @@ export function useGraphEngine(): GraphEngineAPI {
           page: result.page,
           children: merged,
         },
-      } as Channel);
+      } as Channel | User);
 
       for (const child of result.children) {
         g.link(sid(nodeId), sid(child.id));
       }
 
+      flush();
+    },
+    [flush]
+  );
+
+  const fetchMoreFollowers = useCallback(
+    async (nodeId: string, status: FollowersStatus): Promise<void> => {
+      if (status.complete) return;
+      const g = graph.current;
+      const node = g.get(sid(nodeId));
+      if (!node?.object || node.object.type !== "User") return;
+  
+      const result = fetchOK() ? await getFollowers(nodeId, status.page) : null;
+      if (!result) return;
+  
+      const merged = Array.from(
+        new Map([...status.followers, ...result.followers].map(u => [sid(u.id), u])).values()
+      );
+      g.updateObject(sid(nodeId), {
+        ...node.object,
+        followersStatus: { complete: result.complete, page: result.page, followers: merged },
+      } as User);
+      flush();
+    },
+    [flush]
+  );
+  
+  const fetchMoreFollowing = useCallback(
+    async (nodeId: string, status: FollowingStatus): Promise<void> => {
+      if (status.complete) return;
+      const g = graph.current;
+      const node = g.get(sid(nodeId));
+      if (!node?.object || node.object.type !== "User") return;
+  
+      const result = fetchOK() ? await getFollowing(nodeId, status.page) : null;
+      if (!result) return;
+  
+      const merged = Array.from(
+        new Map([...status.following, ...result.following].map(u => [sid(u.id), u])).values()
+      );
+      g.updateObject(sid(nodeId), {
+        ...node.object,
+        followingStatus: { complete: result.complete, page: result.page, following: merged },
+      } as User);
       flush();
     },
     [flush]
@@ -537,6 +598,8 @@ export function useGraphEngine(): GraphEngineAPI {
     onNodeDrag,
     fetchMoreConnections,
     fetchMoreChildren,
+    fetchMoreFollowers,
+    fetchMoreFollowing,
     setSelectedNode,
     selectNodeByDirection,
     getNearestNode,
