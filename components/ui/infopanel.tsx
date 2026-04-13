@@ -208,7 +208,7 @@ export default function InfoPanel({
                 {hasChildren && (
                   <NodeList list={current.childrenStatus.children} status={current.childrenStatus}
                     checkNodeVisible={checkNodeVisible} onToggle={toggleNode} onSelect={handleSelect}
-                    loadMore={() => childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? "channels" : isGroup(current) ? "groups" : "channels")}
+                    loadMore={() => childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? "channels" : isGroup(current) ? "groups" : "users")}
                     label="Children" nodeId={current.id} />
                 )}
                 {hasConnections && (
