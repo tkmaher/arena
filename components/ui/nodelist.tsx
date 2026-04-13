@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock } from "@/types/arena";
+import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock, Group } from "@/types/arena";
 
-type AnyNode = Block | Channel | User;
+type AnyNode = Block | Channel | User | Group;
 type AnyStatus = ConnectionStatus | ChildrenStatus | FollowersStatus | FollowingStatus;
 
 interface NodeListProps {

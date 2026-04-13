@@ -187,7 +187,7 @@ export default function InfoPanel({
                   
                 </div>}
                 <span className="info-id">
-                  <a href={(isLink(current) || isAttachment(current) || isEmbed(current))
+                  <a href={(isBlock(current) && (isLink(current) || isAttachment(current) || isEmbed(current)))
                     ? `https://are.na/block/${current.id}` : linkOut} target="_blank">
                     {current.id}
                   </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : isGroup(current) ? " Group" : " Block"}
