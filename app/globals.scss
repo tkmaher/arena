@@ -3,7 +3,7 @@
 :root {
   --fg:        #f9f9f9;
   --fg-dim:    #f9f9f956;
-  --fg-mid:    #f9f9f980;
+  --fg-mid:    #f9f9f9c3;
   --fg-muted:  #565656;
   --fg-sec:    #cfcfcf;
   --bg:        #1f1f1f;
@@ -56,11 +56,6 @@ body {
   .info-stats .tooltip {
     margin-right: auto !important;
     transform: none !important;
-  }
-
-  @media (max-width: 768px) {
-    .tooltip { max-width: 50vw; }
-    
   }
 }
 
@@ -504,7 +499,8 @@ input[type="checkbox"] {
   .info-body { padding: 0; }
   .info-toolbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .info-box { width: 100vw; }
-  .info-stats { display: none; .tooltip { width: calc(50vw + 0.2em); max-height: 17.8em } }
+  .info-stats { display: none; }
+  .tooltip { display: none; }
   .collections-grid { flex-direction: column; }
 
   .stat-label, .info-stats { width: 50vw; max-width: 50vw; }
