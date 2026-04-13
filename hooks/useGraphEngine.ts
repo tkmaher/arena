@@ -12,7 +12,7 @@ import {
 
 import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT, GRID_SIZE } from "@/lib/graph";
 import { getBlock, getChannel, getUser, getConnections, getChildren, getFollowing, getFollowers } from "@/scripts/getBlock";
-import type { Block, Channel, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, User } from "@/types/arena";
+import type { Block, Channel, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, Group, User } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
@@ -32,12 +32,12 @@ export interface GraphEngineAPI {
   onEdgesChange: OnEdgesChange<Edge>;
   addNode: (idOrPath: string, mousePos: MousePos) => Promise<string | null>;
   addRandom: (mousePos: MousePos) => Promise<string | null>;
-  toggleNode: (id: string | number, body: Block | Channel | User, linkedToId?: string) => Promise<void>;
+  toggleNode: (id: string | number, body: Block | Channel | User | Group, linkedToId?: string) => Promise<void>;
   removeNode: (id: string) => void;
   removeAllNodes: () => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
-  fetchMoreChildren: (id: string, status: ChildrenStatus, isUser: boolean) => Promise<void>;
-  fetchMoreFollowers: (id: string, status: FollowersStatus) => Promise<void>;
+  fetchMoreChildren: (id: string, status: ChildrenStatus, type: string) => Promise<void>;
+  fetchMoreFollowers: (id: string, status: FollowersStatus, type: string) => Promise<void>;
   fetchMoreFollowing: (id: string, status: FollowingStatus) => Promise<void>;
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
@@ -154,7 +154,7 @@ export function useGraphEngine(): GraphEngineAPI {
   const { screenToFlowPosition } = useReactFlow();
 
   const mountNode = useCallback(
-    (id: string, object: Block | Channel | User, mousePos?: MousePos) => {
+    (id: string, object: Block | Channel | User | Group, mousePos?: MousePos) => {
       const g = graph.current;
       if (g.isOnCanvas(id)) return false;
       
@@ -331,7 +331,7 @@ export function useGraphEngine(): GraphEngineAPI {
   const toggleNode = useCallback(
     async (
       id: string | number,
-      body: Block | Channel | User,
+      body: Block | Channel | User | Group,
       linkedToId?: string
     ): Promise<void> => {
       const g = graph.current;
@@ -479,7 +479,7 @@ export function useGraphEngine(): GraphEngineAPI {
   );
 
   const fetchMoreChildren = useCallback(
-    async (nodeId: string, status: ChildrenStatus, isUser: boolean): Promise<void> => {
+    async (nodeId: string, status: ChildrenStatus, type: string): Promise<void> => {
       if (status.complete) return;
 
       const g = graph.current;
@@ -487,7 +487,7 @@ export function useGraphEngine(): GraphEngineAPI {
       // Guard: stub or non-channel/user nodes can't be updated
       if (!node?.object || node.object.type === "Block") return;
 
-      const result = fetchOK() ? await getChildren(nodeId, status.page, isUser) : null;
+      const result = fetchOK() ? await getChildren(nodeId, status.page, type) : null;
       if (!result) return;
 
       const merged = Array.from(
@@ -503,7 +503,7 @@ export function useGraphEngine(): GraphEngineAPI {
           page: result.page,
           children: merged,
         },
-      } as Channel | User);
+      } as Channel | User | Group);
 
       for (const child of result.children) {
         g.link(sid(nodeId), sid(child.id));
@@ -515,13 +515,13 @@ export function useGraphEngine(): GraphEngineAPI {
   );
 
   const fetchMoreFollowers = useCallback(
-    async (nodeId: string, status: FollowersStatus): Promise<void> => {
+    async (nodeId: string, status: FollowersStatus, type: string): Promise<void> => {
       if (status.complete) return;
       const g = graph.current;
       const node = g.get(sid(nodeId));
-      if (!node?.object || node.object.type !== "User") return;
+      if (!node?.object || (node.object.type !== "User" && node.object.type !== "Group")) return;
   
-      const result = fetchOK() ? await getFollowers(nodeId, status.page) : null;
+      const result = fetchOK() ? await getFollowers(nodeId, status.page, type) : null;
       if (!result) return;
   
       const merged = Array.from(
@@ -530,7 +530,7 @@ export function useGraphEngine(): GraphEngineAPI {
       g.updateObject(sid(nodeId), {
         ...node.object,
         followersStatus: { complete: result.complete, page: result.page, followers: merged },
-      } as User);
+      } as User | Group);
       flush();
     },
     [flush]

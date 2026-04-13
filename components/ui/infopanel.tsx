@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
-import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock, User, FollowingStatus, FollowersStatus } from "@/types/arena";
+import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
 import Image from "next/image";
 import { HTMLDecode } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
@@ -10,10 +10,10 @@ import NodeList from "@/components/ui/nodelist";
 
 interface InfoPanelType {
   connectionFetcher: (id: string, s: ConnectionStatus, type: string) => Promise<void>;
-  childrenFetcher:   (id: string, s: ChildrenStatus, isUser: boolean) => Promise<void>;
-  followerFetcher:   (id: string, s: FollowersStatus) => Promise<void>;
+  childrenFetcher:   (id: string, s: ChildrenStatus, type: string) => Promise<void>;
+  followerFetcher:   (id: string, s: FollowersStatus, type: string) => Promise<void>;
   followingFetcher:   (id: string, s: FollowingStatus) => Promise<void>;
-  makeNodeVisible:   (id: string, body: Block | Channel | User) => void;
+  makeNodeVisible:   (id: string, body: Block | Channel | User | Group) => void;
   setSelected:       (id: string) => void;
   checkNodeVisible:  (id: string) => boolean;
   setImageOpen:      (val: boolean) => void;
@@ -21,11 +21,12 @@ interface InfoPanelType {
 }
 
 interface InfoPanelProps extends InfoPanelType {
-  current: Block | Channel | User | undefined;
+  current: Block | Channel | User | Group | undefined;
 }
 
-const isChannel    = (n: Block | Channel | User): n is Channel  => n.type === "Channel";
-const isUser       = (n: Block | Channel | User): n is User     => n.type === "User";
+const isChannel    = (n: Block | Channel | User | Group): n is Channel  => n.type === "Channel";
+const isUser       = (n: Block | Channel | User | Group): n is User     => n.type === "User";
+const isGroup      = (n: Block | Channel | User | Group): n is Group    => n.type === "Group";
 const hasImage     = (n: Block): n is ImageBlock            => "imageUrl" in n;
 const isText       = (n: Block): n is TextBlock             => n.type === "Text";
 const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
@@ -65,12 +66,12 @@ export default function InfoPanel({
 
   useEffect(() => {
     if (!current) return;
-    if (!isUser(current) && !current.connectionStatus.complete && current.connectionStatus.connections.length === 0)
+    if (!isUser(current) && !isGroup(current) && !current.connectionStatus.complete && current.connectionStatus.connections.length === 0)
       connectionFetcher(current.id, current.connectionStatus, isChannel(current) ? "channels" : "blocks");
-    if ((isChannel(current) || isUser(current)) && !current.childrenStatus.complete && current.childrenStatus.children.length === 0)
-      childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? false : true);
-    if (isUser(current) && !current.followersStatus.complete && current.followersStatus.followers.length === 0)
-      followerFetcher(current.id, current.followersStatus);
+    if ((isChannel(current) || isUser(current) || isGroup(current)) && !current.childrenStatus.complete && current.childrenStatus.children.length === 0)
+      childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? "channels" : isGroup(current) ? "groups" : "users");
+    if ((isUser(current) || isGroup(current)) && !current.followersStatus.complete && current.followersStatus.followers.length === 0)
+      followerFetcher(current.id, current.followersStatus, isGroup(current) ? "groups" : "users");
     if (isUser(current) && !current.followingStatus.complete && current.followingStatus.following.length === 0)
       followingFetcher(current.id, current.followingStatus);
   }, [current?.id]);
@@ -91,8 +92,8 @@ export default function InfoPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [current]);
 
-  const toggleNode   = (node: Block | Channel | User) => { makeNodeVisible(node.id, node); }
-  const handleSelect = (node: Block | Channel | User) =>
+  const toggleNode   = (node: Block | Channel | User | Group) => { makeNodeVisible(node.id, node); }
+  const handleSelect = (node: Block | Channel | User | Group) =>
     checkNodeVisible(node.id) ? setSelected(node.id) : makeNodeVisible(node.id, node);
 
   const animState = collapsed ? "collapsed" : "open";
@@ -101,13 +102,13 @@ export default function InfoPanel({
   const linkOut = current
     ? isChannel(current)
       ? `https://www.are.na/${current.owner.slug}/${current.id}`
-      : isUser(current) ? `https://www.are.na/${current.slug}`
+      : (isUser(current) || isGroup(current)) ? `https://www.are.na/${current.slug}`
       : ((isLink(current) || isAttachment(current) || isEmbed(current)) ? current.url : `https://www.are.na/block/${current.id}`)
     : "#";
 
-  const hasConnections = !!current && !isUser(current) && (current.connectionStatus.connections.length > 0 || current.connectionStatus.complete);
-  const hasChildren =   !!current && (isChannel(current) || isUser(current)) && (current.childrenStatus.children.length > 0 || current.childrenStatus.complete);
-  const hasFollowers   = !!current && isUser(current) && (current.followersStatus.followers.length > 0 || current.followersStatus.complete);
+  const hasConnections = !!current && !isUser(current) && !isGroup(current) && (current.connectionStatus.connections.length > 0 || current.connectionStatus.complete);
+  const hasChildren =   !!current && (isChannel(current) || isUser(current) || isGroup(current)) && (current.childrenStatus.children.length > 0 || current.childrenStatus.complete);
+  const hasFollowers   = !!current && (isUser(current) || isGroup(current)) && (current.followersStatus.followers.length > 0 || current.followersStatus.complete);
   const hasFollowing   = !!current && isUser(current) && (current.followingStatus.following.length > 0 || current.followingStatus.complete);
 
   return (
@@ -134,7 +135,7 @@ export default function InfoPanel({
               <motion.div key={current.id} className="info-media-wrap"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: imageLoaded ? 1 : 0, y: imageLoaded ? 0 : -8 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3 }} onClick={() => handleViewerOpen(true)}
               >
                 <Image src={current.thumbnailUrl!} alt={current.title} fill
                   onLoad={() => setImageLoaded(true)} className="info-media" />
@@ -169,7 +170,7 @@ export default function InfoPanel({
                 <a className="info-title" href={linkOut} target="_blank">
                   {current.title ?? (isChannel(current) ? current.id : "")} ↗
                 </a>
-                {!isUser(current) && <div className="info-sub">
+                {!isUser(current) && !isGroup(current) && <div className="info-sub">
                   <div className="username" onClick={() => handleSelect(current.owner)}>{current.owner.title} </div>
                   <input
                     type="checkbox"
@@ -183,7 +184,7 @@ export default function InfoPanel({
                   <a href={(isLink(current) || isAttachment(current) || isEmbed(current))
                     ? `https://are.na/block/${current.id}` : linkOut} target="_blank">
                     {current.id}
-                  </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : " Block"}
+                  </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : isGroup(current) ? " Group" : " Block"}
                 </span>
                 {current.description && <DescriptionRef html={current.description} />}
               </>
@@ -207,7 +208,7 @@ export default function InfoPanel({
                 {hasChildren && (
                   <NodeList list={current.childrenStatus.children} status={current.childrenStatus}
                     checkNodeVisible={checkNodeVisible} onToggle={toggleNode} onSelect={handleSelect}
-                    loadMore={() => childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? false : true)}
+                    loadMore={() => childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? "channels" : isGroup(current) ? "groups" : "channels")}
                     label="Children" nodeId={current.id} />
                 )}
                 {hasConnections && (
@@ -228,9 +229,9 @@ export default function InfoPanel({
             >
               <div className="collections-grid">
                 {hasFollowers && (
-                  <NodeList list={(current as User).followersStatus.followers} status={(current as User).followersStatus}
+                  <NodeList list={(current as User | Group).followersStatus.followers} status={(current as User).followersStatus}
                     checkNodeVisible={checkNodeVisible} onToggle={toggleNode} onSelect={handleSelect}
-                    loadMore={() => followerFetcher(current.id, (current as User).followersStatus)}
+                    loadMore={() => followerFetcher(current.id, (current as User).followersStatus, isGroup(current) ? "groups" : "users")}
                     label="Followers" nodeId={current.id} />
                 )}
                 {hasFollowing && (
@@ -252,7 +253,7 @@ export default function InfoPanel({
           setSelected("nearest");
         }}
           className="node-toolbar-button react-flow__controls popup-menu menu-title">
-          <div className="icon-left">{current && `Remove ${isChannel(current) ? "channel" : `${isUser(current) ? "user" : "block"}`}`}</div>
+          <div className="icon-left">{current && `Remove ${isChannel(current) ? "channel" : `${isUser(current) ? "user" : `${isGroup(current) ? "group" : "block"}`}`}`}</div>
           <div className="icon">✕</div>
         </button>
         <button onClick={() => setCollapsed(c => !c)}

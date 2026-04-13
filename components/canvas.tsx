@@ -23,7 +23,7 @@ import FloatingConnectionLine from "@/components/flow/FloatingConnectionLine";
 import RadialMenu from "@/components/ui/radialmenu";
 import InfoPanel from "@/components/ui/infopanel";
 import type { CanvasNode } from "@/types/reactflow";
-import type { Block, Channel, User } from "@/types/arena";
+import type { Block, Channel, Group, User } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
 
@@ -57,7 +57,7 @@ function CanvasInner() {
 
   // Pass selectedId so the engine can wire the edge on toggle-on
   const makeNodeVisible = useCallback(
-    (id: string, body: Block | Channel | User) => {
+    (id: string, body: Block | Channel | User | Group) => {
       engine.toggleNode(id, body, selectedId ?? undefined);
     },
     [engine, selectedId]

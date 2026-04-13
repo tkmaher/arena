@@ -13,7 +13,7 @@ export interface Block {
 export interface Channel {
     id: string;
     date: string;
-    owner: User;
+    owner: User | Group;
     title?: string;
     description?: string;
 
@@ -48,6 +48,7 @@ export interface User {
 export interface Group {
     id: string;
     title: string;
+    slug: string;
     description?: string;
     thumbnailUrl?: string;
     imageUrl?: string;

@@ -1,5 +1,5 @@
 import { Edge, MarkerType } from "@xyflow/react";
-import type { Block, Channel, User } from "@/types/arena";
+import type { Block, Channel, Group, User } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export class PositionAllocator {
 // ─── Graph ────────────────────────────────────────────────────────────────────
 
 export interface GraphNodeData {
-    object: Block | Channel | User;
+    object: Block | Channel | User | Group;
     gridPos: { x: number; y: number };
     /** Set on first drag; overrides gridPos in toReactFlowNodes. */
     manualPos?: { x: number; y: number };
@@ -196,7 +196,7 @@ export class Graph {
   ): GraphNodeData {
     if (!this.nodes.has(id)) {
       this.nodes.set(id, {
-        object: data.object as (Block | Channel | User),
+        object: data.object as (Block | Channel | User | Group),
         gridPos: data.gridPos ?? { x: 0, y: 0 },
         onCanvas: data.onCanvas ?? false,
         children: new Set(),
@@ -290,7 +290,7 @@ export class Graph {
    * Update a node's `object` field in-place (e.g. after fetching paginated
    * connections/children).  Returns false if the node does not exist.
    */
-  updateObject(id: string, object: Block | Channel | User): boolean {
+  updateObject(id: string, object: Block | Channel | User | Group): boolean {
     const n = this.nodes.get(id);
     if (!n) return false;
     n.object = object;
