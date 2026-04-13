@@ -19,7 +19,7 @@ export const staticMetadata: Metadata = {
     },
     openGraph: {
       locale: "en_US",
-      siteName: "arena flow",
+      siteName: "arena flow | A directed graph of are.na",
       url: "https://arena-flow.org/",
       type: "website",
       images: [
@@ -33,7 +33,7 @@ export const staticMetadata: Metadata = {
     },
     twitter: {
       card: "summary_large_image",
-      title: "arena flow",
+      title: "arena flow | A directed graph of are.na",
       
       images: [
         {
