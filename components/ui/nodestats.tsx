@@ -6,19 +6,19 @@ import { Panel } from "@xyflow/react";
 import { useGraphEngine } from "@/hooks/useGraphEngine";
 import NodeList from "@/components/ui/nodelist";
 import { useEffect, useRef } from "react";
-import { Block, Channel } from "@/types/arena";
+import { Block, Channel, Group, User } from "@/types/arena";
 
 interface NodeStatsProps {
     checkNodeVisible: (id: string) => boolean;
-    makeNodeVisible: (id: string, node: Block | Channel) => void;
+    makeNodeVisible: (id: string, node: Block | Channel | User | Group) => void;
     setSelected: (id: string) => void;
     engine: ReturnType<typeof useGraphEngine>;
 }
 
 export default function NodeStats({checkNodeVisible, makeNodeVisible, setSelected, engine}: NodeStatsProps) {
-    const objects = useRef<(Block | Channel)[]>(engine.nodes.map(n => n.data.object));
-    const toggleNode    = (node: Block | Channel) => makeNodeVisible(node.id, node);
-    const handleSelect  = (node: Block | Channel) =>
+    const objects = useRef<(Block | Channel | User | Group)[]>(engine.nodes.map(n => n.data.object));
+    const toggleNode    = (node: Block | Channel | User | Group) => makeNodeVisible(node.id, node);
+    const handleSelect  = (node: Block | Channel | User | Group) =>
         checkNodeVisible(node.id) ? setSelected(node.id) : makeNodeVisible(node.id, node);
     const [isOpen, setOpen] = useState(false);
 

@@ -3,6 +3,7 @@
 :root {
   --fg:        #f9f9f9;
   --fg-dim:    #f9f9f956;
+  --fg-mid:    #f9f9f980;
   --fg-muted:  #565656;
   --fg-sec:    #cfcfcf;
   --bg:        #1f1f1f;
@@ -36,6 +37,31 @@ body {
 .react-flow__controls-button {
   border-bottom: 1px solid rgba(255,255,255,.06) !important;
   background: none !important;
+}
+
+@supports (-webkit-hyphens: none) {
+  .react-flow__controls,
+  .node-parent {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background-color: var(--fg-mid) !important;
+  }
+
+  /* Compensate: tooltip right is now viewport-relative, offset by panel width */
+  .tooltip {
+    max-width: 15vw;
+    bottom: 1em !important;
+  }
+
+  .info-stats .tooltip {
+    margin-right: auto !important;
+    transform: none !important;
+  }
+
+  @media (max-width: 768px) {
+    .tooltip { max-width: 50vw; }
+    
+  }
 }
 
 /* ─── Node ────────────────────────────────────────── */
@@ -359,12 +385,11 @@ body {
   align-items: center; gap: 0.2em;
   img {
     height: 1.2em; width: auto; 
-    opacity: 0.5;
   }
   .linkout {
     justify-self: flex-end;
-    flex-grow: 1;
     text-align: right;
+    margin-left: auto;
   }
 }
 .info-sub      { 
@@ -479,7 +504,7 @@ input[type="checkbox"] {
   .info-body { padding: 0; }
   .info-toolbar { padding-bottom: env(safe-area-inset-bottom, 0px); }
   .info-box { width: 100vw; }
-  .info-stats { display: none; .tooltip { width: calc(50vw + 0.2em); } }
+  .info-stats { display: none; .tooltip { width: calc(50vw + 0.2em); max-height: 17.8em } }
   .collections-grid { flex-direction: column; }
 
   .stat-label, .info-stats { width: 50vw; max-width: 50vw; }
