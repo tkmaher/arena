@@ -27,6 +27,7 @@ interface InfoPanelProps extends InfoPanelType {
 const isChannel    = (n: Block | Channel | User | Group): n is Channel  => n.type === "Channel";
 const isUser       = (n: Block | Channel | User | Group): n is User     => n.type === "User";
 const isGroup      = (n: Block | Channel | User | Group): n is Group    => n.type === "Group";
+const isBlock      = (n: Block | Channel | User | Group): n is Block    => (!isChannel(n) && !isUser(n) && !isGroup(n));
 const hasImage     = (n: Block): n is ImageBlock            => "imageUrl" in n;
 const isText       = (n: Block): n is TextBlock             => n.type === "Text";
 const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
@@ -167,9 +168,14 @@ export default function InfoPanel({
           <div className="info-section react-flow__controls info-meta">
             {current ? (
               <>
-                <a className="info-title" href={linkOut} target="_blank">
-                  {current.title ?? (isChannel(current) ? current.id : "")} ↗
-                </a>
+                <div className="info-title node-title" >
+                  {isUser(current) && <img src="user.svg"  alt="User"/>}
+                  {isGroup(current) && <img src="group.svg" alt="Group"/>}
+                  {isChannel(current) && <img src="channel.svg" alt="Channel"/>}
+                  {isBlock(current) && <img src="block.svg" alt="Block"/>}
+                  <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
+                  <a href={linkOut} target="_blank" className="linkout">↗</a>
+                </div>
                 {!isUser(current) && !isGroup(current) && <div className="info-sub">
                   <div className="username" onClick={() => handleSelect(current.owner)}>{current.owner.title} </div>
                   <input

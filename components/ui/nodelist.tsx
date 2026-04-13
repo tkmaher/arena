@@ -85,7 +85,7 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
                       <div className="tooltip-img" style={{ backgroundImage: `url(${(node as ImageBlock).thumbnailUrl})` }} />
                     }
                     <div className="list-container">
-                      <div className="icon-left">{node.title ?? node.id}</div>
+                      <div className="icon-left ellipse">{node.title ?? node.id}</div>
                       <div className="icon">{checkNodeVisible(node.id) ? "⇢" : "+"}</div>
                     </div>
                   </div>

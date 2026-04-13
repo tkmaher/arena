@@ -44,7 +44,11 @@ export default function BlockProp({ id, data, selected }: NodeProps) {
       >
         <div className="node-body">
           {"childrenStatus" in data.object ? (
-            <>{data.object.title}</>
+              <div className="node-title"><div>{data.object.title}</div>
+                {data.object.type == "User" && <img src="user.svg" alt="User"/>}
+                {data.object.type == "Group" && <img src="group.svg"  alt="Group"/>}
+                {data.object.type == "Channel" && <img src="channel.svg"  alt="Channel"/>}
+              </div>
           ) : data.object.thumbnailUrl ? (
             <Image
               src={data.object.thumbnailUrl} 

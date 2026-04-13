@@ -60,6 +60,17 @@ body {
   position: relative;
   display: flex; align-items: center; justify-content: center;
   text-align: justify;
+
+  .node-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    img {
+      height: 1.2em; width: auto; 
+      opacity: 0.5;
+    }
+
+  }
 }
 
 .node-toolbar-button {
@@ -182,10 +193,12 @@ body {
   .list-container {
     display: flex;
     padding: 0.2em 0.5em;
-    div { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
     font-size: 11px !important;
   }
 }
+
+.ellipse { text-overflow: ellipsis; overflow: hidden; white-space: nowrap; }
+
 
 .icon-left { flex-grow: 1; text-align: left; }
 
@@ -337,7 +350,23 @@ body {
   display: flex; flex-direction: column; gap: 4px;
 }
 
-.info-title    { font-size: 16px; font-weight: 400; line-height: 1.5; word-wrap: break-word; }
+.info-title    { 
+  font-size: 16px; 
+  font-weight: 400; 
+  line-height: 1.5; 
+  word-wrap: break-word; 
+  display: flex;
+  align-items: center; gap: 0.2em;
+  img {
+    height: 1.2em; width: auto; 
+    opacity: 0.5;
+  }
+  .linkout {
+    justify-self: flex-end;
+    flex-grow: 1;
+    text-align: right;
+  }
+}
 .info-sub      { 
   font-size: 12px; 
   font-weight: 300; 
