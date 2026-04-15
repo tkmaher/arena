@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { generateChallenge, generateVerifier } from "@/scripts/utility";
 
 export default function AuthResponseClient({
   code,
@@ -44,9 +43,9 @@ export default function AuthResponseClient({
           //setTimeout(() => window.close(), 200);
           return;
         }
+        
 
-        const verifier = generateVerifier();
-        const challenge = await generateChallenge(verifier);
+        const verifier = sessionStorage.getItem("arena_pkce_verifier");
 
         console.log("Exchanging code for token with verifier", verifier);
 
