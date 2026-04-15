@@ -20,7 +20,8 @@ export default function AuthResponseClient({
           return;
         }
 
-        const origin = window.location.origin;
+        //const origin = window.location.origin;
+        const origin = "*"; // FOR DEBUG TODO CHANGE
 
         // Error case (user denied)
         if (error) {
@@ -54,7 +55,7 @@ export default function AuthResponseClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             grant_type: "client_credentials",
-            client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID,
+            client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA",
             code: code,
             redirect_uri: REDIRECT_URI,
             code_verifier: verifier,

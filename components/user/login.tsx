@@ -10,7 +10,7 @@ export default function LoginPage() {
   useEffect(() => {
     function handler(event: MessageEvent) {
       console.log("MESSAGE RECEIVED:", event.data, event.origin);
-      console.log(event.data.toString());
+      console.log(event.data.access_token);
   
       if (event.origin !== window.location.origin) return;
       if (event.data?.type !== "ARENA_AUTH_RESULT") return;
@@ -25,9 +25,9 @@ export default function LoginPage() {
   }, []);
 
   async function login() {
-    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
-        console.error("Missing client ID");
-    }
+    // if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
+    //     console.error("Missing client ID");
+    // }
 
     const verifier = generateVerifier();
     const challenge = await generateChallenge(verifier);
@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     const url =
       "https://www.are.na/oauth/authorize" +
-      `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
+      `?client_id=iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA` +
       `&redirect_uri=${REDIRECT_URI}` +
       `&response_type=code` +
       `&scope=read` +
