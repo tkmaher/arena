@@ -34,6 +34,8 @@ export default function LoginPage() {
     const verifier = generateVerifier();
     const challenge = await generateChallenge(verifier);
 
+    sessionStorage.setItem("arena_pkce_verifier", verifier);
+
     const url =
       "https://www.are.na/oauth/authorize" +
       `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
