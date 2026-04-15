@@ -102,6 +102,7 @@ export async function getChildren(
     const url = new URL(`https://api.are.na/v3/${type}/${id}/contents`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
+    if (type === "users" || type === "groups") url.searchParams.set("type", "channels");
 
     try {
         const data = await arenaFetch(url);
