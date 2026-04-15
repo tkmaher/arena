@@ -3,18 +3,19 @@
 import AuthResponseClient from "@/components/user/authresponseclient";
 
 export default function Page({
-  searchParams,
+    searchParams,
 }: {
-  searchParams: {
-    code?: string;
-    error?: string;
-  };
+    searchParams: {
+        code?: string;
+        error?: string;
+    };
 }) {
-  return (
-    <AuthResponseClient
-      code={searchParams.code}
-      error={searchParams.error}
-    />
-  );
+    console.log(searchParams);
+    return (
+        <AuthResponseClient
+            code={searchParams.code}
+            error={searchParams.error}
+        />
+    );
 }
 

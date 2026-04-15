@@ -9,10 +9,11 @@ export default function LoginPage() {
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
-      if (event.origin !== window.location.origin) return;
-      if (event.data?.type !== "ARENA_AUTH_RESULT") return;
+        console.log("received:", event.data);
+        if (event.origin !== window.location.origin) return;
+        if (event.data?.type !== "ARENA_AUTH_RESULT") return;
 
-      if (event.data.success) setConnected(true);
+        if (event.data.success) setConnected(true);
     }
 
     window.addEventListener("message", handleMessage);
