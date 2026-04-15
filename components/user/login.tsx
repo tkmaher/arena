@@ -7,7 +7,9 @@ import { useGraphActions } from "@/context/graphcontext";
 export default function LoginPage() {
   const { user, setUser } = useGraphActions();
 
-  const REDIRECT_URI = `${window.location.origin}/auth-response`;
+  const REDIRECT_URI = process.env.NODE_ENV === "development"
+  ? "http://localhost:3000/auth-response"
+  : "https://arena-flow.org/auth-response";
 
   useEffect(() => {
     function handler(event: MessageEvent) {

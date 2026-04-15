@@ -48,14 +48,16 @@ export default function AuthResponseClient({
 
         console.log("Exchanging code for token with verifier", verifier);
 
-        const REDIRECT_URI = `${window.location.origin}/auth-response`;
-
+        const REDIRECT_URI = process.env.NODE_ENV === "development"
+        ? "http://localhost:3000/auth-response"
+        : "https://arena-flow.org/auth-response";
+                
         const res = await fetch("https://api.are.na/v3/oauth/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             grant_type: "authorization_code",
-            client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA", // TODO: change
+            client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID, // TODO: change
             code: code,
             redirect_uri: REDIRECT_URI,
             code_verifier: verifier,
