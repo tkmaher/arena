@@ -47,9 +47,12 @@ function CanvasInner() {
   const [uploader, setUploader] = useState(false);
 
   const [authUser, setAuthUser] = useState<User | null>(null);
-  const [authToken, setAuthToken] = useState<string | null>(null);
 
-  const userHandler = useCallback(async (token: string) => {
+  const userHandler = useCallback(async (token: string | null) => {
+    if (!token) {
+      setAuthUser(null);
+      return;
+    }
     // Store token as HttpOnly cookie via edge function
     await fetch("/api/set-token", {
       method: "POST",
@@ -185,7 +188,6 @@ function CanvasInner() {
         selectedOnGraph: selectedId,
         setUser: userHandler,
         user: authUser,
-        token: authToken
       }}
       
     >

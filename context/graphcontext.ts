@@ -6,9 +6,8 @@ import { createContext, useContext } from "react";
 interface GraphActions {
     removeNode: (id: string) => void;
     selectedOnGraph: null | string;
-    setUser: (token: string) => void;
+    setUser: (token: string | null) => void;
     user: null | User;
-    token: string | null;
     
 }
   
@@ -16,7 +15,6 @@ export const GraphContext = createContext<GraphActions>({
     removeNode: () => {}, 
     selectedOnGraph: null,
     setUser: () => {},
-    token: null,
     user: null
 });
 

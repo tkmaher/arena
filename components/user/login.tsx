@@ -51,13 +51,20 @@ export default function LoginPage({checkNodeVisible, onToggle, onSelect}: LoginP
             checked={checkNodeVisible(user.id)}
             onChange={() => onToggle(user)}
           />
+          <a onClick={async () => {
+              await fetch("/api/logout", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+              });
+              setUser(null);
+          }}>Log out</a>
         </div>
       </div>
     )
   }
 
   return (
-    <button onClick={login}>
+    <button onClick={() => (user && login())} style={{padding: "0.4em", textAlign: "left"}}>
       {user ? <UserPage/> : "Login with Are.na"}
     </button>
   );
