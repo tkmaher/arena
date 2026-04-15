@@ -6,8 +6,8 @@ export default function AuthResponseClient({
   code,
   error,
 }: {
-  code?: string;
-  error?: string;
+  code: string | null;
+  error: string | null;
 }) {
   useEffect(() => {
     async function run() {

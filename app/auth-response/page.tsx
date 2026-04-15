@@ -1,17 +1,23 @@
+
+'use client'
+import { useSearchParams } from 'next/navigation'
+import { Suspense } from 'react'
 import AuthResponseClient from "@/components/user/authresponseclient";
 
-export default function Page({
-  searchParams,
-}: {
-  searchParams: {
-    code?: string;
-    error?: string;
-  };
-}) {
+function SearchComponent() {
+  const searchParams = useSearchParams()
   return (
     <AuthResponseClient
-      code={searchParams.code}
-      error={searchParams.error}
+        code={searchParams.get('code')}
+        error={searchParams.get('error')}
     />
-  );
+  )
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+        <SearchComponent/>
+    </Suspense>
+  )
 }
