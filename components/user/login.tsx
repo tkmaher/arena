@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 export default function LoginPage() {
   const [connected, setConnected] = useState(false);
 
-  const REDIRECT_URI = "https://yourdomain.com/auth-response";
+  const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
