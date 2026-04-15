@@ -1,8 +1,11 @@
-export default async function Page({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
-    const { code, error } = await searchParams;
-    console.log("Received auth code:", code);
-    
-    if (error) return (
+"use client";
+import { useParams } from 'next/navigation';
+
+export default async function Page() {
+    const params = useParams<{ code?: string, error?: string }>();
+    console.log("Received auth code:", params.code);
+
+    if (params.error) return (
         <div className="confirm">
             <h1 className="">Authorization denied. Redirecting...</h1>
         </div>
