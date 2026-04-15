@@ -10,59 +10,97 @@ export default function AuthResponseClient({
   error?: string;
 }) {
   useEffect(() => {
-    async function finish() {
-      if (!window.opener) return;
+    async function run() {
+      try {
+        console.log("AUTH RESPONSE LOADED", { code, error });
 
-      const origin = window.location.origin;
+        // MUST be popup
+        if (!window.opener) {
+          console.log("No window.opener — not a popup");
+          return;
+        }
 
-      if (error) {
-        window.opener.postMessage(
-          { type: "ARENA_AUTH_RESULT", success: false, error },
-          origin
-        );
-        window.close();
-        return;
-      }
+        const origin = window.location.origin;
 
-      if (!code) return;
+        // Error case (user denied)
+        if (error) {
+          window.opener.postMessage(
+            { type: "ARENA_AUTH_RESULT", success: false, error },
+            origin
+          );
 
-      const verifier = sessionStorage.getItem("arena_pkce_verifier");
+          setTimeout(() => window.close(), 200);
+          return;
+        }
 
-      const res = await fetch("https://dev.are.na/oauth/token", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          grant_type: "authorization_code",
-          client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID,
-          code,
-          redirect_uri: process.env.NEXT_PUBLIC_ARENA_REDIRECT_URI,
-          code_verifier: verifier,
-        }),
-      });
+        if (!code) {
+          window.opener.postMessage(
+            { type: "ARENA_AUTH_RESULT", success: false },
+            origin
+          );
 
-      const data = await res.json();
+          setTimeout(() => window.close(), 200);
+          return;
+        }
 
-      if (res.ok) {
+        const verifier = sessionStorage.getItem("arena_pkce_verifier");
+
+        console.log("Exchanging code for token...");
+
+        const res = await fetch("https://dev.are.na/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID,
+            code,
+            redirect_uri: process.env.NEXT_PUBLIC_ARENA_REDIRECT_URI,
+            code_verifier: verifier,
+          }),
+        });
+
+        const data = await res.json();
+
+        console.log("TOKEN RESPONSE", data);
+
+        if (!res.ok) {
+          window.opener.postMessage(
+            { type: "ARENA_AUTH_RESULT", success: false },
+            origin
+          );
+
+          setTimeout(() => window.close(), 200);
+          return;
+        }
+
         localStorage.setItem("arena_token", data.access_token);
 
         window.opener.postMessage(
           { type: "ARENA_AUTH_RESULT", success: true },
           origin
         );
-      } else {
-        window.opener.postMessage(
-          { type: "ARENA_AUTH_RESULT", success: false },
-          origin
-        );
-      }
 
-      window.close();
+        console.log("Posted message to opener");
+
+        setTimeout(() => {
+          window.close();
+        }, 200);
+      } catch (err) {
+        console.error("AUTH FLOW ERROR", err);
+
+        if (window.opener) {
+          window.opener.postMessage(
+            { type: "ARENA_AUTH_RESULT", success: false },
+            window.location.origin
+          );
+        }
+
+        setTimeout(() => window.close(), 200);
+      }
     }
 
-    finish();
+    run();
   }, [code, error]);
 
-  return <p className="confirm">Signing in...</p>;
+  return <p>Completing login...</p>;
 }

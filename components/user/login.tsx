@@ -8,19 +8,26 @@ export default function LoginPage() {
   const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
   useEffect(() => {
-    function handleMessage(event: MessageEvent) {
-        console.log("received:", event.data);
-        if (event.origin !== window.location.origin) return;
-        if (event.data?.type !== "ARENA_AUTH_RESULT") return;
-
-        if (event.data.success) setConnected(true);
+    function handler(event: MessageEvent) {
+      console.log("MESSAGE RECEIVED:", event.data, event.origin);
+  
+      if (event.origin !== window.location.origin) return;
+      if (event.data?.type !== "ARENA_AUTH_RESULT") return;
+  
+      if (event.data.success) {
+        setConnected(true);
+      }
     }
-
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
+  
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
   }, []);
 
   async function login() {
+    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
+        console.error("Missing client ID");
+    }
+
     const verifier = generateVerifier();
     const challenge = await generateChallenge(verifier);
 
