@@ -64,5 +64,5 @@ export default function AuthResponseClient({
     finish();
   }, [code, error]);
 
-  return <p>Signing in...</p>;
+  return <p className="confirm">Signing in...</p>;
 }

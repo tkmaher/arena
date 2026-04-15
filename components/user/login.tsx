@@ -5,6 +5,8 @@ import { useEffect, useState } from "react";
 export default function LoginPage() {
   const [connected, setConnected] = useState(false);
 
+  const REDIRECT_URI = "https://yourdomain.com/auth-response";
+
   useEffect(() => {
     function handleMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
@@ -26,13 +28,13 @@ export default function LoginPage() {
     const url =
       "https://www.are.na/oauth/authorize" +
       `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
-      `&redirect_uri=${process.env.NEXT_PUBLIC_ARENA_REDIRECT_URI}` +
+      `&redirect_uri=${REDIRECT_URI}` +
       `&response_type=code` +
       `&scope=read` +
       `&code_challenge=${challenge}` +
       `&code_challenge_method=S256`;
 
-    window.open(url, "arena_login", "width=600,height=700");
+    window.open(url, "_blank", "width=600,height=700");
   }
 
   return (
