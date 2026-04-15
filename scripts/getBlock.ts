@@ -34,7 +34,7 @@ const PROXY_BASE = "/api/arena";
 
 async function arenaFetch(url: string | URL): Promise<any> {
     const original = new URL(url.toString());
-    const proxyUrl = original.href.replace(ARENA_BASE, ARENA_BASE);
+    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
 
     let response: Response;
     try {
