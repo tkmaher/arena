@@ -22,6 +22,7 @@ export default function AuthResponseClient({
         }
 
         const origin = window.location.origin;
+        console.log("origin;", origin);
 
         // Error case (user denied)
         if (error) {
@@ -30,7 +31,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -40,7 +41,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -66,7 +67,7 @@ export default function AuthResponseClient({
 
         console.log("TOKEN RESPONSE", data);
 
-        alert(data);
+        console.log(data.toString());
 
         if (!res.ok) {
           window.opener.postMessage(
@@ -74,7 +75,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -88,7 +89,7 @@ export default function AuthResponseClient({
         console.log("Posted message to opener");
 
         setTimeout(() => {
-          window.close();
+          //window.close();
         }, 200);
       } catch (err) {
         console.error("AUTH FLOW ERROR", err);
@@ -100,7 +101,7 @@ export default function AuthResponseClient({
           );
         }
 
-        setTimeout(() => window.close(), 200);
+        //setTimeout(() => window.close(), 200);
       }
     }
 
