@@ -13,7 +13,6 @@ export default function AuthResponseClient({
     async function run() {
       try {
         console.log("AUTH RESPONSE LOADED", { code, error });
-        alert(`${code}, ${error}`);
 
         // MUST be popup
         if (!window.opener) {
@@ -22,7 +21,6 @@ export default function AuthResponseClient({
         }
 
         const origin = window.location.origin;
-        console.log("origin;", origin);
 
         // Error case (user denied)
         if (error) {
@@ -31,7 +29,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -41,7 +39,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -75,7 +73,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -89,7 +87,7 @@ export default function AuthResponseClient({
         console.log("Posted message to opener");
 
         setTimeout(() => {
-          //window.close();
+          window.close();
         }, 200);
       } catch (err) {
         console.error("AUTH FLOW ERROR", err);
@@ -101,7 +99,7 @@ export default function AuthResponseClient({
           );
         }
 
-        //setTimeout(() => window.close(), 200);
+        setTimeout(() => window.close(), 200);
       }
     }
 
