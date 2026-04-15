@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { generateChallenge, generateVerifier } from "@/scripts/utility";
 
 export default function AuthResponseClient({
   code,
@@ -44,9 +45,10 @@ export default function AuthResponseClient({
           return;
         }
 
-        const verifier = sessionStorage.getItem("arena_pkce_verifier");
+        const verifier = generateVerifier();
+        const challenge = await generateChallenge(verifier);
 
-        console.log("Exchanging code for token...");
+        console.log("Exchanging code for token with verifier", verifier);
 
         const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
