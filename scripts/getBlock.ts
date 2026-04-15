@@ -396,3 +396,19 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
         followersStatus: followers,
     };
 }
+
+export async function setUser(token: string) {
+    const url = new URL(`https://api.are.na/v3/me`);
+    try {
+        const data = await arenaFetch(url);
+        const user = parseUser(data, true);
+        return user;
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 401) {
+            console.warn(`[setUser] Token "${token}" invalid.`);
+        } else {
+            console.error(`[setUser] Unexpected error for token "${token}":`, error);
+        }
+        return null;
+    }
+}

@@ -11,7 +11,7 @@ interface NodeProps {
   selected: boolean;
 }
 
-export default function BlockProp({ id, data, selected }: NodeProps) {
+export default function BlockProp({ id, data }: NodeProps) {
   const { removeNode, selectedOnGraph } = useGraphActions();
   const [imageLoaded, setImageLoaded] = useState(!data.object.thumbnailUrl);
 

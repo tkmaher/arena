@@ -54,7 +54,7 @@ export default function AuthResponseClient({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            grant_type: "client_credentials",
+            grant_type: "authorization_code",
             client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA",
             code: code,
             redirect_uri: REDIRECT_URI,

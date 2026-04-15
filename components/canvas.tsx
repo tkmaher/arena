@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -26,6 +26,7 @@ import type { CanvasNode } from "@/types/reactflow";
 import type { Block, Channel, Group, User } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
+import { setUser } from "@/scripts/getBlock";
 
 import { motion } from "framer-motion";
 import Upload from "./ui/upload";
@@ -45,8 +46,18 @@ function CanvasInner() {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [uploader, setUploader] = useState(false);
 
+  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  const userHandler = useCallback(async (token: string) => {
+    const res = await setUser(token);
+    if (res) {
+      setAuthToken(token);
+      setAuthUser(res);
+    }
+  }, []);
+
   const selectedNode = useMemo(
-    
     () => engine.nodes.find(n => n.id === selectedId),
     [engine.nodes, selectedId]
   );
@@ -157,6 +168,9 @@ function CanvasInner() {
       value={{ 
         removeNode: engine.removeNode,
         selectedOnGraph: selectedId,
+        setUser: userHandler,
+        user: authUser,
+        token: authToken
       }}
       
     >
