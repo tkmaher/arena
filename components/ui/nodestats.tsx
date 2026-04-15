@@ -39,8 +39,11 @@ export default function NodeStats({checkNodeVisible, makeNodeVisible, setSelecte
     return (
         <Panel position="top-right" style={{zIndex: 0}}>
             <div className="react-flow__controls">
-              
-                <Login/>  
+                <Login
+                    checkNodeVisible={checkNodeVisible}
+                    onToggle={toggleNode}
+                    onSelect={handleSelect}
+                />  
             </div>
             <div className="react-flow__controls popup-menu node-toolbar-button stat-label">
                 Nodes: <b>{engine.nodes.length}</b> | Edges: <b>{engine.edges.length}</b>

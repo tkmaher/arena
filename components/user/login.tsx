@@ -1,13 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
-import { generateChallenge, generateVerifier } from "@/scripts/utility";
+import { login } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
+import { Block, Channel, User, Group } from "@/types/arena";
 
-export default function LoginPage() {
+interface LoginProps {
+  checkNodeVisible: (id: string) => boolean;
+  onToggle:         (node: Block | Channel | User | Group) => void;
+  onSelect:         (node: Block | Channel | User | Group) => void;
+}
+
+export default function LoginPage({checkNodeVisible, onToggle, onSelect}: LoginProps) {
   const { user, setUser } = useGraphActions();
 
-  const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
   useEffect(() => {
     function handler(event: MessageEvent) {
@@ -26,31 +32,33 @@ export default function LoginPage() {
     return () => window.removeEventListener("message", handler);
   }, []);
 
-  async function login() {
-    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
-        console.error("Missing client ID");
-    }
+  
 
-    const verifier = generateVerifier();
-    const challenge = await generateChallenge(verifier);
+  function UserPage() {
+    if (!user) return;
 
-    sessionStorage.setItem("arena_pkce_verifier", verifier);
+    return (
+      <div>
+        <div
+          className="checklist"
+        >
+          <a onClick={() => onSelect(user)}>
+            {user.title ?? user.id}
+          </a>
 
-    const url =
-      "https://www.are.na/oauth/authorize" +
-      `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
-      `&redirect_uri=${REDIRECT_URI}` +
-      `&response_type=code` +
-      `&scope=write` +
-      `&code_challenge=${challenge}` +
-      `&code_challenge_method=S256`;
-
-    window.open(url, "_blank", "width=600,height=700");
+          <input
+            type="checkbox"
+            checked={checkNodeVisible(user.id)}
+            onChange={() => onToggle(user)}
+          />
+        </div>
+      </div>
+    )
   }
 
   return (
     <button onClick={login}>
-      {user ? user.title : "Login with Are.na"}
+      {user ? <UserPage/> : "Login with Are.na"}
     </button>
   );
 }

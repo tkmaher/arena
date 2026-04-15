@@ -34,7 +34,7 @@ const PROXY_BASE = "/api/arena";
 
 async function arenaFetch(url: string | URL): Promise<any> {
     const original = new URL(url.toString());
-    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
+    const proxyUrl = original.href.replace(ARENA_BASE, ARENA_BASE);
 
     let response: Response;
     try {
@@ -103,7 +103,7 @@ export async function getChildren(
     const url = new URL(`https://api.are.na/v3/${type}/${id}/contents`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
-    if (type === "users" || type === "groups") url.searchParams.set("type", "channels");
+    if (type === "users" || type === "groups") url.searchParams.set("type", "Channel");
 
     try {
         const data = await arenaFetch(url);
