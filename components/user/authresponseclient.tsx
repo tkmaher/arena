@@ -81,8 +81,8 @@ export default function AuthResponseClient({
         localStorage.setItem("arena_token", data.access_token);
 
         window.opener.postMessage(
-          { type: "ARENA_AUTH_RESULT", success: true },
-          origin
+          { type: "ARENA_AUTH_RESULT", success: true, token: data.access_token },
+          origin 
         );
 
         console.log("Posted message to opener");

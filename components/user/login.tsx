@@ -25,9 +25,9 @@ export default function LoginPage() {
   }, []);
 
   async function login() {
-    // if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
-    //     console.error("Missing client ID");
-    // }
+    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
+        console.error("Missing client ID");
+    }
 
     const verifier = generateVerifier();
     const challenge = await generateChallenge(verifier);
