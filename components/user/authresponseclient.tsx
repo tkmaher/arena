@@ -30,7 +30,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -40,10 +40,9 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
-        
 
         const verifier = sessionStorage.getItem("arena_pkce_verifier");
 
@@ -56,7 +55,7 @@ export default function AuthResponseClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             grant_type: "authorization_code",
-            client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA", 
+            client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA", // TODO: change
             code: code,
             redirect_uri: REDIRECT_URI,
             code_verifier: verifier,
@@ -66,7 +65,7 @@ export default function AuthResponseClient({
         const data: any = await res.json();
         
 
-        alert(`TOKEN RESPONSE: ${data}`);
+        console.log("TOKEN RESPONSE", data);
 
         console.log(data.toString(), data.access_token);
 
@@ -76,7 +75,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          setTimeout(() => window.close(), 200);
+          //setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -90,7 +89,7 @@ export default function AuthResponseClient({
         console.log("Posted message to opener");
 
         setTimeout(() => {
-          window.close();
+          // window.close();
         }, 200);
       } catch (err) {
         console.error("AUTH FLOW ERROR", err);
@@ -102,12 +101,12 @@ export default function AuthResponseClient({
           );
         }
 
-        setTimeout(() => window.close(), 200);
+        // setTimeout(() => window.close(), 200);
       }
     }
 
     run();
   }, [code, error]);
 
-  return <p className="confirm">Completing login...</p>;
+  return <p>Completing login...</p>;
 }
