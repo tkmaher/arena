@@ -13,6 +13,7 @@ export default function AuthResponseClient({
     async function run() {
       try {
         console.log("AUTH RESPONSE LOADED", { code, error });
+        alert(`${code}, ${error}`);
 
         // MUST be popup
         if (!window.opener) {
@@ -47,14 +48,16 @@ export default function AuthResponseClient({
 
         console.log("Exchanging code for token...");
 
-        const res = await fetch("https://dev.are.na/oauth/token", {
+        const REDIRECT_URI = "https://arena-flow.org/auth-response";
+
+        const res = await fetch("https://api.are.na/v3/oauth/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            grant_type: "authorization_code",
+            grant_type: "client_credentials",
             client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID,
-            code,
-            redirect_uri: process.env.NEXT_PUBLIC_ARENA_REDIRECT_URI,
+            code: code,
+            redirect_uri: REDIRECT_URI,
             code_verifier: verifier,
           }),
         });
@@ -62,6 +65,8 @@ export default function AuthResponseClient({
         const data = await res.json();
 
         console.log("TOKEN RESPONSE", data);
+
+        alert(data);
 
         if (!res.ok) {
           window.opener.postMessage(
