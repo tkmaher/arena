@@ -7,6 +7,7 @@ import { useGraphEngine } from "@/hooks/useGraphEngine";
 import NodeList from "@/components/ui/nodelist";
 import { useEffect, useRef } from "react";
 import { Block, Channel, Group, User } from "@/types/arena";
+import Login from "../user/login";
 
 interface NodeStatsProps {
     checkNodeVisible: (id: string) => boolean;
@@ -38,9 +39,8 @@ export default function NodeStats({checkNodeVisible, makeNodeVisible, setSelecte
     return (
         <Panel position="top-right" style={{zIndex: 0}}>
             <div className="react-flow__controls">
-                <a href="https://www.are.na/oauth/authorize?client_id=iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA&redirect_uri=https%3A%2F%2Farena-flow.org%2Fauth-response&response_type=code&scope=write">
-                    LOG IN
-                </a>    
+              
+                <Login/>  
             </div>
             <div className="react-flow__controls popup-menu node-toolbar-button stat-label">
                 Nodes: <b>{engine.nodes.length}</b> | Edges: <b>{engine.edges.length}</b>
