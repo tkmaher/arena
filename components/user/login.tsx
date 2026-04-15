@@ -7,7 +7,7 @@ import { useGraphActions } from "@/context/graphcontext";
 export default function LoginPage() {
   const { user, setUser } = useGraphActions();
 
-  const REDIRECT_URI = "https://arena-flow.org/auth-response";
+  const REDIRECT_URI = `${window.location.origin}/auth-response`;
 
   useEffect(() => {
     function handler(event: MessageEvent) {
@@ -27,7 +27,7 @@ export default function LoginPage() {
   }, []);
 
   async function login() {
-    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) { // TODO: uncomment
+    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) {
         console.error("Missing client ID");
     }
 

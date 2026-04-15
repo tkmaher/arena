@@ -30,7 +30,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -40,7 +40,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -48,7 +48,7 @@ export default function AuthResponseClient({
 
         console.log("Exchanging code for token with verifier", verifier);
 
-        const REDIRECT_URI = "https://arena-flow.org/auth-response";
+        const REDIRECT_URI = `${window.location.origin}/auth-response`;
 
         const res = await fetch("https://api.are.na/v3/oauth/token", {
           method: "POST",
@@ -75,7 +75,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -89,7 +89,7 @@ export default function AuthResponseClient({
         console.log("Posted message to opener");
 
         setTimeout(() => {
-          // window.close();
+          window.close();
         }, 200);
       } catch (err) {
         console.error("AUTH FLOW ERROR", err);
@@ -101,12 +101,12 @@ export default function AuthResponseClient({
           );
         }
 
-        // setTimeout(() => window.close(), 200);
+        setTimeout(() => window.close(), 200);
       }
     }
 
     run();
   }, [code, error]);
 
-  return <p>Completing login...</p>;
+  return <p className="confirm">Completing login...</p>;
 }
