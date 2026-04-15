@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function AuthResponsePage() {
@@ -64,5 +64,9 @@ export default function AuthResponsePage() {
     finish();
   }, [params]);
 
-  return <p>Signing in...</p>;
+  return (
+    <Suspense>
+        <p>Signing in...</p>
+    </Suspense>
+  );
 }
