@@ -50,12 +50,27 @@ function CanvasInner() {
   const [authToken, setAuthToken] = useState<string | null>(null);
 
   const userHandler = useCallback(async (token: string) => {
-    const res = await setUser(token);
+    // Store token as HttpOnly cookie via edge function
+    await fetch("/api/set-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    });
+  
+    const res = await setUser(); // no token argument needed anymore
     if (res) {
-      setAuthToken(token);
       setAuthUser(res);
     }
   }, []);
+  
+  useEffect(() => {
+    // On mount, check if a session already exists
+    setUser().then(res => {
+      if (res) setAuthUser(res);
+    });
+  }, []);
+  
+  // FLnDTqen2Qi0YymoOXxKLhM9dMTDMaQ9g19VztL4Pko
 
   const selectedNode = useMemo(
     () => engine.nodes.find(n => n.id === selectedId),

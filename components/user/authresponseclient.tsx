@@ -14,14 +14,12 @@ export default function AuthResponseClient({
       try {
         console.log("AUTH RESPONSE LOADED", { code, error });
 
-        // MUST be popup
         if (!window.opener) {
           console.log("No window.opener — not a popup");
           return;
         }
 
-        //const origin = window.location.origin;
-        const origin = "*"; // FOR DEBUG TODO CHANGE
+        const origin = window.location.origin;
 
         // Error case (user denied)
         if (error) {
@@ -30,7 +28,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -40,7 +38,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
         
@@ -56,14 +54,14 @@ export default function AuthResponseClient({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             grant_type: "authorization_code",
-            client_id: "iwceyjA6tED7HpdjF5daMdPbtGF9MqdqXMKq3lYZ1NA", // TODO: change
+            client_id: process.env.NEXT_PUBLIC_ARENA_CLIENT_ID,
             code: code,
             redirect_uri: REDIRECT_URI,
             code_verifier: verifier,
           }),
         });
 
-        const data = await res.json();
+        const data: any = await res.json();
         
 
         console.log("TOKEN RESPONSE", data);
@@ -76,7 +74,7 @@ export default function AuthResponseClient({
             origin
           );
 
-          //setTimeout(() => window.close(), 200);
+          setTimeout(() => window.close(), 200);
           return;
         }
 
@@ -90,7 +88,7 @@ export default function AuthResponseClient({
         console.log("Posted message to opener");
 
         setTimeout(() => {
-          // window.close();
+          window.close();
         }, 200);
       } catch (err) {
         console.error("AUTH FLOW ERROR", err);
@@ -102,12 +100,12 @@ export default function AuthResponseClient({
           );
         }
 
-        // setTimeout(() => window.close(), 200);
+        setTimeout(() => window.close(), 200);
       }
     }
 
     run();
   }, [code, error]);
 
-  return <p>Completing login...</p>;
+  return <p className="confirm">Completing login...</p>;
 }

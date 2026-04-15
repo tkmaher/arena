@@ -29,44 +29,45 @@ class ArenaApiError extends Error {
     }
 }
 
+const ARENA_BASE = "https://api.are.na/v3";
+const PROXY_BASE = "/api/arena";
+
 async function arenaFetch(url: string | URL): Promise<any> {
+    const original = new URL(url.toString());
+    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
+
     let response: Response;
     try {
-        response = await fetch(url.toString(), {
+        response = await fetch(proxyUrl, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
+           
         });
     } catch (networkError) {
-        throw new ArenaApiError(0, `Network error reaching Are.na: ${networkError}`, url.toString());
+        throw new ArenaApiError(0, `Network error: ${networkError}`, proxyUrl);
     }
 
     if (!response.ok) {
-        // Try to pull a message from the response body; fall back gracefully.
         let serverMessage = "";
         try {
-            const body = await response.json();
+            const body: any = await response.json();
             serverMessage = body?.message ?? body?.error ?? "";
-        } catch {
-            // body wasn't JSON — that's fine, ignore
-        }
+        } catch { }
 
-        const reason = serverMessage
-            ? `${response.status} ${response.statusText}: ${serverMessage}`
-            : `${response.status} ${response.statusText}`;
-
-        throw new ArenaApiError(response.status, reason, url.toString());
+        throw new ArenaApiError(
+            response.status,
+            serverMessage || `${response.status} ${response.statusText}`,
+            proxyUrl
+        );
     }
 
     try {
         return await response.json();
     } catch {
-        throw new ArenaApiError(
-            response.status,
-            "Are.na returned an invalid JSON response.",
-            url.toString()
-        );
+        throw new ArenaApiError(response.status, "Invalid JSON response.", proxyUrl);
     }
 }
+
 export async function getConnections(
     id: string,
     type: string,
@@ -397,17 +398,15 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
     };
 }
 
-export async function setUser(token: string) {
-    const url = new URL(`https://api.are.na/v3/me`);
+export async function setUser() {
     try {
-        const data = await arenaFetch(url);
-        const user = parseUser(data, true);
-        return user;
+        const data = await arenaFetch(`${ARENA_BASE}/me`);
+        return parseUser(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 401) {
-            console.warn(`[setUser] Token "${token}" invalid.`);
+            console.warn("[setUser] No valid session.");
         } else {
-            console.error(`[setUser] Unexpected error for token "${token}":`, error);
+            console.error("[setUser] Unexpected error:", error);
         }
         return null;
     }
