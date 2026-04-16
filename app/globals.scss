@@ -466,6 +466,21 @@ body {
   input, button { cursor: pointer; }
 }
 
+.channel-list {
+  width: 20em;
+  flex-direction: column;
+  ul {
+    overflow-y: auto;
+    height: 70dvh;
+    width: 100%;
+    margin-bottom: 0.8em;
+  }
+  label {
+    display: flex;
+    gap: 0.8em;
+  }
+}
+
 .loader {
   cursor: pointer; text-align: center; margin-top: 0.6em;
   padding: 0.2em 0.5em; border: 0.5px solid var(--bg);

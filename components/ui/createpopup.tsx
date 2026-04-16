@@ -112,7 +112,6 @@ export default function CreatePopup({
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 placeholder="Description"
-                autoFocus
                 style={{marginBottom: "0.8em"}}
                 className="text-input"
             />
@@ -123,7 +122,6 @@ export default function CreatePopup({
                 value={gid}
                 onChange={e => setGid(e.target.value)}
                 placeholder="Group ID"
-                autoFocus
                 style={{marginBottom: "0.8em"}}
                 className="text-input"
             />}

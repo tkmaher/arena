@@ -20,26 +20,18 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
 
     return (
         <motion.div
-            className="info-media-wrap viewer checklist"
+            className="info-media-wrap viewer checklist channel-list"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             onClick={e => e.stopPropagation()}
         >
-            <input
-                type="text"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="Search channels..."
-                autoFocus
-                style={{marginBottom: "0.8em"}}
-                className="text-input"
-            />
+            
 
-            <ul style={{overflowY: "auto", height: "70dvh"}}>
+            <ul>
                 {filtered.map(ch => (
                     <li key={ch.id}>
-                        <label style={{display: "flex", gap: "0.8em"}}>
+                        <label>
                             <input
                                 type="checkbox"
                                 checked={selected.has(ch.id)}
@@ -51,6 +43,15 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
                 ))}
                 {filtered.length === 0 && <li>No channels found</li>}
             </ul>
+            <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search channels..."
+                autoFocus
+                style={{marginBottom: "0.8em"}}
+                className="text-input"
+            />
         </motion.div>
     )
 }
@@ -96,7 +97,7 @@ export default function ChannelSelect({
 
     return (
         <motion.div
-            className="confirm"
+            className="confirm about"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
