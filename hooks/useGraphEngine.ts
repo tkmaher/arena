@@ -371,7 +371,6 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const toggleNode = useCallback(
     async (data: ToggleOptions): Promise<void> => {
-      console.log("toggling node with data: ", data)
       const g = graph.current;
       const nodeId = sid(data.id);
   
@@ -588,12 +587,9 @@ export function useGraphEngine(): GraphEngineAPI {
   
       if (!node || (!isBlock(node.object) && !isChannel(node.object))) return;
 
-      console.log("got node");
   
       const ok = await createConnection(id, type, channels);
       if (!ok) return;
-
-      console.log("got connection");
   
       const newConnections = [...node.object.connectionStatus.connections];
   
@@ -649,7 +645,6 @@ export function useGraphEngine(): GraphEngineAPI {
     ): Promise<string | null> => {
       if (!fetchOK()) return null;
       const block = await createBlockAPI(data);
-      console.log("created:", block);
       if (!block) return null;
 
       const blockId = sid(block.id);
@@ -665,7 +660,6 @@ export function useGraphEngine(): GraphEngineAPI {
     ): Promise<string | null> => {
       if (!fetchOK()) return null;
       const channel = await createChannelAPI(data);
-      console.log("created:", channel);
       if (!channel) return null;
 
       const channelId = sid(channel.id);
