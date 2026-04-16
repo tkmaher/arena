@@ -23,7 +23,7 @@ import FloatingConnectionLine from "@/components/flow/FloatingConnectionLine";
 import RadialMenu from "@/components/ui/radialmenu";
 import InfoPanel from "@/components/ui/infopanel";
 import type { CanvasNode } from "@/types/reactflow";
-import type { Block, Channel, Group, User } from "@/types/arena";
+import type { AuthUser, Block, Channel, Group, User } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
 import { setUser } from "@/scripts/getBlock";
@@ -46,7 +46,7 @@ function CanvasInner() {
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [uploader, setUploader] = useState(false);
 
-  const [authUser, setAuthUser] = useState<User | null>(null);
+  const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
   const userHandler = useCallback(async (token: string | null) => {
     if (!token) {
@@ -188,6 +188,7 @@ function CanvasInner() {
         selectedOnGraph: selectedId,
         setUser: userHandler,
         user: authUser,
+        makeConnection: engine.makeConnection
       }}
       
     >

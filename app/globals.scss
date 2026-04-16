@@ -386,8 +386,11 @@ body {
     justify-self: flex-end;
     text-align: right;
     margin-left: auto;
+    font-size: 12px; 
+    margin-top: 0 !important;
   }
 }
+
 .info-sub      { 
   font-size: 12px; 
   font-weight: 300; 
@@ -518,9 +521,6 @@ input[type="checkbox"] {
   text-align: left;
   em {
     text-align: center;
-    transition: font-weight 0.1s ease;
-    &:hover {
-      font-weight: 600;
-    }
+    &:hover { background-color: var(--fg-sec); }
   }
 }

@@ -45,7 +45,7 @@ export interface GraphEngineAPI {
   getNearestNode: (id: string) => string | null;
   exportGraph: () => void;
   importGraph: (data: any) => void;
-
+  makeConnection: (id: string, type: string, channels: string[]) => void;
 }
 
 export interface MousePos {
@@ -581,6 +581,11 @@ export function useGraphEngine(): GraphEngineAPI {
     flush();
   }, [flush]);
 
+  // -- Add connections
+
+  const makeConnection = useCallback((id: string, type: string, channels: string[]) => {
+
+  }, [flush])
 
   // ── Return ────────────────────────────────────────────────────────────────
 
@@ -604,6 +609,7 @@ export function useGraphEngine(): GraphEngineAPI {
     selectNodeByDirection,
     getNearestNode,
     exportGraph,
-    importGraph
+    importGraph,
+    makeConnection
   };
 }

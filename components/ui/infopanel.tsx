@@ -4,20 +4,22 @@ import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
 import Image from "next/image";
-import { HTMLDecode } from "@/scripts/utility";
+import { HTMLDecode, login } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
 import NodeList from "@/components/ui/nodelist";
+import { useGraphActions } from "@/context/graphcontext";
+import ChannelSelect from "./channelselect";
 
 interface InfoPanelType {
   connectionFetcher: (id: string, s: ConnectionStatus, type: string) => Promise<void>;
   childrenFetcher:   (id: string, s: ChildrenStatus, type: string) => Promise<void>;
   followerFetcher:   (id: string, s: FollowersStatus, type: string) => Promise<void>;
-  followingFetcher:   (id: string, s: FollowingStatus) => Promise<void>;
+  followingFetcher:  (id: string, s: FollowingStatus) => Promise<void>;
   makeNodeVisible:   (id: string, body: Block | Channel | User | Group) => void;
   setSelected:       (id: string) => void;
   checkNodeVisible:  (id: string) => boolean;
   setImageOpen:      (val: boolean) => void;
-  closePanel:          () => void;
+  closePanel:        () => void;
 }
 
 interface InfoPanelProps extends InfoPanelType {
@@ -58,6 +60,9 @@ export default function InfoPanel({
   const [collapsed, setCollapsed] = useState<boolean>(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [viewerOpen, setViewerOpen] = useState(false);
+  const [selectOpen, setSelectOpen] = useState(false);
+
+  const { user } = useGraphActions();
 
   // Collapse whenever current disappears
   useEffect(() => { 
@@ -81,6 +86,10 @@ export default function InfoPanel({
     setViewerOpen(val);
     setImageOpen(val);
   }, [setImageOpen]);
+
+  const handleSelectOpen = useCallback((val: boolean) => {
+    setSelectOpen(val);
+  }, [setSelectOpen])
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -122,6 +131,13 @@ export default function InfoPanel({
           linkOut={linkOut}
         />
       )}
+      {current && user && selectOpen &&
+        <ChannelSelect
+          setSelectOpen={handleSelectOpen}
+          id={current.id}
+          type={isChannel(current) ? "Channel" : "Block"}
+        />
+      }
       <div className="info-box" style={{ pointerEvents: collapsed ? "none" : "auto" }}>
         <div className="info-body">
 
@@ -167,33 +183,38 @@ export default function InfoPanel({
           {/* Meta — always visible */}
           <div className="info-section react-flow__controls info-meta">
             {current ? (
-              <>
-                <div className="info-title node-title" >
-                  {isUser(current) && <img src="user.svg"  alt="User"/>}
-                  {isGroup(current) && <img src="group.svg" alt="Group"/>}
-                  {isChannel(current) && <img src="channel.svg" alt="Channel"/>}
-                  {isBlock(current) && <img src="block.svg" alt="Block"/>}
-                  <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
-                  <a href={linkOut} target="_blank" className="linkout">↗</a>
-                </div>
-                {!isUser(current) && !isGroup(current) && <div className="info-sub">
-                  <div className="username" onClick={() => handleSelect(current.owner)}>{current.owner.title} </div>
-                  <input
-                    type="checkbox"
-                    checked={checkNodeVisible(current.owner.id)}
-                    onChange={() => makeNodeVisible(current.owner.id, current.owner)}
-                  />
-                  · {current.date} 
-                  
-                </div>}
-                <span className="info-id">
-                  <a href={(isBlock(current) && (isLink(current) || isAttachment(current) || isEmbed(current)))
-                    ? `https://are.na/block/${current.id}` : linkOut} target="_blank">
-                    {current.id}
-                  </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : isGroup(current) ? " Group" : " Block"}
-                </span>
-                {current.description && <DescriptionRef html={current.description} />}
-              </>
+                <>
+                  <div className="info-title node-title" >
+                    {isUser(current) && <img src="user.svg"  alt="User"/>}
+                    {isGroup(current) && <img src="group.svg" alt="Group"/>}
+                    {isChannel(current) && <img src="channel.svg" alt="Channel"/>}
+                    {isBlock(current) && <img src="block.svg" alt="Block"/>}
+                    <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
+                    {(isBlock(current) || isGroup(current)) && 
+                      <a className="linkout loader" onClick={() => user ? setSelectOpen(true) : login()}>
+                        Add...
+                      </a>
+                    }
+                  </div>
+                  {!isUser(current) && !isGroup(current) && <div className="info-sub">
+                    <div className="username" onClick={() => handleSelect(current.owner)}>{current.owner.title} </div>
+                    <input
+                      type="checkbox"
+                      checked={checkNodeVisible(current.owner.id)}
+                      onChange={() => makeNodeVisible(current.owner.id, current.owner)}
+                    />
+                    · {current.date} 
+                    
+                  </div>}
+                  <span className="info-id">
+                    <a href={(isBlock(current) && (isLink(current) || isAttachment(current) || isEmbed(current)))
+                      ? `https://are.na/block/${current.id}` : linkOut} target="_blank">
+                      {current.id}
+                    </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : isGroup(current) ? " Group" : " Block"}
+                  </span>
+                  {current.description && <DescriptionRef html={current.description} />}
+                </>
+              
             ) : (
               <>
                 <a className="info-title">No node selected.</a>

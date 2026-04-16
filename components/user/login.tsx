@@ -70,7 +70,7 @@ export default function LoginPage({checkNodeVisible, onToggle, onSelect}: LoginP
 
   return (
     <button onClick={() => (!user && login())} className="login">
-      {user ? <UserPage/> : <em>Log inwith Are.na</em>}
+      {user ? <UserPage/> : <em>Log in with Are.na</em>}
     </button>
   );
 }

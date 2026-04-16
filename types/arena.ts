@@ -45,6 +45,13 @@ export interface User {
     childrenStatus: ChildrenStatus;
 }
 
+export interface AuthUser {
+    user: User;
+    followers: Set<User>;
+    following: Set<User | Group | Channel>;
+    children: Set<Block | Channel>;
+}
+
 export interface Group {
     id: string;
     title: string;

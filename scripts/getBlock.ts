@@ -11,10 +11,11 @@ import {
     FollowersStatus,
     FollowingStatus,
     Group,
-    User
+    User,
+    AuthUser
 } from "@/types/arena";
 
-const CONNECTIONS_PER_PAGE = 25;
+const CONNECTIONS_PER_PAGE = 50;
 
 import { formattedDate } from "@/scripts/utility"
 
@@ -103,7 +104,7 @@ export async function getChildren(
     const url = new URL(`https://api.are.na/v3/${type}/${id}/contents`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
-    if (type === "users" || type === "groups") url.searchParams.set("type", "Channel");
+    //if (type === "users" || type === "groups") url.searchParams.set("type", "Channel");
 
     try {
         const data = await arenaFetch(url);
@@ -401,7 +402,36 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
 export async function setUser() {
     try {
         const data = await arenaFetch(`${ARENA_BASE}/me`);
-        return parseUser(data, true);
+        let user = await parseUser(data, false);
+        let count = 1;
+        while (!user.childrenStatus.complete && count < 120) {
+            const res = await getChildren(user.id, user.childrenStatus.page, "users"); 
+            user.childrenStatus.children.push(...res.children);
+            user.childrenStatus.complete = res.complete;
+            user.childrenStatus.page = res.page;
+            ++count;
+        }
+        while (!user.followersStatus.complete && count < 120) {
+            const res = await getFollowers(user.id, user.followersStatus.page, "users"); 
+            user.followersStatus.followers.push(...res.followers);
+            user.followersStatus.complete = res.complete;
+            user.followersStatus.page = res.page;
+            ++count;
+        }
+        while (!user.followingStatus.complete && count < 120) {
+            const res = await getFollowing(user.id, user.followingStatus.page); 
+            user.followingStatus.following.push(...res.following);
+            user.followingStatus.complete = res.complete;
+            user.followingStatus.page = res.page;
+            ++count;
+        }
+        const superUser: AuthUser = {
+            user: user,
+            followers: new Set(user.followersStatus.followers),
+            following: new Set(user.followingStatus.following),
+            children: new Set(user.childrenStatus.children)
+        }
+        return superUser;
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 401) {
             console.warn("[setUser] No valid session.");
