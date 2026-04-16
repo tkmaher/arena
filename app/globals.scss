@@ -512,3 +512,15 @@ input[type="checkbox"] {
   .about { padding: 3em 3em;}
   .confirm { justify-content: flex-start; }
 }
+
+.login {
+  padding: 0.4em;
+  text-align: left;
+  em {
+    text-align: center;
+    transition: font-weight 0.1s ease;
+    &:hover {
+      font-weight: 600;
+    }
+  }
+}
