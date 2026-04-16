@@ -12,7 +12,9 @@ import {
     FollowingStatus,
     Group,
     User,
-    AuthUser
+    AuthUser,
+    ChannelCreation,
+    BlockCreation
 } from "@/types/arena";
 
 const CONNECTIONS_PER_PAGE = 50;
@@ -44,7 +46,7 @@ async function arenaFetch(url: string | URL, options: FetchOptions = {}): Promis
     const method = options.method ?? "GET";
     const original = new URL(url.toString());
     const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
-    
+
     let response: Response;
     try {
         response = await fetch(proxyUrl, {
@@ -260,13 +262,19 @@ export async function getGroup(id: string): Promise<Group | null> {
  * status: "public" | "closed" | "private"
  */
 export async function createChannel(
-    title: string,
-    status: "public" | "closed" | "private" = "private"
+    data: ChannelCreation
 ): Promise<Channel | null> {
+    let body: Record<string, string | string[]> = {
+        title: data.title,
+        visibility: data.visibility
+    };
+    if (data.description) body.description = data.description;
+    if (data.group_id) body.group_id = data.group_id;
+
     try {
         const data = await arenaFetch(`${ARENA_BASE}/channels`, {
             method: "POST",
-            body: { title, status },
+            body
         });
         return parseChannel(data, false);
     } catch (error) {
@@ -279,42 +287,30 @@ export async function createChannel(
     }
 }
 
-export interface CreateBlockContent {
-    value: string;
-    title?: string;
-    description?: string;
-    original_source_url?: string;
-    original_source_title?: string;
-    channel_ids: string[];
-}
-
 /**
  * Create a block inside a channel. Returns the new block from the API.
  * The are.na API mirrors the new block back from
  *   POST /v3/channels/:channel_id/blocks
  */
 export async function createBlock(
-    channelId: string,
-    content: CreateBlockContent
+    data: BlockCreation
 ): Promise<Block | null> {
     let body: Record<string, string | string[]> = {
-        value: content.value,
-        channel_ids: content.channel_ids
+        value: data.value,
+        channel_ids: data.channel_ids
     };
-    if (content.title) body.title = content.title;
-    if (content.description) body.description = content.description;
-    if (content.original_source_url) body.original_source_url = content.original_source_url;
-    if (content.original_source_title) body.original_source_title = content.original_source_title;
+    if (data.title) body.title = data.title;
+    if (data.description) body.description = data.description
 
     try {
-        const data = await arenaFetch(`${ARENA_BASE}/channels/${channelId}/blocks`, {
+        const data = await arenaFetch(`${ARENA_BASE}/blocks`, {
             method: "POST",
             body
         });
-        return parseBlock(data, false);
+        return parseBlock(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError) {
-            console.error(`[createBlock] API error for channel "${channelId}":`, error.message);
+            console.error(`[createBlock] API error for new block "${data.value}":`, error.message);
         } else {
             console.error(`[createBlock] Unexpected error:`, error);
         }

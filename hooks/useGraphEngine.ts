@@ -24,12 +24,13 @@ import {
   createBlock as createBlockAPI,
   createChannel as createChannelAPI,
   deleteChannel as deleteChannelAPI,
-  type CreateBlockContent,
 } from "@/scripts/getBlock";
 import type {
   AuthUser,
   Block,
+  BlockCreation,
   Channel,
+  ChannelCreation,
   ChildrenStatus,
   ConnectionStatus,
   FollowersStatus,
@@ -74,8 +75,8 @@ export interface GraphEngineAPI {
 
   // ── Authentication ──────────────────────────────────────────────────────────
   makeConnection: (id: string, type: string, channels: string[]) => Promise<void>;
-  createBlock: (channelId: string, content: CreateBlockContent, mousePos?: MousePos) => Promise<string | null>;
-  createChannel: (title: string, status?: "public" | "closed" | "private", mousePos?: MousePos) => Promise<string | null>;
+  createBlock: (data: BlockCreation) => Promise<string | null>;
+  createChannel: (data: ChannelCreation) => Promise<string | null>;
   deleteChannel: (id: string) => Promise<boolean>;
   hydrateFromAuthUser: () => Promise<AuthUser | null>;
 }
@@ -612,40 +613,34 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const createBlock = useCallback(
     async (
-      channelId: string,
-      content: CreateBlockContent,
-      mousePos?: MousePos
+      data: BlockCreation,
     ): Promise<string | null> => {
       if (!fetchOK()) return null;
-      const block = await createBlockAPI(channelId, content);
+      const block = await createBlockAPI(data);
+      console.log("created:", block);
       if (!block) return null;
 
       const blockId = sid(block.id);
-      const g = graph.current;
-      mountNode(blockId, block, mousePos);
-      g.link(sid(channelId), blockId);
-      flush();
+      addBlockNode(blockId, undefined, block);
       return blockId;
     },
-    [mountNode, flush]
+    [addBlockNode]
   );
 
   const createChannel = useCallback(
     async (
-      title: string,
-      status: "public" | "closed" | "private" = "private",
-      mousePos?: MousePos
+      data: ChannelCreation,
     ): Promise<string | null> => {
       if (!fetchOK()) return null;
-      const channel = await createChannelAPI(title, status);
+      const channel = await createChannelAPI(data);
+      console.log("created:", channel);
       if (!channel) return null;
 
       const channelId = sid(channel.id);
-      mountNode(channelId, channel, mousePos);
-      flush();
+      addChannelNode(channelId, undefined, channel)
       return channelId;
     },
-    [mountNode, flush]
+    [addChannelNode]
   );
 
   // ── Delete from are.na + graph ────────────────────────────────────────────

@@ -195,6 +195,12 @@ body {
   input { padding: 0.5em; width: 100%; }
 }
 
+.text-input {
+  border: 0.5px solid var(--bg);
+  padding: 0.4em;
+  width: 20em;
+}
+
 .menu-title { font-size: 13px; letter-spacing: 0.2px; }
 
 /* ─── Tooltip ─────────────────────────────────────── */

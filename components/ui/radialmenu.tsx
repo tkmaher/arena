@@ -9,9 +9,10 @@ interface RadialMenuProps {
     onClose: () => void;
     onAdd: (id: string) => void;
     onRandom: () => void;
+    createNode: (isChannel: boolean) => void;
 }
   
-export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialMenuProps) {
+export default function RadialMenu({ origin, onClose, onAdd, onRandom, createNode }: RadialMenuProps) {
     const [input, setInput] = useState("");
     const [inputOpen, setInputOpen] = useState(false);
   
@@ -56,6 +57,11 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
         setInputOpen(false);
         onClose();
     };
+
+    const add = (isChannel: boolean) => {
+        createNode(isChannel);
+        onClose()
+    }
   
     return (
         <div
@@ -184,7 +190,7 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
                         cursor: "pointer"
                     }}
                     className=" popup-menu"
-                    onClick={() => {}}
+                    onClick={() => add(true)}
                 >
                     <span className="menu-title">
                         Create channel
@@ -209,7 +215,7 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
                         cursor: "pointer",
                     }}
                     className=" popup-menu"
-                    onClick={() => {}}
+                    onClick={() => add(false)}
                 >
                     <span className="menu-title">
                         Create block

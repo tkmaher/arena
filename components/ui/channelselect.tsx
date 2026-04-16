@@ -2,7 +2,58 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useGraphActions } from "@/context/graphcontext";
-import { Channel } from "@/types/arena";
+import { isChannel } from "@/scripts/utility";
+
+export function ChannelList({ id, selected, toggleChannel }: { id: string, selected: Set<string>, toggleChannel: (channelId: string) => void}) {
+    const { user } = useGraphActions();
+    if (!user) return;
+
+    const [search, setSearch] = useState("");
+
+    const channels = Array.from(user.user.childrenStatus.children).filter(
+        (child) => isChannel(child) && !child.childrenStatus.children.some(obj => obj.id === id)
+    );
+
+    const filtered = channels.filter(ch =>
+        (ch.title ?? ch.id).toLowerCase().includes(search.toLowerCase())
+    );
+
+    return (
+        <motion.div
+            className="info-media-wrap viewer checklist"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            onClick={e => e.stopPropagation()}
+        >
+            <input
+                type="text"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Search channels..."
+                autoFocus
+                style={{marginBottom: "0.8em"}}
+                className="text-input"
+            />
+
+            <ul style={{overflowY: "auto", height: "70dvh"}}>
+                {filtered.map(ch => (
+                    <li key={ch.id}>
+                        <label style={{display: "flex", gap: "0.8em"}}>
+                            <input
+                                type="checkbox"
+                                checked={selected.has(ch.id)}
+                                onChange={() => toggleChannel(ch.id)}
+                            />
+                            <a>{ch.title ?? ch.id}</a>
+                        </label>
+                    </li>
+                ))}
+                {filtered.length === 0 && <li>No channels found</li>}
+            </ul>
+        </motion.div>
+    )
+}
 
 export default function ChannelSelect({
     setSelectOpen,
@@ -16,16 +67,7 @@ export default function ChannelSelect({
     const { makeConnection, user } = useGraphActions();
     if (!user) return;
 
-    const [search, setSearch] = useState("");
     const [selected, setSelected] = useState<Set<string>>(new Set());
-
-    const channels = Array.from(user.user.childrenStatus.children).filter(
-        (child): child is Channel => child.type === "Channel"
-    );
-
-    const filtered = channels.filter(ch =>
-        (ch.title ?? ch.id).toLowerCase().includes(search.toLowerCase())
-    );
 
     const toggleChannel = (channelId: string) => {
         setSelected(prev => {
@@ -54,43 +96,15 @@ export default function ChannelSelect({
 
     return (
         <motion.div
-            className="confirm about"
+            className="confirm"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
         >
-            <motion.div
-                className="info-media-wrap viewer checklist"
-                initial={{ opacity: 0, y: -8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                onClick={e => e.stopPropagation()}
-            >
-                <input
-                    type="text"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    placeholder="Search channels..."
-                    autoFocus
-                    style={{marginBottom: "0.8em"}}
-                />
-
-                <ul style={{overflowY: "auto", height: "70dvh"}}>
-                    {filtered.map(ch => (
-                        <li key={ch.id}>
-                            <label style={{display: "flex", gap: "0.8em"}}>
-                                <input
-                                    type="checkbox"
-                                    checked={selected.has(ch.id)}
-                                    onChange={() => toggleChannel(ch.id)}
-                                />
-                                <a>{ch.title ?? ch.id}</a>
-                            </label>
-                        </li>
-                    ))}
-                    {filtered.length === 0 && <li>No channels found</li>}
-                </ul>
-            </motion.div>
+            <p className="info-title">
+                Select a channel
+            </p>
+            <ChannelList id={id} selected={selected} toggleChannel={toggleChannel}/>
 
             <div className="confirm-toolbar">
                 <button

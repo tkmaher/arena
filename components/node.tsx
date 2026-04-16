@@ -1,19 +1,20 @@
 "use client";
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { HTMLDecode } from "@/scripts/utility";
+import { HTMLDecode, isBlock, hasImage, isChannel, isUser, isGroup, isText } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
 import { Position, Handle, useStore } from "@xyflow/react";
+import { Block, Group, User, Channel } from "@/types/arena";
 
 interface NodeProps {
   id: string;
-  data: { object: any };
+  data: { object: User | Group | Block | Channel };
   selected: boolean;
 }
 
 export default function BlockProp({ id, data }: NodeProps) {
-  const { removeNode, selectedOnGraph } = useGraphActions();
-  const [imageLoaded, setImageLoaded] = useState(!data.object.thumbnailUrl);
+  const { removeNode, selectedOnGraph, user } = useGraphActions();
+  const [imageLoaded, setImageLoaded] = useState(isBlock(data.object) && !hasImage(data.object));
 
   const handleRemove = () => removeNode(id);
 
@@ -30,6 +31,12 @@ export default function BlockProp({ id, data }: NodeProps) {
     );
   }, [edges, id, selectedOnGraph]);
 
+  let background = "auto";
+  if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
+    background = "#32a852";
+  else if (isUser(data.object) && user?.user.id === data.object.id)
+    background = "#32a852";
+
   return (
     <>
       <Handle type="target" position={Position.Top} />
@@ -40,6 +47,7 @@ export default function BlockProp({ id, data }: NodeProps) {
         style={{
           border: isSelected ? `0.5px solid #1f1f1f` : isConnectedToSelected ? `0.5px dashed #1f1f1f` : `0.5px dashed #1f1f1f00`,
           position: "relative",
+          color: background
         }}
       >
         <div className="node-body">
@@ -49,7 +57,7 @@ export default function BlockProp({ id, data }: NodeProps) {
                 {data.object.type == "Group" && <img src="group.svg"  alt="Group"/>}
                 {data.object.type == "Channel" && <img src="channel.svg"  alt="Channel"/>}
               </div>
-          ) : data.object.thumbnailUrl ? (
+          ) : hasImage(data.object) ? (
             <Image
               src={data.object.thumbnailUrl} 
               alt={data.object.title || "ImageBlock"}
@@ -60,7 +68,7 @@ export default function BlockProp({ id, data }: NodeProps) {
               placeholder="empty"
               className="image"
             />
-          ) : data.object.content ? (
+          ) : isText(data.object) ? (
             <div><HTMLDecode rawHTML={data.object.content} /></div>
           ) : (
             <div>{data.object.title}</div>

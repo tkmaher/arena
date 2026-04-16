@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { Block, Channel, User, Group } from "@/types/arena";
+import { Block, Channel, User, Group, ImageBlock, TextBlock, AttachmentBlock, LinkBlock, EmbedBlock } from "@/types/arena";
 
 export function HTMLDecode({rawHTML}: {rawHTML: string}) {
     const sanitizedHTML = DOMPurify.sanitize(rawHTML);
@@ -67,3 +67,8 @@ export const isChannel    = (n: Block | Channel | User | Group): n is Channel  =
 export const isUser       = (n: Block | Channel | User | Group): n is User     => n.type === "User";
 export const isGroup      = (n: Block | Channel | User | Group): n is Group    => n.type === "Group";
 export const isBlock      = (n: Block | Channel | User | Group): n is Block    => (!isChannel(n) && !isUser(n) && !isGroup(n));
+export const hasImage     = (n: Block): n is ImageBlock            => "imageUrl" in n;
+export const isText       = (n: Block): n is TextBlock             => n.type === "Text";
+export const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
+export const isEmbed      = (n: Block): n is EmbedBlock            => n.type === "Embed";
+export const isLink       = (n: Block): n is LinkBlock             => n.type === "Link";

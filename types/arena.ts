@@ -119,3 +119,17 @@ export interface EmbedBlock extends Block {
     thumbnailUrl?: string;
     embed: string;
 }
+
+export interface ChannelCreation {
+    title: string,
+    visibility: "public" | "closed" | "private",
+    description?: string,
+    group_id?: string,
+}
+
+export interface BlockCreation {
+    value: string,
+    channel_ids: string[],
+    title?: string,
+    description?: string,
+}

@@ -2,9 +2,9 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
-import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
+import { Block, Channel, ChildrenStatus, ConnectionStatus, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
 import Image from "next/image";
-import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
+import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser, hasImage, isText, isAttachment, isEmbed, isLink } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
 import NodeList from "@/components/ui/nodelist";
 import { useGraphActions } from "@/context/graphcontext";
@@ -25,12 +25,6 @@ interface InfoPanelType {
 interface InfoPanelProps extends InfoPanelType {
   current: Block | Channel | User | Group | undefined;
 }
-
-const hasImage     = (n: Block): n is ImageBlock            => "imageUrl" in n;
-const isText       = (n: Block): n is TextBlock             => n.type === "Text";
-const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
-const isEmbed      = (n: Block): n is EmbedBlock            => n.type === "Embed";
-const isLink       = (n: Block): n is LinkBlock             => n.type === "Link";
 
 const sectionVariants = {
   open:      { height: "auto", opacity: 1, pointerEvents: "auto"  as const },
@@ -189,7 +183,7 @@ export default function InfoPanel({
                     {isChannel(current) && <img src="channel.svg" alt="Channel"/>}
                     {isBlock(current) && <img src="block.svg" alt="Block"/>}
                     <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
-                    {(isBlock(current) || isGroup(current)) && 
+                    {(isBlock(current) || isChannel(current)) && 
                       <a className="linkout loader" onClick={() => user ? setSelectOpen(true) : login()}>
                         Connect
                       </a>

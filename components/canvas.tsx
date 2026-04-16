@@ -29,6 +29,7 @@ import NodeStats from "@/components/ui/nodestats";
 
 import { motion } from "framer-motion";
 import Upload from "./ui/upload";
+import CreatePopup from "./ui/createpopup";
 
 const nodeTypes = { Canvas: BlockProp };
 const edgeTypes = { floating: FloatingEdge };
@@ -44,6 +45,7 @@ function CanvasInner() {
   const [about, setAbout] = useState(false);
   const [imageViewerOpen, setImageViewerOpen] = useState(false);
   const [uploader, setUploader] = useState(false);
+  const [createPopupOpen, setCreatePopupOpen] = useState<string | null>(null);
 
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 
@@ -95,6 +97,10 @@ function CanvasInner() {
     setImageViewerOpen(val);
   }, [setImageViewerOpen]);
 
+  const handleCreatePopupOpen = useCallback((val: boolean) => {
+    if (!val) setCreatePopupOpen(null);
+  }, [setCreatePopupOpen]);
+
   const { setCenter, getZoom, zoomIn, zoomOut } = useReactFlow();
 
   useEffect(() => {
@@ -125,7 +131,7 @@ function CanvasInner() {
   }, [selectedId, infoOpen]);
 
   const keyDownEvent = useCallback((e: any) => {
-    if (imageViewerOpen || about || uploader) return;
+    if (imageViewerOpen || about || uploader || createPopupOpen) return;
     
     if (e.key === "Escape") {
         if (deleteAll) { setDeleteAll(false); return; }
@@ -162,7 +168,7 @@ function CanvasInner() {
     } else if (e.key === "-" || e.key === "_" ) {
         zoomOut();
     }
-  }, [deleteAll, selectedId, imageViewerOpen, about, uploader]);
+  }, [deleteAll, selectedId, imageViewerOpen, about, uploader, createPopupOpen]);
 
   useEffect(() => {
     window.addEventListener("keydown", keyDownEvent);
@@ -288,6 +294,10 @@ function CanvasInner() {
         uploadHandler={(data: any) => engine.importGraph(data)}
       />}
 
+      {!createPopupOpen && <CreatePopup
+        setOpen={handleCreatePopupOpen}
+      />}
+
       <InfoPanel
         current={infoOpen ? selectedNode?.data.object : undefined}
         connectionFetcher={engine.fetchMoreConnections}
@@ -334,6 +344,10 @@ function CanvasInner() {
               engine.setSelectedNode(res);
               setInfoOpen(true);
             }
+          }}
+          createNode={(isChannel: boolean) => {
+            if (isChannel) setCreatePopupOpen("channels");
+            else setCreatePopupOpen("blocks");
           }}
         />
       )}
