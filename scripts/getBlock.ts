@@ -31,6 +31,7 @@ class ArenaApiError extends Error {
 }
 
 const ARENA_BASE = "https://api.are.na/v3";
+const PROXY_BASE = "/api/arena";
 
 // ─── Core fetch ───────────────────────────────────────────────────────────────
 
@@ -41,8 +42,9 @@ interface FetchOptions {
 
 async function arenaFetch(url: string | URL, options: FetchOptions = {}): Promise<any> {
     const method = options.method ?? "GET";
-    const proxyUrl = url.toString();
-
+    const original = new URL(url.toString());
+    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
+    
     let response: Response;
     try {
         response = await fetch(proxyUrl, {
