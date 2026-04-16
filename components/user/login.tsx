@@ -42,14 +42,14 @@ export default function LoginPage({checkNodeVisible, onToggle, onSelect}: LoginP
         <div
           className="checklist"
         >
-          <a onClick={() => onSelect(user)}>
-            {user.title ?? user.id}
+          <a onClick={() => onSelect(user.user)}>
+            {user.user.title ?? user.user.id}
           </a>
 
           <input
             type="checkbox"
-            checked={checkNodeVisible(user.id)}
-            onChange={() => onToggle(user)}
+            checked={checkNodeVisible(user.user.id)}
+            onChange={() => onToggle(user.user)}
           />
         </div>
         <div
