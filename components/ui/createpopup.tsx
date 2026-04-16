@@ -12,8 +12,8 @@ export default function CreatePopup({
 }: {
     setOpen: (val: boolean) => void, 
     type: string,
-    createChannel: (data: ChannelCreation) => null | string;
-    createBlock: (data: BlockCreation) => null | string;
+    createChannel: (data: ChannelCreation) => Promise<null | string>;
+    createBlock: (data: BlockCreation) => Promise<null | string>;
 }) {
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");

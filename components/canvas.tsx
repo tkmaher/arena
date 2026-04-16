@@ -294,8 +294,11 @@ function CanvasInner() {
         uploadHandler={(data: any) => engine.importGraph(data)}
       />}
 
-      {!createPopupOpen && <CreatePopup
+      {createPopupOpen != null && <CreatePopup
         setOpen={handleCreatePopupOpen}
+        type={createPopupOpen}
+        createBlock={engine.createBlock}
+        createChannel={engine.createChannel}
       />}
 
       <InfoPanel
