@@ -24,6 +24,7 @@ import {
   createBlock as createBlockAPI,
   createChannel as createChannelAPI,
   deleteChannel as deleteChannelAPI,
+  getGroup,
 } from "@/scripts/getBlock";
 import type {
   AuthUser,
@@ -298,6 +299,20 @@ export function useGraphEngine(): GraphEngineAPI {
     [mountNode, flush]
   );
 
+  const addGroupNode = useCallback(
+    async (id: string, mousePos?: MousePos, data?: Group): Promise<string | null> => {
+      const g = graph.current;
+      const nodeId = sid(id);
+      if (g.isOnCanvas(nodeId)) return null;
+      const group = data ?? (fetchOK() ? await getGroup(nodeId) : null);
+      if (!group) return null;
+      mountNode(nodeId, group, mousePos);
+      flush();
+      return nodeId;
+    },
+    [mountNode, flush]
+  );
+
   // ── Public add / remove ───────────────────────────────────────────────────
 
   const addNode = useCallback(
@@ -369,12 +384,14 @@ export function useGraphEngine(): GraphEngineAPI {
           await addUserNode(nodeId, undefined, data.body);
         } else if (isBlock(data.body)) {
           await addBlockNode(nodeId, undefined, data.body);
+        } else if (isGroup(data.body)) {
+          await addGroupNode(nodeId, undefined, data.body);
         }
-        if (data.linkedToId && data.linkOptions?.shouldLink) {
+        if (data.linkedToId) {
           const lId = sid(data.linkedToId);
           if (isChannel(data.body)) {
             g.link(nodeId, lId);                     
-          } else if (data.linkOptions.reverseLink) {
+          } else if (data.linkOptions?.reverseLink) {
             g.link(nodeId, lId);                     
           } else {
             g.link(lId, nodeId);                     
@@ -383,7 +400,7 @@ export function useGraphEngine(): GraphEngineAPI {
       }
       flush();
     },
-    [unmountNode, addChannelNode, addUserNode, addBlockNode, flush]
+    [unmountNode, addChannelNode, addUserNode, addBlockNode, flush, addGroupNode]
   );
 
   // ── Selection ─────────────────────────────────────────────────────────────

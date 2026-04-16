@@ -3,6 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ChannelList } from "./channelselect";
 import { BlockCreation, ChannelCreation } from "@/types/arena";
+import { useGraphActions } from "@/context/graphcontext";
+import { login } from "@/scripts/utility";
 
 export default function CreatePopup({
     setOpen, 

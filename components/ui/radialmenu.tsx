@@ -1,4 +1,6 @@
 "use client";
+import { useGraphActions } from "@/context/graphcontext";
+import { login } from "@/scripts/utility";
 import { useCallback, useRef, useState } from "react";
 
 const MENU_W = 200; // approximate pill width, used for clamping
@@ -15,6 +17,8 @@ interface RadialMenuProps {
 export default function RadialMenu({ origin, onClose, onAdd, onRandom, createNode }: RadialMenuProps) {
     const [input, setInput] = useState("");
     const [inputOpen, setInputOpen] = useState(false);
+
+    const { user } = useGraphActions();
   
     if (!origin) return null;
   
@@ -59,6 +63,10 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom, createNod
     };
 
     const add = (isChannel: boolean) => {
+        if (!user) {
+            login();
+            return;
+        }
         createNode(isChannel);
         onClose()
     }
