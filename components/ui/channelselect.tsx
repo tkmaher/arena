@@ -49,7 +49,6 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search channels..."
                 autoFocus
-                style={{marginBottom: "0.8em"}}
                 className="text-input"
             />
         </motion.div>

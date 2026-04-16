@@ -61,18 +61,20 @@ export default function CreatePopup({
                 }
             );
         }
-        if (isChannel && title == "") {
-            alert("Please specify a title.");
-            return;
-        }
-        createChannel(
-            {
-                title: title,
-                visibility: "public", // TODO: make selection
-                description: description != "" ? description : undefined,
-                group_id: gid != "" ? gid : undefined
+        if (isChannel) {
+            if (title == "") {
+                alert("Please specify a title.");
+                return;
             }
-        );
+            createChannel(
+                {
+                    title: title,
+                    visibility: "public", // TODO: make selection
+                    description: description != "" ? description : undefined,
+                    group_id: gid != "" ? gid : undefined
+                }
+            );
+        }
         setOpen(false);
     };
 

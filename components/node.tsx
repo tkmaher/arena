@@ -33,9 +33,9 @@ export default function BlockProp({ id, data }: NodeProps) {
 
   let background = "auto";
   if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
-    background = "#32a852 !important";
+    background = "#32a852";
   else if (isUser(data.object) && user?.user.id === data.object.id)
-    background = "#32a852 !important";
+    background = "#32a852";
 
   return (
     <>
@@ -47,7 +47,7 @@ export default function BlockProp({ id, data }: NodeProps) {
         style={{
           border: isSelected ? `0.5px solid #1f1f1f` : isConnectedToSelected ? `0.5px dashed #1f1f1f` : `0.5px dashed #1f1f1f00`,
           position: "relative",
-          color: background
+          backgroundColor: background
         }}
       >
         <div className="node-body">
