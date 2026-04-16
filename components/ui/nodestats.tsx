@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Panel } from "@xyflow/react";
 import { useGraphEngine } from "@/hooks/useGraphEngine";
 import NodeList from "@/components/ui/nodelist";
@@ -27,6 +27,10 @@ export default function NodeStats({ checkNodeVisible, makeNodeVisible, setSelect
         objects.current = engine.nodes.map(n => n.data.object);
     }, [engine.nodes]);
 
+    const onToggle = useCallback((node: Block | Channel | User | Group) => {
+        makeNodeVisible({ id: node.id, body: node });
+    }, [makeNodeVisible]);
+
     return (
         <Panel position="top-right" style={{ zIndex: 0 }}>
             <div className="react-flow__controls">
@@ -47,7 +51,7 @@ export default function NodeStats({ checkNodeVisible, makeNodeVisible, setSelect
                     list={objects.current}
                     status={{ complete: true, children: [], page: 0 }}
                     checkNodeVisible={checkNodeVisible}
-                    onToggle={makeNodeVisible}
+                    onToggle={onToggle}
                     onSelect={handleSelect}
                     loadMore={() => {}}
                     nodeId="nodes"
