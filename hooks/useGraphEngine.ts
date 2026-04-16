@@ -36,6 +36,7 @@ import type {
   FollowersStatus,
   FollowingStatus,
   Group,
+  ToggleOptions,
   User,
 } from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
@@ -59,7 +60,7 @@ export interface GraphEngineAPI {
   // ── Read / navigation ────────────────────────────────────────────────────
   addNode: (idOrPath: string, mousePos: MousePos) => Promise<string | null>;
   addRandom: (mousePos: MousePos) => Promise<string | null>;
-  toggleNode: (id: string | number, body: Block | Channel | User | Group, linkedToId?: string) => Promise<void>;
+  toggleNode: (data: ToggleOptions) => Promise<void>;
   removeNode: (id: string) => void;
   removeAllNodes: () => void;
   fetchMoreConnections: (id: string, status: ConnectionStatus, type: string) => Promise<void>;
@@ -214,21 +215,37 @@ export function useGraphEngine(): GraphEngineAPI {
       const g = graph.current;
       const nodeId = sid(id);
       if (g.isOnCanvas(nodeId)) return null;
-
+  
       const block = data ?? (fetchOK() ? await getBlock(nodeId) : null);
       if (!block) return null;
-
+  
       mountNode(nodeId, block, mousePos);
-
-      if (!data) {
-        let shown = 0;
-        for (const conn of block.connectionStatus.connections) {
-          const connId = sid(conn.id);
-          g.link(connId, nodeId);
-          if (shown++ < INITIAL_CANVAS_LIMIT) mountNode(connId, conn, mousePos);
+  
+      // Always link connections so existing on-canvas channels stay in sync,
+      // but only auto-mount neighbours during a fresh fetch (no pre-supplied data).
+      let shown = 0;
+      for (const conn of block.connectionStatus.connections) {
+        const connId = sid(conn.id);
+        g.link(connId, nodeId);
+  
+        // Patch the channel already in the graph so it lists this block as a child
+        const channelNode = g.get(connId);
+        if (channelNode && isChannel(channelNode.object)) {
+          const existing = channelNode.object.childrenStatus.children;
+          if (!existing.some(c => sid(c.id) === nodeId)) {
+            g.updateObject(connId, {
+              ...channelNode.object,
+              childrenStatus: {
+                ...channelNode.object.childrenStatus,
+                children: [...existing, block],
+              },
+            } as Channel);
+          }
         }
+  
+        if (!data && shown++ < INITIAL_CANVAS_LIMIT) mountNode(connId, conn, mousePos);
       }
-
+  
       flush();
       return nodeId;
     },
@@ -338,37 +355,34 @@ export function useGraphEngine(): GraphEngineAPI {
   }, [flush, unmountNode]);
 
   const toggleNode = useCallback(
-    async (
-      id: string | number,
-      body: Block | Channel | User | Group,
-      linkedToId?: string
-    ): Promise<void> => {
+    async (data: ToggleOptions): Promise<void> => {
       const g = graph.current;
-      const nodeId = sid(id);
-
+      const nodeId = sid(data.id);
+  
       if (g.isOnCanvas(nodeId)) {
         unmountNode(nodeId);
       } else {
-        if (body.type === "Channel") {
-          await addChannelNode(nodeId, undefined, body as Channel);
-        } else if (body.type === "User") {
-          await addUserNode(nodeId, undefined, body as User);
-        } else {
-          await addBlockNode(nodeId, undefined, body as Block);
+        if (isChannel(data.body)) {
+          await addChannelNode(nodeId, undefined, data.body);
+        } else if (isUser(data.body)) {
+          await addUserNode(nodeId, undefined, data.body);
+        } else if (isBlock(data.body)) {
+          await addBlockNode(nodeId, undefined, data.body);
         }
-        if (linkedToId) {
-          const lId = sid(linkedToId);
-          if (body.type === "Channel") {
-            g.link(nodeId, lId);
+        if (data.linkedToId && data.linkOptions?.shouldLink) {
+          const lId = sid(data.linkedToId);
+          if (isChannel(data.body)) {
+            g.link(nodeId, lId);                     
+          } else if (data.linkOptions.reverseLink) {
+            g.link(nodeId, lId);                     
           } else {
-            g.link(lId, nodeId);
+            g.link(lId, nodeId);                     
           }
         }
       }
-
       flush();
     },
-    [unmountNode, addChannelNode, addBlockNode, flush]
+    [unmountNode, addChannelNode, addUserNode, addBlockNode, flush]
   );
 
   // ── Selection ─────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
-import { Block, Channel, ChildrenStatus, ConnectionStatus, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
+import { Block, Channel, ChildrenStatus, ConnectionStatus, User, FollowingStatus, FollowersStatus, Group, ToggleOptions } from "@/types/arena";
 import Image from "next/image";
 import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser, hasImage, isText, isAttachment, isEmbed, isLink } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
@@ -15,7 +15,7 @@ interface InfoPanelType {
   childrenFetcher:   (id: string, s: ChildrenStatus, type: string) => Promise<void>;
   followerFetcher:   (id: string, s: FollowersStatus, type: string) => Promise<void>;
   followingFetcher:  (id: string, s: FollowingStatus) => Promise<void>;
-  makeNodeVisible:   (id: string, body: Block | Channel | User | Group) => void;
+  makeNodeVisible:   (data: ToggleOptions) => void;
   setSelected:       (id: string) => void;
   checkNodeVisible:  (id: string) => boolean;
   setImageOpen:      (val: boolean) => void;
@@ -87,7 +87,7 @@ export default function InfoPanel({
         current && checkNodeVisible(current.id) &&
         !viewerOpen && !selectOpen
       ) {
-        makeNodeVisible(current.id, current);
+        makeNodeVisible({id: current.id, body: current});
         setSelected("nearest");
       }
     };
@@ -95,9 +95,16 @@ export default function InfoPanel({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [current]);
 
-  const toggleNode   = (node: Block | Channel | User | Group) => { makeNodeVisible(node.id, node); }
+  const toggleNode     = (node: Block | Channel | User | Group) =>
+    makeNodeVisible({ id: node.id, body: node, linkedToId: current?.id });
+
+  const toggleFollower = (node: Block | Channel | User | Group) =>
+    makeNodeVisible({ id: node.id, body: node, linkedToId: current?.id, linkOptions: { reverseLink: true } });
+
   const handleSelect = (node: Block | Channel | User | Group) =>
-    checkNodeVisible(node.id) ? setSelected(node.id) : makeNodeVisible(node.id, node);
+    checkNodeVisible(node.id)
+      ? setSelected(node.id)
+      : makeNodeVisible({ id: node.id, body: node, linkedToId: current?.id });
 
   const animState = collapsed ? "collapsed" : "open";
 
@@ -194,7 +201,7 @@ export default function InfoPanel({
                     <input
                       type="checkbox"
                       checked={checkNodeVisible(current.owner.id)}
-                      onChange={() => makeNodeVisible(current.owner.id, current.owner)}
+                      onChange={() => makeNodeVisible({id: current.owner.id, body: current.owner})}
                     />
                     · {current.date} 
                     
@@ -248,11 +255,17 @@ export default function InfoPanel({
               className="info-section-scroll react-flow__controls"
             >
               <div className="collections-grid">
-                {hasFollowers && (
-                  <NodeList list={(current as User | Group).followersStatus.followers} status={(current as User).followersStatus}
-                    checkNodeVisible={checkNodeVisible} onToggle={toggleNode} onSelect={handleSelect}
+              {hasFollowers && (
+                  <NodeList
+                    list={(current as User | Group).followersStatus.followers}
+                    status={(current as User).followersStatus}
+                    checkNodeVisible={checkNodeVisible}
+                    onToggle={toggleFollower}          
+                    onSelect={handleSelect}
                     loadMore={() => followerFetcher(current.id, (current as User).followersStatus, isGroup(current) ? "groups" : "users")}
-                    label="Followers" nodeId={current.id} />
+                    label="Followers"
+                    nodeId={current.id}
+                  />
                 )}
                 {hasFollowing && (
                   <NodeList list={(current as User).followingStatus.following} status={(current as User).followingStatus}
@@ -269,7 +282,7 @@ export default function InfoPanel({
       <div className={current ? "info-toolbar" : "info-toolbar info-null"}>
         <button onClick={() => {
           if (!current) return;
-          makeNodeVisible(current.id, current);
+          makeNodeVisible({id: current.id, body: current});
           setSelected("nearest");
         }}
           className="node-toolbar-button react-flow__controls popup-menu menu-title">

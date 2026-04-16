@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock, Group } from "@/types/arena";
+import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock, Group, ToggleOptions } from "@/types/arena";
 import { isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
 
 type AnyNode = Block | Channel | User | Group;
@@ -11,7 +11,7 @@ interface NodeListProps {
     list:             AnyNode[];
     status:           AnyStatus;
     checkNodeVisible: (id: string) => boolean;
-    onToggle:         (node: AnyNode) => void;
+    onToggle:         (data: ToggleOptions) => void;
     onSelect:         (node: AnyNode) => void;
     loadMore:         () => void;
     label:            string;
@@ -73,7 +73,7 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
                     <input
                       type="checkbox"
                       checked={checkNodeVisible(node.id)}
-                      onChange={() => onToggle(node)}
+                      onChange={() => onToggle({id: node.id, body: node})}
                     />
                   )}
 

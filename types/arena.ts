@@ -133,3 +133,13 @@ export interface BlockCreation {
     title?: string,
     description?: string,
 }
+
+export interface ToggleOptions {
+    id: string;
+    body: Block | Channel | User | Group;
+    linkedToId?: string;
+    linkOptions?: { 
+        shouldLink?: boolean; 
+        reverseLink?: boolean 
+    }
+}
