@@ -18,7 +18,7 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
     if (!origin) return null;
   
     // Clamp so pills don't overflow viewport
-    const OFFSET = 70; // horizontal distance from origin to pill center
+    const OFFSET = 120; // horizontal distance from origin to pill center
     const vw = window.innerWidth;
     const vh = window.innerHeight;
   
@@ -32,7 +32,15 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
         x: clamp(origin.x , MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
         y: clamp(origin.y + OFFSET, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
     };
-  
+    const rightCenter = {
+        y: clamp(origin.y, MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
+        x: clamp(origin.x - OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
+    };
+    const leftCenter = {
+        y: clamp(origin.y , MENU_H / 2 + 8, vh - MENU_H / 2 - 8),
+        x: clamp(origin.x + OFFSET, MENU_W / 2 + 8, vw - MENU_W / 2 - 8),
+    };
+    
   
     const submit = () => {
       if (!input.trim()) return;
@@ -158,6 +166,56 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
                     </button>
                 </div>
             </div>
+
+            <div
+                style={{
+                    position: "absolute",
+                    left: leftCenter.x,
+                    top: leftCenter.y,
+                    transform: "translate(-50%,-50%)",
+                    animation: "radial-left 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="react-flow__controls"
+            >
+                <div
+                    style={{
+                        padding: "6px 14px 6px 14px",
+                        cursor: "pointer"
+                    }}
+                    className=" popup-menu"
+                    onClick={() => {}}
+                >
+                    <span className="menu-title">
+                        Create channel
+                    </span>
+                </div>
+            </div>
+
+            <div
+                style={{
+                    position: "absolute",
+                    left: rightCenter.x,
+                    top: rightCenter.y,
+                    transform: "translate(-50%,-50%)",
+                    animation: "radial-right 0.22s cubic-bezier(0.34,1.56,0.64,1) both",
+                }}
+                onMouseDown={(e) => e.stopPropagation()}
+                className="react-flow__controls"
+            >
+                <div
+                    style={{
+                        padding: "6px 14px 6px 14px",
+                        cursor: "pointer",
+                    }}
+                    className=" popup-menu"
+                    onClick={() => {}}
+                >
+                    <span className="menu-title">
+                        Create block
+                    </span>
+                </div>
+            </div>
   
             <style>{`
                 @keyframes radial-top {
@@ -168,11 +226,11 @@ export default function RadialMenu({ origin, onClose, onAdd, onRandom }: RadialM
                 from { opacity: 0; transform: translate(-50%, calc(-50% - 80px)) scale(0.7); pointer-events: none  }
                 to   { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto  }
                 }
-                @keyframes radial-left {
+                @keyframes radial-right {
                     from { opacity: 0; transform: translate( calc(-50% + 80px), -50% ) scale(0.7); pointer-events: none  }
                     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto  }
                     }
-                @keyframes radial-right {
+                @keyframes radial-left {
                     from { opacity: 0; transform: translate( calc(-50% - 80px), -50% ) scale(0.7); pointer-events: none  }
                     to   { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto  }
                 }

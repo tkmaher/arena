@@ -38,6 +38,7 @@ import type {
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
+import { isBlock, isChannel } from "@/scripts/utility";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -566,9 +567,37 @@ export function useGraphEngine(): GraphEngineAPI {
   const makeConnection = useCallback(
     async (id: string, type: string, channels: string[]): Promise<void> => {
       const g = graph.current;
+      const node = g.get(id);
+      if (!node || (!isBlock(node.object) && !isChannel(node.object))) return;
       const ok = await createConnection(id, type, channels);
       if (ok) {
-        for (const c of channels) g.link(sid(c), sid(id));
+        let newConnections = node.object.connectionStatus.connections;
+
+        for (const c of channels) {
+          const channel = g.get(sid(c));
+          if (!channel || !isChannel(channel.object)) continue;
+
+          g.updateObject(sid(c), {
+            ...channel.object,
+            childrenStatus: { 
+              ...channel.object.childrenStatus, 
+              children: [...channel.object.childrenStatus.children, node.object]
+            },
+          } as Channel);
+
+          g.link(sid(c), sid(id));
+
+          newConnections.push(channel.object);
+        }
+
+        g.updateObject(sid(id), {
+          ...node.object,
+          connectionStatus: { 
+            ...node.object.connectionStatus, 
+            connections: newConnections
+          },
+        } as Block);
+
         flush();
       }
     },
