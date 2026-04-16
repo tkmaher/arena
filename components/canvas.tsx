@@ -26,7 +26,6 @@ import type { CanvasNode } from "@/types/reactflow";
 import type { AuthUser, Block, Channel, Group, User } from "@/types/arena";
 import { GraphContext } from "@/context/graphcontext";
 import NodeStats from "@/components/ui/nodestats";
-import { setUser } from "@/scripts/getBlock";
 
 import { motion } from "framer-motion";
 import Upload from "./ui/upload";
@@ -60,7 +59,7 @@ function CanvasInner() {
       body: JSON.stringify({ token }),
     });
   
-    const res = await setUser(); // no token argument needed anymore
+    const res = await engine.hydrateFromAuthUser(); // no token argument needed anymore
     if (res) {
       setAuthUser(res);
     }
@@ -68,7 +67,7 @@ function CanvasInner() {
   
   useEffect(() => {
     // On mount, check if a session already exists
-    setUser().then(res => {
+    engine.hydrateFromAuthUser().then(res => {
       if (res) setAuthUser(res);
     });
   }, []);

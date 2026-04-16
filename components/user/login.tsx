@@ -24,7 +24,7 @@ export default function LoginPage({checkNodeVisible, onToggle, onSelect}: LoginP
       if (event.data?.type !== "ARENA_AUTH_RESULT") return;
   
       if (event.data.success) {
-        setUser(event.data.token)
+        setUser(event.data.token);
       }
     }
   

@@ -20,12 +20,14 @@ import {
   getFollowing,
   getFollowers,
   createConnection,
+  setUser,
   createBlock as createBlockAPI,
   createChannel as createChannelAPI,
   deleteChannel as deleteChannelAPI,
   type CreateBlockContent,
 } from "@/scripts/getBlock";
 import type {
+  AuthUser,
   Block,
   Channel,
   ChildrenStatus,
@@ -38,7 +40,7 @@ import type {
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
-import { isBlock, isChannel } from "@/scripts/utility";
+import { isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -70,30 +72,12 @@ export interface GraphEngineAPI {
   exportGraph: () => void;
   importGraph: (data: any) => void;
 
-  // ── Connections ──────────────────────────────────────────────────────────
-  /**
-   * Connect an existing block/channel (childId) to one or more channels.
-   * Updates graph edges on success.
-   */
+  // ── Authentication ──────────────────────────────────────────────────────────
   makeConnection: (id: string, type: string, channels: string[]) => Promise<void>;
-
-  // ── Create ───────────────────────────────────────────────────────────────
-  /**
-   * Create a new block inside a channel and mount it on the canvas.
-   * Returns the new node id, or null on failure.
-   */
   createBlock: (channelId: string, content: CreateBlockContent, mousePos?: MousePos) => Promise<string | null>;
-  /**
-   * Create a new channel and mount it on the canvas.
-   * Returns the new node id, or null on failure.
-   */
   createChannel: (title: string, status?: "public" | "closed" | "private", mousePos?: MousePos) => Promise<string | null>;
-
-  // ── Delete ───────────────────────────────────────────────────────────────
-  /**
-   * Permanently delete a channel from are.na AND remove it from the graph.
-   */
   deleteChannel: (id: string) => Promise<boolean>;
+  hydrateFromAuthUser: () => Promise<AuthUser | null>;
 }
 
 export interface MousePos {
@@ -678,6 +662,71 @@ export function useGraphEngine(): GraphEngineAPI {
     [purgeNode, flush]
   );
 
+  const hydrateFromAuthUser = useCallback(async (): Promise<AuthUser | null> => {
+    const auth = await setUser();
+    if (!auth) return null;
+  
+    const g = graph.current;
+  
+    const register = (obj: Block | Channel | User | Group) => {
+      const id = sid(obj.id);
+      const existing = g.get(id);
+  
+      if (existing) {
+        g.updateObject(id, obj);
+        return;
+      }
+  
+      g.ensure(id, {
+        object: obj,
+        onCanvas: false,
+        gridPos: { x: 0, y: 0 },
+      });
+    };
+  
+    const registerRecursive = (obj: Block | Channel | User | Group) => {
+      register(obj);
+  
+      if (isChannel(obj) || isUser(obj) || isGroup(obj)) {
+        for (const child of obj.childrenStatus.children) {
+          register(child);
+          g.link(sid(obj.id), sid(child.id));
+        }
+      }
+  
+      if (isBlock(obj) || isChannel(obj)) {
+        for (const conn of obj.connectionStatus.connections) {
+          register(conn);
+          g.link(sid(conn.id), sid(obj.id));
+        }
+      }
+  
+      if (isUser(obj)) {
+        for (const item of obj.followingStatus.following) {
+          register(item);
+        }
+        for (const follower of obj.followersStatus.followers) {
+          register(follower);
+        }
+      }
+  
+      if (isGroup(obj)) {
+        for (const follower of obj.followersStatus.followers) {
+          register(follower);
+        }
+      }
+    };
+  
+    registerRecursive(auth.user);
+  
+    for (const child of auth.user.childrenStatus.children) registerRecursive(child);
+    for (const item of auth.user.followingStatus.following) registerRecursive(item);
+    for (const follower of auth.user.followersStatus.followers) registerRecursive(follower);
+  
+    flush();
+    return auth;
+  }, [flush]);
+
   // ── Return ────────────────────────────────────────────────────────────────
 
   return {
@@ -705,5 +754,6 @@ export function useGraphEngine(): GraphEngineAPI {
     createBlock,
     createChannel,
     deleteChannel,
+    hydrateFromAuthUser
   };
 }
