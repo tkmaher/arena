@@ -568,38 +568,54 @@ export function useGraphEngine(): GraphEngineAPI {
     async (id: string, type: string, channels: string[]): Promise<void> => {
       const g = graph.current;
       const node = g.get(id);
+  
       if (!node || (!isBlock(node.object) && !isChannel(node.object))) return;
+  
       const ok = await createConnection(id, type, channels);
-      if (ok) {
-        let newConnections = node.object.connectionStatus.connections;
-
-        for (const c of channels) {
-          const channel = g.get(sid(c));
-          if (!channel || !isChannel(channel.object)) continue;
-
-          g.updateObject(sid(c), {
-            ...channel.object,
-            childrenStatus: { 
-              ...channel.object.childrenStatus, 
-              children: [...channel.object.childrenStatus.children, node.object]
+      if (!ok) return;
+  
+      const newConnections = [...node.object.connectionStatus.connections];
+  
+      for (const c of channels) {
+        const channelNode = g.get(sid(c));
+        if (!channelNode || !isChannel(channelNode.object)) continue;
+  
+        const existingChildren = channelNode.object.childrenStatus.children;
+        const childExists = existingChildren.some(child => sid(child.id) === sid(id));
+  
+        g.updateObject(
+          sid(c),
+          {
+            ...channelNode.object,
+            childrenStatus: {
+              ...channelNode.object.childrenStatus,
+              children: childExists
+                ? existingChildren
+                : [...existingChildren, node.object],
             },
-          } as Channel);
-
-          g.link(sid(c), sid(id));
-
-          newConnections.push(channel.object);
+          }
+        );
+  
+        g.link(sid(c), sid(id));
+  
+        const alreadyConnected = newConnections.some(
+          conn => sid(conn.id) === sid(c)
+        );
+  
+        if (!alreadyConnected) {
+          newConnections.push(channelNode.object);
         }
-
-        g.updateObject(sid(id), {
-          ...node.object,
-          connectionStatus: { 
-            ...node.object.connectionStatus, 
-            connections: newConnections
-          },
-        } as Block);
-
-        flush();
       }
+  
+      g.updateObject(sid(id), {
+        ...node.object,
+        connectionStatus: {
+          ...node.object.connectionStatus,
+          connections: newConnections,
+        },
+      });
+  
+      flush();
     },
     [flush]
   );
