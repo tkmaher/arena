@@ -60,7 +60,7 @@ export default function ChannelSelect({
             transition={{ duration: 0.3 }}
         >
             <motion.div
-                className="info-media-wrap viewer"
+                className="info-media-wrap viewer checklist"
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
@@ -74,16 +74,16 @@ export default function ChannelSelect({
                     autoFocus
                 />
 
-                <ul>
+                <ul style={{overflowY: "auto", height: "70dvh"}}>
                     {filtered.map(ch => (
                         <li key={ch.id}>
-                            <label>
+                            <label style={{display: "flex", gap: "0.8em"}}>
                                 <input
                                     type="checkbox"
                                     checked={selected.has(ch.id)}
                                     onChange={() => toggleChannel(ch.id)}
                                 />
-                                {ch.title ?? ch.id}
+                                <a>{ch.title ?? ch.id}</a>
                             </label>
                         </li>
                     ))}

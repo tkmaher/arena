@@ -93,7 +93,10 @@ export default function InfoPanel({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if ((e.key === "Backspace" || e.key === "Delete") && current && checkNodeVisible(current.id)) {
+      if ((e.key === "Backspace" || e.key === "Delete") && 
+        current && checkNodeVisible(current.id) &&
+        !viewerOpen && !selectOpen
+      ) {
         makeNodeVisible(current.id, current);
         setSelected("nearest");
       }
