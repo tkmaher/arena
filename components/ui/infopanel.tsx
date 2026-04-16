@@ -83,6 +83,9 @@ export default function InfoPanel({
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
+      if (document.activeElement instanceof HTMLElement) {
+        if (document.activeElement.isContentEditable) return;
+      }
       if ((e.key === "Backspace" || e.key === "Delete") && 
         current && checkNodeVisible(current.id) &&
         !viewerOpen && !selectOpen
@@ -210,7 +213,10 @@ export default function InfoPanel({
                     <a href={(isBlock(current) && (isLink(current) || isAttachment(current) || isEmbed(current)))
                       ? `https://are.na/block/${current.id}` : linkOut} target="_blank">
                       {current.id}
-                    </a> · {isChannel(current) ? ` Channel · ${current.itemCount} children` : isUser(current) ? " User" : isGroup(current) ? " Group" : " Block"}
+                    </a> · {
+                      isChannel(current) ? ` Channel · ${current.itemCount} children` 
+                      : isUser(current) ? ` User · ${current.channelCount} channels` 
+                      : isGroup(current) ? ` Group · ${current.channelCount} channels` : " Block"}
                   </span>
                   {current.description && <DescriptionRef html={current.description} />}
                 </>

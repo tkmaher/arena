@@ -3,8 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ChannelList } from "./channelselect";
 import { BlockCreation, ChannelCreation } from "@/types/arena";
-import { useGraphActions } from "@/context/graphcontext";
-import { login } from "@/scripts/utility";
 
 export default function CreatePopup({
     setOpen, 
@@ -24,6 +22,10 @@ export default function CreatePopup({
     const isChannel: boolean = type === "channels";
 
     const [selected, setSelected] = useState<Set<string>>(new Set());
+
+    const [visibility, setVisibility] = useState("");
+
+    const visibilities = ["public", "closed", "private"];
 
     const toggleChannel = (channelId: string) => {
         setSelected(prev => {
@@ -71,7 +73,7 @@ export default function CreatePopup({
             createChannel(
                 {
                     title: title,
-                    visibility: "public", // TODO: make selection
+                    visibility: visibility,
                     description: description != "" ? description : undefined,
                     group_id: gid != "" ? gid : undefined
                 }
@@ -129,6 +131,21 @@ export default function CreatePopup({
                 style={{marginBottom: "0.8em"}}
                 className="text-input"
             />}
+
+            {!isChannel && 
+                <select 
+                    id="choice-select" 
+                    value={visibility} 
+                    onChange={(e) => setVisibility(e.target.value)}
+                >
+                    <option value="" disabled>Visibility</option>
+                    {visibilities.map((vis) => (
+                        <option key={vis} value={vis}>
+                            {vis}
+                        </option>
+                    ))}
+                </select>
+            }
 
             {!isChannel && <ChannelList id={""} selected={selected} toggleChannel={toggleChannel}/>}
 

@@ -524,6 +524,7 @@ async function parseUser(data: any, performFetch: boolean): Promise<User> {
         imageUrl:     data.avatar ?? null,
         description:  data.bio ? data.bio.html : null,
         type: "User",
+        channelCount: data.counts.channels,
         followingStatus: following,
         childrenStatus:  children,
         followersStatus: followers,
@@ -549,6 +550,7 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
         imageUrl:     data.avatar ?? null,
         description:  data.bio ? data.bio.html : null,
         type: "Group",
+        channelCount: data.counts.channels,
         childrenStatus:  children,
         followersStatus: followers,
     };

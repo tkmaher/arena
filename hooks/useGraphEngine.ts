@@ -231,7 +231,7 @@ export function useGraphEngine(): GraphEngineAPI {
   
         // Patch the channel already in the graph so it lists this block as a child
         const channelNode = g.get(connId);
-        if (channelNode && isChannel(channelNode.object)) {
+        if (channelNode?.object && isChannel(channelNode.object)) {
           const existing = channelNode.object.childrenStatus.children;
           if (!existing.some(c => sid(c.id) === nodeId)) {
             g.updateObject(connId, {

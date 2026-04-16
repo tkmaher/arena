@@ -40,6 +40,8 @@ export interface User {
 
     type: string;
 
+    channelCount: number;
+
     followersStatus: FollowersStatus;
     followingStatus: FollowingStatus;
     childrenStatus: ChildrenStatus;
@@ -61,6 +63,8 @@ export interface Group {
     imageUrl?: string;
 
     type: string;
+
+    channelCount: number;
 
     followersStatus: FollowersStatus;
     childrenStatus: ChildrenStatus; // TODO: How to get group members/
@@ -122,7 +126,7 @@ export interface EmbedBlock extends Block {
 
 export interface ChannelCreation {
     title: string,
-    visibility: "public" | "closed" | "private",
+    visibility: string,
     description?: string,
     group_id?: string,
 }
