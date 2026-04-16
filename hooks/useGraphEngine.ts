@@ -567,43 +567,45 @@ export function useGraphEngine(): GraphEngineAPI {
   const makeConnection = useCallback(
     async (id: string, type: string, channels: string[]): Promise<void> => {
       const g = graph.current;
-      const node = g.get(id);
+      const node = g.get(sid(id));
   
       if (!node || (!isBlock(node.object) && !isChannel(node.object))) return;
+
+      console.log("got node");
   
       const ok = await createConnection(id, type, channels);
       if (!ok) return;
+
+      console.log("got connection");
   
       const newConnections = [...node.object.connectionStatus.connections];
   
       for (const c of channels) {
-        const channelNode = g.get(sid(c));
+        const cid = sid(c);
+        const channelNode = g.get(cid);
+      
         if (!channelNode || !isChannel(channelNode.object)) continue;
-  
+      
         const existingChildren = channelNode.object.childrenStatus.children;
-        const childExists = existingChildren.some(child => sid(child.id) === sid(id));
-  
-        g.updateObject(
-          sid(c),
-          {
-            ...channelNode.object,
-            childrenStatus: {
-              ...channelNode.object.childrenStatus,
-              children: childExists
-                ? existingChildren
-                : [...existingChildren, node.object],
-            },
-          }
+        const childExists = existingChildren.some(
+          child => sid(child.id) === sid(id)
         );
-  
-        g.link(sid(c), sid(id));
-  
-        const alreadyConnected = newConnections.some(
-          conn => sid(conn.id) === sid(c)
-        );
-  
-        if (!alreadyConnected) {
-          newConnections.push(channelNode.object);
+      
+        const updatedChannel: Channel = {
+          ...channelNode.object,
+          childrenStatus: {
+            ...channelNode.object.childrenStatus,
+            children: childExists
+              ? existingChildren
+              : [...existingChildren, node.object],
+          },
+        };
+      
+        g.updateObject(cid, updatedChannel);
+        g.link(cid, sid(id));
+      
+        if (!newConnections.some(conn => sid(conn.id) === cid)) {
+          newConnections.push(updatedChannel);
         }
       }
   
