@@ -33,9 +33,9 @@ export default function BlockProp({ id, data }: NodeProps) {
 
   let background = "auto";
   if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
-    background = "#32a852";
+    background = "#32a852 !important";
   else if (isUser(data.object) && user?.user.id === data.object.id)
-    background = "#32a852";
+    background = "#32a852 !important";
 
   return (
     <>

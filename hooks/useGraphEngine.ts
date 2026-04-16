@@ -356,6 +356,7 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const toggleNode = useCallback(
     async (data: ToggleOptions): Promise<void> => {
+      console.log("toggling node with data: ", data)
       const g = graph.current;
       const nodeId = sid(data.id);
   

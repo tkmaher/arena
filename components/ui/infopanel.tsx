@@ -262,7 +262,7 @@ export default function InfoPanel({
                     checkNodeVisible={checkNodeVisible}
                     onToggle={toggleFollower}          
                     onSelect={handleSelect}
-                    loadMore={() => followerFetcher(current.id, (current as User).followersStatus, isGroup(current) ? "groups" : "users")}
+                    loadMore={() => followerFetcher(current.id, (current as User | Group).followersStatus, isGroup(current) ? "groups" : "users")}
                     label="Followers"
                     nodeId={current.id}
                   />
