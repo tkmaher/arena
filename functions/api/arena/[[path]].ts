@@ -1,11 +1,16 @@
-const ALLOWED_METHODS = ["GET", "POST", "PUT", "DELETE", "PATCH"];
+type Params = Record<string, string | string[]>;
 
 async function proxyToArena(request: Request, params: Params): Promise<Response> {
-    const cookie = request.headers.get("Cookie") ?? "";
-    const token = cookie.split(";").map(c => c.trim())
-        .find(c => c.startsWith("arena_token="))?.split("=")[1];
+    const isReadOnly = request.method === "GET" || request.method === "HEAD";
 
-    if (!token) {
+    const cookie = request.headers.get("Cookie") ?? "";
+    const token = cookie
+        .split(";")
+        .map(c => c.trim())
+        .find(c => c.startsWith("arena_token="))
+        ?.split("=")[1];
+
+    if (!isReadOnly && !token) {
         return new Response(JSON.stringify({ error: "Not authenticated" }), {
             status: 401,
             headers: { "Content-Type": "application/json" },
@@ -16,16 +21,31 @@ async function proxyToArena(request: Request, params: Params): Promise<Response>
     const originalUrl = new URL(request.url);
     const arenaUrl = `https://api.are.na/v3/${path}${originalUrl.search}`;
 
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+    };
+    if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const arenaRes = await fetch(arenaUrl, {
         method: request.method,
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-        },
-        body: ["GET", "HEAD"].includes(request.method) ? undefined : request.body,
+        headers,
+        body: isReadOnly ? undefined : request.body,
     });
 
-    const data = await arenaRes.json();
+    // 204 No Content — return empty success
+    if (arenaRes.status === 204) {
+        return new Response(null, { status: 204 });
+    }
+
+    let data: unknown;
+    try {
+        data = await arenaRes.json();
+    } catch {
+        return new Response(null, { status: arenaRes.status });
+    }
+
     return new Response(JSON.stringify(data), {
         status: arenaRes.status,
         headers: { "Content-Type": "application/json" },

@@ -72,6 +72,7 @@ export default function ChannelSelect({
                     onChange={e => setSearch(e.target.value)}
                     placeholder="Search channels..."
                     autoFocus
+                    style={{marginBottom: "0.8em"}}
                 />
 
                 <ul style={{overflowY: "auto", height: "70dvh"}}>

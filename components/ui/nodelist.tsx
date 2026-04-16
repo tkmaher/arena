@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Block, Channel, User, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, ImageBlock, Group } from "@/types/arena";
+import { isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
 
 type AnyNode = Block | Channel | User | Group;
 type AnyStatus = ConnectionStatus | ChildrenStatus | FollowersStatus | FollowingStatus;
@@ -62,7 +63,10 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
                   onMouseLeave={() => setHovered(null)}
                 >
                   <a onClick={() => onSelect(node)}>
-                    {node.title ?? node.id}
+                    <img src={
+                      isBlock(node) ? "block.svg" : isChannel(node) ? "channel.svg" : isGroup(node) ? "group.svg" : "user.svg"}
+                    />
+                    <div>{node.title ?? node.id}</div>
                   </a>
 
                   {!limitSize && (

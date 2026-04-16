@@ -1,10 +1,10 @@
-import { 
-    Block, 
-    ImageBlock, 
-    LinkBlock, 
-    TextBlock, 
-    EmbedBlock, 
-    Channel, 
+import {
+    Block,
+    ImageBlock,
+    LinkBlock,
+    TextBlock,
+    EmbedBlock,
+    Channel,
     AttachmentBlock,
     ConnectionStatus,
     ChildrenStatus,
@@ -17,7 +17,7 @@ import {
 
 const CONNECTIONS_PER_PAGE = 50;
 
-import { formattedDate } from "@/scripts/utility"
+import { formattedDate } from "@/scripts/utility";
 
 class ArenaApiError extends Error {
     constructor(
@@ -31,18 +31,24 @@ class ArenaApiError extends Error {
 }
 
 const ARENA_BASE = "https://api.are.na/v3";
-const PROXY_BASE = "/api/arena";
 
-async function arenaFetch(url: string | URL): Promise<any> {
-    const original = new URL(url.toString());
-    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
+// ─── Core fetch ───────────────────────────────────────────────────────────────
+
+interface FetchOptions {
+    method?: string;
+    body?: unknown;
+}
+
+async function arenaFetch(url: string | URL, options: FetchOptions = {}): Promise<any> {
+    const method = options.method ?? "GET";
+    const proxyUrl = url.toString();
 
     let response: Response;
     try {
         response = await fetch(proxyUrl, {
-            method: "GET",
+            method,
             headers: { "Content-Type": "application/json" },
-           
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
         });
     } catch (networkError) {
         throw new ArenaApiError(0, `Network error: ${networkError}`, proxyUrl);
@@ -54,7 +60,6 @@ async function arenaFetch(url: string | URL): Promise<any> {
             const body: any = await response.json();
             serverMessage = body?.message ?? body?.error ?? "";
         } catch { }
-
         throw new ArenaApiError(
             response.status,
             serverMessage || `${response.status} ${response.statusText}`,
@@ -62,19 +67,24 @@ async function arenaFetch(url: string | URL): Promise<any> {
         );
     }
 
+    // 204 No Content
+    if (response.status === 204) return null;
+
     try {
         return await response.json();
     } catch {
-        throw new ArenaApiError(response.status, "Invalid JSON response.", proxyUrl);
+        return null;
     }
 }
+
+// ─── Read operations ─────────────────────────────────────────────────────────
 
 export async function getConnections(
     id: string,
     type: string,
     page: number
 ): Promise<ConnectionStatus> {
-    const url = new URL(`https://api.are.na/v3/${type}/${id}/connections`);
+    const url = new URL(`${ARENA_BASE}/${type}/${id}/connections`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
 
@@ -90,21 +100,18 @@ export async function getConnections(
         } else {
             console.error(`[getConnections] Unexpected error for ${type}/${id}:`, error);
         }
-        // Return a terminal state so the UI stops paginating.
         return { connections: [], complete: true, page };
     }
 }
 
-// types: users/channels/groups
 export async function getChildren(
-    id: string, 
-    page: number, 
+    id: string,
+    page: number,
     type: string
 ): Promise<ChildrenStatus> {
-    const url = new URL(`https://api.are.na/v3/${type}/${id}/contents`);
+    const url = new URL(`${ARENA_BASE}/${type}/${id}/contents`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
-    //if (type === "users" || type === "groups") url.searchParams.set("type", "Channel");
 
     try {
         const data = await arenaFetch(url);
@@ -120,16 +127,16 @@ export async function getChildren(
         return { children, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         if (error instanceof ArenaApiError) {
-            console.error(`[getChildren] API error for channel ${id} (page ${page}):`, error.message);
+            console.error(`[getChildren] API error for ${type}/${id} (page ${page}):`, error.message);
         } else {
-            console.error(`[getChildren] Unexpected error for channel ${id}:`, error);
+            console.error(`[getChildren] Unexpected error for ${type}/${id}:`, error);
         }
         return { children: [], complete: true, page };
     }
 }
 
 export async function getFollowing(id: string, page: number): Promise<FollowingStatus> {
-    const url = new URL(`https://api.are.na/v3/users/${id}/following`);
+    const url = new URL(`${ARENA_BASE}/users/${id}/following`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
 
@@ -144,7 +151,6 @@ export async function getFollowing(id: string, page: number): Promise<FollowingS
                 })
             )
         ).filter((item): item is User | Channel | Group => item !== null);
-
         return { following, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         if (error instanceof ArenaApiError) {
@@ -156,33 +162,26 @@ export async function getFollowing(id: string, page: number): Promise<FollowingS
     }
 }
 
-// types: users/groups
 export async function getFollowers(
-    id: string, 
+    id: string,
     page: number,
     type: string
 ): Promise<FollowersStatus> {
-    const url = new URL(`https://api.are.na/v3/${type}/${id}/followers`);
+    const url = new URL(`${ARENA_BASE}/${type}/${id}/followers`);
     url.searchParams.set("per", CONNECTIONS_PER_PAGE.toString());
     url.searchParams.set("page", page.toString());
-    console.log("Fetching followers from URL:", url.toString());
 
     try {
         const data = await arenaFetch(url);
-        const followers: (User)[] = (
-            await Promise.all(
-                data.data.map((child: any) =>
-                    parseUser(child, false)
-                )
-            )
+        const followers: User[] = (
+            await Promise.all(data.data.map((child: any) => parseUser(child, false)))
         ).filter((item): item is User => item !== null);
-
         return { followers, complete: !data.meta.has_more_pages, page: page + 1 };
     } catch (error) {
         if (error instanceof ArenaApiError) {
-            console.error(`[getFollowers] API error for user ${id} (page ${page}):`, error.message);
+            console.error(`[getFollowers] API error for ${type}/${id} (page ${page}):`, error.message);
         } else {
-            console.error(`[getFollowers] Unexpected error for user ${id}:`, error);
+            console.error(`[getFollowers] Unexpected error for ${type}/${id}:`, error);
         }
         return { followers: [], complete: true, page };
     }
@@ -190,7 +189,7 @@ export async function getFollowers(
 
 export async function getBlock(id: string): Promise<Block | null> {
     try {
-        const data = await arenaFetch(`https://api.are.na/v3/blocks/${id}`);
+        const data = await arenaFetch(`${ARENA_BASE}/blocks/${id}`);
         return parseBlock(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 404) {
@@ -206,7 +205,7 @@ export async function getBlock(id: string): Promise<Block | null> {
 
 export async function getChannel(id: string): Promise<Channel | null> {
     try {
-        const data = await arenaFetch(`https://api.are.na/v3/channels/${id}`);
+        const data = await arenaFetch(`${ARENA_BASE}/channels/${id}`);
         return parseChannel(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 404) {
@@ -222,7 +221,7 @@ export async function getChannel(id: string): Promise<Channel | null> {
 
 export async function getUser(id: string): Promise<User | null> {
     try {
-        const data = await arenaFetch(`https://api.are.na/v3/users/${id}`);
+        const data = await arenaFetch(`${ARENA_BASE}/users/${id}`);
         return parseUser(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 404) {
@@ -238,21 +237,182 @@ export async function getUser(id: string): Promise<User | null> {
 
 export async function getGroup(id: string): Promise<Group | null> {
     try {
-        const data = await arenaFetch(`https://api.are.na/v3/groups/${id}`);
+        const data = await arenaFetch(`${ARENA_BASE}/groups/${id}`);
         return parseGroup(data, true);
     } catch (error) {
         if (error instanceof ArenaApiError && error.status === 404) {
-            console.warn(`[getGroup] User "${id}" not found.`);
+            console.warn(`[getGroup] Group "${id}" not found.`);
         } else if (error instanceof ArenaApiError) {
-            console.error(`[getGroup] API error for user "${id}":`, error.message);
+            console.error(`[getGroup] API error for group "${id}":`, error.message);
         } else {
-            console.error(`[getGroup] Unexpected error for user "${id}":`, error);
+            console.error(`[getGroup] Unexpected error for group "${id}":`, error);
         }
         return null;
     }
 }
 
-// ─── Parsers ───────────────────────────────────────────────────────────────────
+// ─── Create operations ────────────────────────────────────────────────────────
+
+/**
+ * Create a new channel.
+ * status: "public" | "closed" | "private"
+ */
+export async function createChannel(
+    title: string,
+    status: "public" | "closed" | "private" = "private"
+): Promise<Channel | null> {
+    try {
+        const data = await arenaFetch(`${ARENA_BASE}/channels`, {
+            method: "POST",
+            body: { title, status },
+        });
+        return parseChannel(data, false);
+    } catch (error) {
+        if (error instanceof ArenaApiError) {
+            console.error("[createChannel] API error:", error.message);
+        } else {
+            console.error("[createChannel] Unexpected error:", error);
+        }
+        return null;
+    }
+}
+
+export interface CreateBlockContent {
+    value: string;
+    title?: string;
+    description?: string;
+    original_source_url?: string;
+    original_source_title?: string;
+    channel_ids: string[];
+}
+
+/**
+ * Create a block inside a channel. Returns the new block from the API.
+ * The are.na API mirrors the new block back from
+ *   POST /v3/channels/:channel_id/blocks
+ */
+export async function createBlock(
+    channelId: string,
+    content: CreateBlockContent
+): Promise<Block | null> {
+    let body: Record<string, string | string[]> = {
+        value: content.value,
+        channel_ids: content.channel_ids
+    };
+    if (content.title) body.title = content.title;
+    if (content.description) body.description = content.description;
+    if (content.original_source_url) body.original_source_url = content.original_source_url;
+    if (content.original_source_title) body.original_source_title = content.original_source_title;
+
+    try {
+        const data = await arenaFetch(`${ARENA_BASE}/channels/${channelId}/blocks`, {
+            method: "POST",
+            body
+        });
+        return parseBlock(data, false);
+    } catch (error) {
+        if (error instanceof ArenaApiError) {
+            console.error(`[createBlock] API error for channel "${channelId}":`, error.message);
+        } else {
+            console.error(`[createBlock] Unexpected error:`, error);
+        }
+        return null;
+    }
+}
+
+/**
+ * Connect an existing block/channel to one or more channels.
+ * POST /v3/connections  { connectable_id, connectable_type, channel_ids[] }
+ */
+export async function createConnection(
+    childId: string,
+    type: string,
+    parentIds: string[]
+): Promise<boolean> {
+    try {
+        await arenaFetch(`${ARENA_BASE}/connections`, {
+            method: "POST",
+            body: {
+                connectable_id:   childId,
+                connectable_type: type,
+                channel_ids:      parentIds,
+            },
+        });
+        return true;
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 401) {
+            console.warn("[createConnection] No valid session.");
+        } else {
+            console.error("[createConnection] Unexpected error:", error);
+        }
+        return false;
+    }
+}
+
+// ─── Delete operations ────────────────────────────────────────────────────────
+
+
+/** Permanently delete a channel you own. */
+export async function deleteChannel(id: string): Promise<boolean> {
+    try {
+        await arenaFetch(`${ARENA_BASE}/channels/${id}`, { method: "DELETE" });
+        return true;
+    } catch (error) {
+        if (error instanceof ArenaApiError) {
+            console.error(`[deleteChannel] API error for channel "${id}":`, error.message);
+        } else {
+            console.error("[deleteChannel] Unexpected error:", error);
+        }
+        return false;
+    }
+}
+
+// ─── Auth ─────────────────────────────────────────────────────────────────────
+
+export async function setUser(): Promise<AuthUser | null> {
+    try {
+        const data = await arenaFetch(`${ARENA_BASE}/me`);
+        let user = await parseUser(data, false);
+        let count = 1;
+        while (!user.childrenStatus.complete && count < 120) {
+            const res = await getChildren(user.id, user.childrenStatus.page, "users");
+            user.childrenStatus.children.push(...res.children);
+            user.childrenStatus.complete = res.complete;
+            user.childrenStatus.page = res.page;
+            ++count;
+        }
+        while (!user.followersStatus.complete && count < 120) {
+            const res = await getFollowers(user.id, user.followersStatus.page, "users");
+            user.followersStatus.followers.push(...res.followers);
+            user.followersStatus.complete = res.complete;
+            user.followersStatus.page = res.page;
+            ++count;
+        }
+        while (!user.followingStatus.complete && count < 120) {
+            const res = await getFollowing(user.id, user.followingStatus.page);
+            user.followingStatus.following.push(...res.following);
+            user.followingStatus.complete = res.complete;
+            user.followingStatus.page = res.page;
+            ++count;
+        }
+        const superUser: AuthUser = {
+            user,
+            followers: new Set(user.followersStatus.followers),
+            following: new Set(user.followingStatus.following),
+            children:  new Set(user.childrenStatus.children),
+        };
+        return superUser;
+    } catch (error) {
+        if (error instanceof ArenaApiError && error.status === 401) {
+            console.warn("[setUser] No valid session.");
+        } else {
+            console.error("[setUser] Unexpected error:", error);
+        }
+        return null;
+    }
+}
+
+// ─── Parsers ──────────────────────────────────────────────────────────────────
 
 async function parseBlock(data: any, performFetch: boolean): Promise<Block | null> {
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
@@ -264,7 +424,7 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
         date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: owner,
+        owner,
         type: data.type,
         connectionStatus: conn,
     };
@@ -278,31 +438,31 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
         case "Image": {
             const image = block as ImageBlock;
             image.thumbnailUrl = data.image.small.src;
-            image.imageUrl = data.image.large.src;
+            image.imageUrl     = data.image.large.src;
             return image;
         }
         case "Link": {
             const link = block as LinkBlock;
-            link.url = data.source.url;
-            link.urlTitle = data.source.title;
+            link.url          = data.source.url;
+            link.urlTitle     = data.source.title;
             link.thumbnailUrl = data.image ? data.image.small.src : null;
-            link.imageUrl = data.image ? data.image.large.src : null;
+            link.imageUrl     = data.image ? data.image.large.src : null;
             return link;
         }
         case "Embed": {
             const embed = block as EmbedBlock;
-            embed.url = data.source.url;
-            embed.urlTitle = data.source.title;
-            embed.thumbnailUrl = data.image.small.src ?? null;
-            embed.embed = data.embed.html;
+            embed.url          = data.source.url;
+            embed.urlTitle     = data.source.title;
+            embed.thumbnailUrl = data.image?.small?.src ?? null;
+            embed.embed        = data.embed.html;
             return embed;
         }
         case "Attachment": {
             const attachment = block as AttachmentBlock;
-            attachment.filename = data.attachment.filename;
-            attachment.url = data.attachment.url;
+            attachment.filename     = data.attachment.filename;
+            attachment.url          = data.attachment.url;
             attachment.thumbnailUrl = data.image ? data.image.small.src : null;
-            attachment.imageUrl = data.image ? data.image.large.src : null;
+            attachment.imageUrl     = data.image ? data.image.large.src : null;
             return attachment;
         }
         default:
@@ -312,9 +472,11 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
 }
 
 async function parseChannel(data: any, performFetch: boolean): Promise<Channel> {
-    let children: ChildrenStatus = { children: [], complete: false, page: 1 };
-    let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
-    const owner = data.owner.type === "Group" ? await parseGroup(data.owner, false) : await parseUser(data.owner, false);
+    let children: ChildrenStatus   = { children: [],   complete: false, page: 1 };
+    let conn: ConnectionStatus     = { connections: [], complete: false, page: 1 };
+    const owner = data.owner.type === "Group"
+        ? await parseGroup(data.owner, false)
+        : await parseUser(data.owner, false);
 
     if (performFetch) {
         [children, conn] = await Promise.all([
@@ -328,25 +490,25 @@ async function parseChannel(data: any, performFetch: boolean): Promise<Channel> 
         date: formattedDate(data.created_at),
         title: data.title ?? null,
         description: data.description ? data.description.html : null,
-        owner: owner,
+        owner,
         type: "Channel",
         state: data.state,
         visibility: data.visibility,
-        itemCount: data.counts.contents,
-        blockCount: data.counts.blocks,
+        itemCount:    data.counts.contents,
+        blockCount:   data.counts.blocks,
         channelCount: data.counts.channels,
         collaborations: data.collaborators
-            ? data.collaborators.map((c: any) => (parseUser(c, false)))
+            ? data.collaborators.map((c: any) => parseUser(c, false))
             : null,
         connectionStatus: conn,
-        childrenStatus: children,
+        childrenStatus:   children,
     };
 }
 
 async function parseUser(data: any, performFetch: boolean): Promise<User> {
-    let children: ChildrenStatus = { children: [], complete: false, page: 1 };
-    let followers: FollowersStatus = { followers: [], complete: false, page: 1 };
-    let following: FollowingStatus = { following: [], complete: false, page: 1 };
+    let children:  ChildrenStatus  = { children: [],   complete: false, page: 1 };
+    let followers: FollowersStatus = { followers: [],  complete: false, page: 1 };
+    let following: FollowingStatus = { following: [],  complete: false, page: 1 };
 
     if (performFetch) {
         [children, followers, following] = await Promise.all([
@@ -356,25 +518,22 @@ async function parseUser(data: any, performFetch: boolean): Promise<User> {
         ]);
     }
 
-
     return {
         id: data.id,
         title: data.name,
         slug: data.slug,
-        thumbnailUrl: data.avatar ? data.avatar : null,
-        imageUrl: data.avatar ? data.avatar : null,
-        description: data.bio ? data.bio.html : null,
-
+        thumbnailUrl: data.avatar ?? null,
+        imageUrl:     data.avatar ?? null,
+        description:  data.bio ? data.bio.html : null,
         type: "User",
-        
         followingStatus: following,
-        childrenStatus: children,
+        childrenStatus:  children,
         followersStatus: followers,
     };
 }
 
 async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
-    let children: ChildrenStatus = { children: [], complete: false, page: 1 };
+    let children:  ChildrenStatus  = { children: [],  complete: false, page: 1 };
     let followers: FollowersStatus = { followers: [], complete: false, page: 1 };
 
     if (performFetch) {
@@ -388,56 +547,11 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
         id: data.id,
         title: data.name,
         slug: data.slug,
-        thumbnailUrl: data.avatar ? data.avatar : null,
-        imageUrl: data.avatar ? data.avatar : null,
-        description: data.bio ? data.bio.html : null,
-
+        thumbnailUrl: data.avatar ?? null,
+        imageUrl:     data.avatar ?? null,
+        description:  data.bio ? data.bio.html : null,
         type: "Group",
-        
-        childrenStatus: children,
+        childrenStatus:  children,
         followersStatus: followers,
     };
-}
-
-export async function setUser() {
-    try {
-        const data = await arenaFetch(`${ARENA_BASE}/me`);
-        let user = await parseUser(data, false);
-        let count = 1;
-        while (!user.childrenStatus.complete && count < 120) {
-            const res = await getChildren(user.id, user.childrenStatus.page, "users"); 
-            user.childrenStatus.children.push(...res.children);
-            user.childrenStatus.complete = res.complete;
-            user.childrenStatus.page = res.page;
-            ++count;
-        }
-        while (!user.followersStatus.complete && count < 120) {
-            const res = await getFollowers(user.id, user.followersStatus.page, "users"); 
-            user.followersStatus.followers.push(...res.followers);
-            user.followersStatus.complete = res.complete;
-            user.followersStatus.page = res.page;
-            ++count;
-        }
-        while (!user.followingStatus.complete && count < 120) {
-            const res = await getFollowing(user.id, user.followingStatus.page); 
-            user.followingStatus.following.push(...res.following);
-            user.followingStatus.complete = res.complete;
-            user.followingStatus.page = res.page;
-            ++count;
-        }
-        const superUser: AuthUser = {
-            user: user,
-            followers: new Set(user.followersStatus.followers),
-            following: new Set(user.followingStatus.following),
-            children: new Set(user.childrenStatus.children)
-        }
-        return superUser;
-    } catch (error) {
-        if (error instanceof ArenaApiError && error.status === 401) {
-            console.warn("[setUser] No valid session.");
-        } else {
-            console.error("[setUser] Unexpected error:", error);
-        }
-        return null;
-    }
 }

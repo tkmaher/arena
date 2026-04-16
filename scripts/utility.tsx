@@ -1,4 +1,5 @@
 import DOMPurify from 'dompurify';
+import { Block, Channel, User, Group } from "@/types/arena";
 
 export function HTMLDecode({rawHTML}: {rawHTML: string}) {
     const sanitizedHTML = DOMPurify.sanitize(rawHTML);
@@ -61,3 +62,8 @@ async function generateChallenge(verifier: string) {
       .replace(/\//g, "_")
       .replace(/=+$/, "");
 }
+
+export const isChannel    = (n: Block | Channel | User | Group): n is Channel  => n.type === "Channel";
+export const isUser       = (n: Block | Channel | User | Group): n is User     => n.type === "User";
+export const isGroup      = (n: Block | Channel | User | Group): n is Group    => n.type === "Group";
+export const isBlock      = (n: Block | Channel | User | Group): n is Block    => (!isChannel(n) && !isUser(n) && !isGroup(n));

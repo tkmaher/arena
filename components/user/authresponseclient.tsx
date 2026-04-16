@@ -20,8 +20,7 @@ export default function AuthResponseClient({
           return;
         }
 
-        //const origin = window.location.origin;
-        const origin = "*"; // FOR DEBUG TODO CHANGE
+        const origin = window.location.origin;
 
         // Error case (user denied)
         if (error) {

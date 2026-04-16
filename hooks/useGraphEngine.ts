@@ -11,15 +11,36 @@ import {
 } from "@xyflow/react";
 
 import { Graph, PositionAllocator, INITIAL_CANVAS_LIMIT, GRID_SIZE } from "@/lib/graph";
-import { getBlock, getChannel, getUser, getConnections, getChildren, getFollowing, getFollowers } from "@/scripts/getBlock";
-import type { Block, Channel, ChildrenStatus, ConnectionStatus, FollowersStatus, FollowingStatus, Group, User } from "@/types/arena";
+import {
+  getBlock,
+  getChannel,
+  getUser,
+  getConnections,
+  getChildren,
+  getFollowing,
+  getFollowers,
+  createConnection,
+  createBlock as createBlockAPI,
+  createChannel as createChannelAPI,
+  deleteChannel as deleteChannelAPI,
+  type CreateBlockContent,
+} from "@/scripts/getBlock";
+import type {
+  Block,
+  Channel,
+  ChildrenStatus,
+  ConnectionStatus,
+  FollowersStatus,
+  FollowingStatus,
+  Group,
+  User,
+} from "@/types/arena";
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Always compare / store IDs as strings — the API returns numbers at runtime. */
 const sid = (id: string | number): string => String(id);
 
 // ─── Public API ───────────────────────────────────────────────────────────────
@@ -30,6 +51,8 @@ export interface GraphEngineAPI {
   visibleIds: Set<string>;
   onNodesChange: OnNodesChange<CanvasNode>;
   onEdgesChange: OnEdgesChange<Edge>;
+
+  // ── Read / navigation ────────────────────────────────────────────────────
   addNode: (idOrPath: string, mousePos: MousePos) => Promise<string | null>;
   addRandom: (mousePos: MousePos) => Promise<string | null>;
   toggleNode: (id: string | number, body: Block | Channel | User | Group, linkedToId?: string) => Promise<void>;
@@ -41,16 +64,40 @@ export interface GraphEngineAPI {
   fetchMoreFollowing: (id: string, status: FollowingStatus) => Promise<void>;
   onNodeDrag: (node: CanvasNode) => void;
   setSelectedNode: (id: string | null) => void;
-  selectNodeByDirection: (id: string, direction: {lat: number, long: number}) => string | null;
+  selectNodeByDirection: (id: string, direction: { lat: number; long: number }) => string | null;
   getNearestNode: (id: string) => string | null;
   exportGraph: () => void;
   importGraph: (data: any) => void;
-  makeConnection: (id: string, type: string, channels: string[]) => void;
+
+  // ── Connections ──────────────────────────────────────────────────────────
+  /**
+   * Connect an existing block/channel (childId) to one or more channels.
+   * Updates graph edges on success.
+   */
+  makeConnection: (id: string, type: string, channels: string[]) => Promise<void>;
+
+  // ── Create ───────────────────────────────────────────────────────────────
+  /**
+   * Create a new block inside a channel and mount it on the canvas.
+   * Returns the new node id, or null on failure.
+   */
+  createBlock: (channelId: string, content: CreateBlockContent, mousePos?: MousePos) => Promise<string | null>;
+  /**
+   * Create a new channel and mount it on the canvas.
+   * Returns the new node id, or null on failure.
+   */
+  createChannel: (title: string, status?: "public" | "closed" | "private", mousePos?: MousePos) => Promise<string | null>;
+
+  // ── Delete ───────────────────────────────────────────────────────────────
+  /**
+   * Permanently delete a channel from are.na AND remove it from the graph.
+   */
+  deleteChannel: (id: string) => Promise<boolean>;
 }
 
 export interface MousePos {
-  x: number,
-  y: number
+  x: number;
+  y: number;
 }
 
 export function useGraphEngine(): GraphEngineAPI {
@@ -64,16 +111,15 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const freeFetchList = useCallback(() => {
     const now = new Date();
-    fetchLimiter.current = fetchLimiter.current.filter((time: number) => now.getTime() - time < 60000);
-  }, [fetchLimiter]);
+    fetchLimiter.current = fetchLimiter.current.filter(
+      (time: number) => now.getTime() - time < 60000
+    );
+  }, []);
 
   useEffect(() => {
-    const timerId = setInterval(() => {
-      freeFetchList();
-    }, 1000);
-
+    const timerId = setInterval(freeFetchList, 1000);
     return () => clearTimeout(timerId);
-  }, [freeFetchList]); 
+  }, [freeFetchList]);
 
   function fetchOK() {
     if (fetchLimiter.current.length < 30) {
@@ -84,68 +130,44 @@ export function useGraphEngine(): GraphEngineAPI {
     return false;
   }
 
-  // Align nodes and edges to state
+  // ── Sync graph → ReactFlow state ─────────────────────────────────────────
 
   const flush = useCallback(() => {
     const g = graph.current;
     const nextIds = g.canvasIds();
-  
+
     setRfNodes(prev => {
       const nextIdSet = new Set(g.canvasIds());
       const fresh = g.toReactFlowNodes();
       const freshMap = new Map(fresh.map(n => [n.id, n]));
-    
+
       const result: CanvasNode[] = [];
-    
       for (const prevNode of prev) {
         if (!nextIdSet.has(prevNode.id)) continue;
-    
         const freshNode = freshMap.get(prevNode.id);
-    
         if (!freshNode) continue;
-    
-        result.push({
-          ...prevNode,
-          data: freshNode.data,
-        });
+        result.push({ ...prevNode, data: freshNode.data });
       }
-    
-      // Add new nodes
       for (const n of fresh) {
-        if (!prev.find(p => p.id === n.id)) {
-          result.push(n);
-        }
+        if (!prev.find(p => p.id === n.id)) result.push(n);
       }
-    
       return result;
     });
-  
-    // --- EDGES ---
+
     setRfEdges(prev => {
       const fresh = g.toReactFlowEdges();
       const freshMap = new Map(fresh.map(e => [e.id, e]));
-  
       const result: Edge[] = [];
-  
-      // 1. Keep existing edges
       for (const e of prev) {
-        if (freshMap.has(e.id)) {
-          result.push(e);
-        }
+        if (freshMap.has(e.id)) result.push(e);
       }
-  
       const prevIds = new Set(prev.map(e => e.id));
-  
-      // 2. Add new edges
       for (const e of fresh) {
-        if (!prevIds.has(e.id)) {
-          result.push(e);
-        }
+        if (!prevIds.has(e.id)) result.push(e);
       }
-  
       return result;
     });
-  
+
     setVisibleIds(new Set(nextIds));
   }, []);
 
@@ -157,17 +179,14 @@ export function useGraphEngine(): GraphEngineAPI {
     (id: string, object: Block | Channel | User | Group, mousePos?: MousePos) => {
       const g = graph.current;
       if (g.isOnCanvas(id)) return false;
-      
       const centerFlow = mousePos
         ? screenToFlowPosition(mousePos)
         : screenToFlowPosition({
             x: window.innerWidth > 768 ? window.innerWidth * 0.6 : window.innerWidth / 2,
             y: window.innerHeight / 2,
           });
-  
       const gridPos = positions.current.allocate(centerFlow);
       g.ensure(id, { object, gridPos, onCanvas: true });
-  
       return true;
     },
     [screenToFlowPosition]
@@ -182,19 +201,27 @@ export function useGraphEngine(): GraphEngineAPI {
     return true;
   }, []);
 
-  const onNodeDrag = useCallback(
-    (node: CanvasNode) => {
-      const g = graph.current;
-      const n = g.get(node.id);
-      if (!n) return;
-      if (!n.manualPos) {
-        positions.current.release(n.gridPos.x, n.gridPos.y);
-      }
-      n.manualPos = node.position;
-    },
-  []);
+  /**
+   * Remove a node from the graph entirely, cleaning up all edges.
+   * Also releases its grid position if it was on-canvas.
+   */
+  const purgeNode = useCallback((id: string): void => {
+    const g = graph.current;
+    const n = g.get(id);
+    if (!n) return;
+    if (n.onCanvas) positions.current.release(n.gridPos.x, n.gridPos.y);
+    g.remove(id);
+  }, []);
 
-  // ── Node operations ───────────────────────────────────────────────────────
+  const onNodeDrag = useCallback((node: CanvasNode) => {
+    const g = graph.current;
+    const n = g.get(node.id);
+    if (!n) return;
+    if (!n.manualPos) positions.current.release(n.gridPos.x, n.gridPos.y);
+    n.manualPos = node.position;
+  }, []);
+
+  // ── Individual node adders ────────────────────────────────────────────────
 
   const addBlockNode = useCallback(
     async (id: string, mousePos?: MousePos, data?: Block): Promise<string | null> => {
@@ -212,9 +239,7 @@ export function useGraphEngine(): GraphEngineAPI {
         for (const conn of block.connectionStatus.connections) {
           const connId = sid(conn.id);
           g.link(connId, nodeId);
-          if (shown++ < INITIAL_CANVAS_LIMIT) {
-            mountNode(connId, conn, mousePos);
-          }
+          if (shown++ < INITIAL_CANVAS_LIMIT) mountNode(connId, conn, mousePos);
         }
       }
 
@@ -243,7 +268,7 @@ export function useGraphEngine(): GraphEngineAPI {
         for (const child of channel.childrenStatus.children) {
           const childId = sid(child.id);
           g.link(nodeId, childId);
-          if (shown + 1 < INITIAL_CANVAS_LIMIT && Math.random() < 0.5) { 
+          if (shown + 1 < INITIAL_CANVAS_LIMIT && Math.random() < 0.5) {
             mountNode(childId, child, mousePos);
             shown++;
           }
@@ -261,16 +286,16 @@ export function useGraphEngine(): GraphEngineAPI {
       const g = graph.current;
       const nodeId = sid(id);
       if (g.isOnCanvas(nodeId)) return null;
-  
       const user = data ?? (fetchOK() ? await getUser(nodeId) : null);
       if (!user) return null;
-  
       mountNode(nodeId, user, mousePos);
       flush();
       return nodeId;
     },
     [mountNode, flush]
   );
+
+  // ── Public add / remove ───────────────────────────────────────────────────
 
   const addNode = useCallback(
     async (idOrPath: string, mousePos: MousePos): Promise<string | null> => {
@@ -283,8 +308,8 @@ export function useGraphEngine(): GraphEngineAPI {
           return null;
         }
         const ok = idOrPath.includes("/block/")
-          ? res = (fetchOK() ? await addBlockNode(slug, mousePos) : null)
-          : res = (fetchOK() ? await addChannelNode(slug, mousePos) : null);
+          ? (res = fetchOK() ? await addBlockNode(slug, mousePos) : null)
+          : (res = fetchOK() ? await addChannelNode(slug, mousePos) : null);
         if (!ok) {
           alert(`Error adding block or channel with URL ${idOrPath}.`);
           return null;
@@ -295,8 +320,8 @@ export function useGraphEngine(): GraphEngineAPI {
         alert(`Node ${idOrPath} already exists.`);
         return null;
       }
-      if (res = fetchOK() ? await addBlockNode(idOrPath, mousePos) : null) return res;
-      if (res = fetchOK() ? await addChannelNode(idOrPath, mousePos) : null) return res;
+      if ((res = fetchOK() ? await addBlockNode(idOrPath, mousePos) : null)) return res;
+      if ((res = fetchOK() ? await addChannelNode(idOrPath, mousePos) : null)) return res;
       alert(`Couldn't find a block or channel with ID ${idOrPath}.`);
       return null;
     },
@@ -307,9 +332,9 @@ export function useGraphEngine(): GraphEngineAPI {
     async (mousePos: MousePos): Promise<string | null> => {
       const randomID = RandomChannels[Math.floor(Math.random() * RandomChannels.length)];
       RandomChannels.splice(RandomChannels.indexOf(randomID), 1);
-      return (fetchOK() ? await addNode(randomID, mousePos) : null);
+      return fetchOK() ? await addNode(randomID, mousePos) : null;
     },
-    [addBlockNode, addChannelNode]
+    [addNode]
   );
 
   const removeNode = useCallback(
@@ -322,9 +347,7 @@ export function useGraphEngine(): GraphEngineAPI {
 
   const removeAllNodes = useCallback(() => {
     const g = graph.current;
-    for (const id of g.canvasIds()) {
-      unmountNode(id);
-    }
+    for (const id of g.canvasIds()) unmountNode(id);
     flush();
   }, [flush, unmountNode]);
 
@@ -347,14 +370,12 @@ export function useGraphEngine(): GraphEngineAPI {
         } else {
           await addBlockNode(nodeId, undefined, body as Block);
         }
-
-        // Wire edge between this node and the selected node
         if (linkedToId) {
           const lId = sid(linkedToId);
           if (body.type === "Channel") {
-            g.link(nodeId, lId); // channel is parent of the selected block
+            g.link(nodeId, lId);
           } else {
-            g.link(lId, nodeId); // selected channel/block owns this block
+            g.link(lId, nodeId);
           }
         }
       }
@@ -364,115 +385,96 @@ export function useGraphEngine(): GraphEngineAPI {
     [unmountNode, addChannelNode, addBlockNode, flush]
   );
 
+  // ── Selection ─────────────────────────────────────────────────────────────
+
   const setSelectedNode = useCallback((id: string | null) => {
     setRfNodes(nodes =>
-      nodes.map(n => ({
-        ...n,
-        selected: id !== null && n.id === id,
-      }))
+      nodes.map(n => ({ ...n, selected: id !== null && n.id === id }))
     );
   }, []);
 
-  const selectNodeByDirection = useCallback((id: string, direction: {lat: number, long: number}) => {
-    const g = graph.current;
-    let currPos = g.get(id)?.gridPos;
-    if (!currPos) return null;
-  
-    const scaledPos = g.get(id)?.manualPos ?? {
-      x: currPos.x * GRID_SIZE,
-      y: currPos.y * GRID_SIZE,
-    };
-  
-    const LATERAL_PENALTY = 10;
-  
-    let bestScore = Infinity;
-    let bestNode = null;
-  
-    for (const node of g.toReactFlowNodes()) {
-      if (node.id === id) continue;
-  
-      const dx = node.position.x - scaledPos.x;
-      const dy = node.position.y - scaledPos.y;
-  
-      const axial = dx * direction.lat + dy * direction.long;
-      if (axial <= 0) continue;
-  
-      const distSq = dx * dx + dy * dy;
-      const lateral = Math.sqrt(Math.max(0, distSq - axial * axial));
-      const score = lateral * LATERAL_PENALTY + axial;
-  
-      if (score < bestScore) {
-        bestScore = score;
-        bestNode = node.id;
+  const selectNodeByDirection = useCallback(
+    (id: string, direction: { lat: number; long: number }) => {
+      const g = graph.current;
+      const currPos = g.get(id)?.gridPos;
+      if (!currPos) return null;
+
+      const scaledPos = g.get(id)?.manualPos ?? {
+        x: currPos.x * GRID_SIZE,
+        y: currPos.y * GRID_SIZE,
+      };
+
+      const LATERAL_PENALTY = 10;
+      let bestScore = Infinity;
+      let bestNode = null;
+
+      for (const node of g.toReactFlowNodes()) {
+        if (node.id === id) continue;
+        const dx = node.position.x - scaledPos.x;
+        const dy = node.position.y - scaledPos.y;
+        const axial = dx * direction.lat + dy * direction.long;
+        if (axial <= 0) continue;
+        const distSq = dx * dx + dy * dy;
+        const lateral = Math.sqrt(Math.max(0, distSq - axial * axial));
+        const score = lateral * LATERAL_PENALTY + axial;
+        if (score < bestScore) {
+          bestScore = score;
+          bestNode = node.id;
+        }
       }
-    }
-  
-    if (bestNode) setSelectedNode(bestNode);
-    return bestNode;
-  }, [positions, setSelectedNode]);
 
-  const getNearestNode = useCallback((id: string): string | null => {
-    const g = graph.current;
-    const targetPos = g.get(id)?.gridPos;
-    if (!targetPos) return null;
+      if (bestNode) setSelectedNode(bestNode);
+      return bestNode;
+    },
+    [setSelectedNode]
+  );
 
-    let bestDist = Infinity;
-    let bestNode = null;
+  const getNearestNode = useCallback(
+    (id: string): string | null => {
+      const g = graph.current;
+      const targetPos = g.get(id)?.gridPos;
+      if (!targetPos) return null;
 
-    for (const node of g.toReactFlowNodes()) {
-      if (node.id === id) continue;
+      let bestDist = Infinity;
+      let bestNode = null;
 
-      const nodePos = g.get(node.id)?.gridPos;
-      if (!nodePos) continue;
-
-      const dx = nodePos.x - targetPos.x;
-      const dy = nodePos.y - targetPos.y;
-      const distSq = dx * dx + dy * dy;
-
-      if (distSq < bestDist) {
-        bestDist = distSq;
-        bestNode = node.id;
+      for (const node of g.toReactFlowNodes()) {
+        if (node.id === id) continue;
+        const nodePos = g.get(node.id)?.gridPos;
+        if (!nodePos) continue;
+        const dx = nodePos.x - targetPos.x;
+        const dy = nodePos.y - targetPos.y;
+        const distSq = dx * dx + dy * dy;
+        if (distSq < bestDist) {
+          bestDist = distSq;
+          bestNode = node.id;
+        }
       }
-    }
 
-    if (bestNode) setSelectedNode(bestNode);
-    return bestNode;
-  }, [positions, setSelectedNode]);
-
+      if (bestNode) setSelectedNode(bestNode);
+      return bestNode;
+    },
+    [setSelectedNode]
+  );
 
   // ── Pagination ────────────────────────────────────────────────────────────
 
   const fetchMoreConnections = useCallback(
     async (nodeId: string, status: ConnectionStatus, type: string): Promise<void> => {
       if (status.complete) return;
-
-      
       const g = graph.current;
       const node = g.get(sid(nodeId));
       if (!node?.object) return;
-      
       const result = fetchOK() ? await getConnections(nodeId, type, status.page) : null;
       if (!result) return;
-      
       const merged = Array.from(
-        new Map(
-          [...status.connections, ...result.connections].map(c => [sid(c.id), c])
-          ).values()
-          );
-
+        new Map([...status.connections, ...result.connections].map(c => [sid(c.id), c])).values()
+      );
       g.updateObject(sid(nodeId), {
         ...node.object,
-        connectionStatus: {
-          complete: result.complete,
-          page: result.page,
-          connections: merged,
-        },
+        connectionStatus: { complete: result.complete, page: result.page, connections: merged },
       } as Block | Channel);
-
-      for (const c of result.connections) {
-        g.link(sid(c.id), sid(nodeId));
-      }
-
+      for (const c of result.connections) g.link(sid(c.id), sid(nodeId));
       flush();
     },
     [flush]
@@ -481,34 +483,19 @@ export function useGraphEngine(): GraphEngineAPI {
   const fetchMoreChildren = useCallback(
     async (nodeId: string, status: ChildrenStatus, type: string): Promise<void> => {
       if (status.complete) return;
-
       const g = graph.current;
       const node = g.get(sid(nodeId));
-      // Guard: stub or non-channel/user nodes can't be updated
       if (!node?.object || node.object.type === "Block") return;
-
       const result = fetchOK() ? await getChildren(nodeId, status.page, type) : null;
       if (!result) return;
-
       const merged = Array.from(
-        new Map(
-          [...status.children, ...result.children].map(c => [sid(c.id), c])
-        ).values()
+        new Map([...status.children, ...result.children].map(c => [sid(c.id), c])).values()
       );
-
       g.updateObject(sid(nodeId), {
         ...node.object,
-        childrenStatus: {
-          complete: result.complete,
-          page: result.page,
-          children: merged,
-        },
+        childrenStatus: { complete: result.complete, page: result.page, children: merged },
       } as Channel | User | Group);
-
-      for (const child of result.children) {
-        g.link(sid(nodeId), sid(child.id));
-      }
-
+      for (const child of result.children) g.link(sid(nodeId), sid(child.id));
       flush();
     },
     [flush]
@@ -520,10 +507,8 @@ export function useGraphEngine(): GraphEngineAPI {
       const g = graph.current;
       const node = g.get(sid(nodeId));
       if (!node?.object || (node.object.type !== "User" && node.object.type !== "Group")) return;
-  
       const result = fetchOK() ? await getFollowers(nodeId, status.page, type) : null;
       if (!result) return;
-  
       const merged = Array.from(
         new Map([...status.followers, ...result.followers].map(u => [sid(u.id), u])).values()
       );
@@ -535,17 +520,15 @@ export function useGraphEngine(): GraphEngineAPI {
     },
     [flush]
   );
-  
+
   const fetchMoreFollowing = useCallback(
     async (nodeId: string, status: FollowingStatus): Promise<void> => {
       if (status.complete) return;
       const g = graph.current;
       const node = g.get(sid(nodeId));
       if (!node?.object || node.object.type !== "User") return;
-  
       const result = fetchOK() ? await getFollowing(nodeId, status.page) : null;
       if (!result) return;
-  
       const merged = Array.from(
         new Map([...status.following, ...result.following].map(u => [sid(u.id), u])).values()
       );
@@ -558,34 +541,95 @@ export function useGraphEngine(): GraphEngineAPI {
     [flush]
   );
 
-  // -- Upload/download
+  // ── Import / export ───────────────────────────────────────────────────────
 
   const exportGraph = useCallback(() => {
     graph.current.exportGraph();
-  }, [])
+  }, []);
 
-  const importGraph = useCallback((data: any) => {
-    // 1. Restore graph structure
-    positions.current = new PositionAllocator();
-    graph.current = new Graph();
-    graph.current.importGraph(data);
-  
-    const alloc = positions.current;
-    for (const n of data) {
-      
-      if (n.onCanvas) {
-        alloc.occupy(n.gridPos.x, n.gridPos.y);
+  const importGraph = useCallback(
+    (data: any) => {
+      positions.current = new PositionAllocator();
+      graph.current = new Graph();
+      graph.current.importGraph(data);
+      const alloc = positions.current;
+      for (const n of data) {
+        if (n.onCanvas) alloc.occupy(n.gridPos.x, n.gridPos.y);
       }
-    }
-  
-    flush();
-  }, [flush]);
+      flush();
+    },
+    [flush]
+  );
 
-  // -- Add connections
+  // ── Connection management ─────────────────────────────────────────────────
 
-  const makeConnection = useCallback((id: string, type: string, channels: string[]) => {
+  const makeConnection = useCallback(
+    async (id: string, type: string, channels: string[]): Promise<void> => {
+      const g = graph.current;
+      const ok = await createConnection(id, type, channels);
+      if (ok) {
+        for (const c of channels) g.link(sid(c), sid(id));
+        flush();
+      }
+    },
+    [flush]
+  );
 
-  }, [flush])
+
+
+  // ── Create on are.na + graph ──────────────────────────────────────────────
+
+  const createBlock = useCallback(
+    async (
+      channelId: string,
+      content: CreateBlockContent,
+      mousePos?: MousePos
+    ): Promise<string | null> => {
+      if (!fetchOK()) return null;
+      const block = await createBlockAPI(channelId, content);
+      if (!block) return null;
+
+      const blockId = sid(block.id);
+      const g = graph.current;
+      mountNode(blockId, block, mousePos);
+      g.link(sid(channelId), blockId);
+      flush();
+      return blockId;
+    },
+    [mountNode, flush]
+  );
+
+  const createChannel = useCallback(
+    async (
+      title: string,
+      status: "public" | "closed" | "private" = "private",
+      mousePos?: MousePos
+    ): Promise<string | null> => {
+      if (!fetchOK()) return null;
+      const channel = await createChannelAPI(title, status);
+      if (!channel) return null;
+
+      const channelId = sid(channel.id);
+      mountNode(channelId, channel, mousePos);
+      flush();
+      return channelId;
+    },
+    [mountNode, flush]
+  );
+
+  // ── Delete from are.na + graph ────────────────────────────────────────────
+
+  const deleteChannel = useCallback(
+    async (id: string): Promise<boolean> => {
+      if (!fetchOK()) return false;
+      const ok = await deleteChannelAPI(sid(id));
+      if (!ok) return false;
+      purgeNode(sid(id));
+      flush();
+      return true;
+    },
+    [purgeNode, flush]
+  );
 
   // ── Return ────────────────────────────────────────────────────────────────
 
@@ -610,6 +654,9 @@ export function useGraphEngine(): GraphEngineAPI {
     getNearestNode,
     exportGraph,
     importGraph,
-    makeConnection
+    makeConnection,
+    createBlock,
+    createChannel,
+    deleteChannel,
   };
 }

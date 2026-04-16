@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus, ImageBlock, AttachmentBlock, LinkBlock, EmbedBlock, TextBlock, User, FollowingStatus, FollowersStatus, Group } from "@/types/arena";
 import Image from "next/image";
-import { HTMLDecode, login } from "@/scripts/utility";
+import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
 import NodeList from "@/components/ui/nodelist";
 import { useGraphActions } from "@/context/graphcontext";
@@ -26,10 +26,6 @@ interface InfoPanelProps extends InfoPanelType {
   current: Block | Channel | User | Group | undefined;
 }
 
-const isChannel    = (n: Block | Channel | User | Group): n is Channel  => n.type === "Channel";
-const isUser       = (n: Block | Channel | User | Group): n is User     => n.type === "User";
-const isGroup      = (n: Block | Channel | User | Group): n is Group    => n.type === "Group";
-const isBlock      = (n: Block | Channel | User | Group): n is Block    => (!isChannel(n) && !isUser(n) && !isGroup(n));
 const hasImage     = (n: Block): n is ImageBlock            => "imageUrl" in n;
 const isText       = (n: Block): n is TextBlock             => n.type === "Text";
 const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
@@ -195,7 +191,7 @@ export default function InfoPanel({
                     <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
                     {(isBlock(current) || isGroup(current)) && 
                       <a className="linkout loader" onClick={() => user ? setSelectOpen(true) : login()}>
-                        Add...
+                        Connect
                       </a>
                     }
                   </div>
@@ -239,7 +235,7 @@ export default function InfoPanel({
                   <NodeList list={current.childrenStatus.children} status={current.childrenStatus}
                     checkNodeVisible={checkNodeVisible} onToggle={toggleNode} onSelect={handleSelect}
                     loadMore={() => childrenFetcher(current.id, current.childrenStatus, isChannel(current) ? "channels" : isGroup(current) ? "groups" : "users")}
-                    label={isChannel(current) ? "Children" : "Channels"} nodeId={current.id} />
+                    label="Children" nodeId={current.id} />
                 )}
                 {hasConnections && (
                   <NodeList list={current.connectionStatus.connections} status={current.connectionStatus}
