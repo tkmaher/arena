@@ -81,23 +81,6 @@ export default function InfoPanel({
     setSelectOpen(val);
   }, [setSelectOpen])
 
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (document.activeElement instanceof HTMLElement) {
-        if (document.activeElement.isContentEditable) return;
-      }
-      if ((e.key === "Backspace" || e.key === "Delete") && 
-        current && checkNodeVisible(current.id) &&
-        !viewerOpen && !selectOpen
-      ) {
-        makeNodeVisible({id: current.id, body: current});
-        setSelected("nearest");
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [current]);
-
   const toggleNode     = (node: Block | Channel | User | Group) =>
     makeNodeVisible({ id: node.id, body: node, linkedToId: current?.id });
 

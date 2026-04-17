@@ -96,7 +96,7 @@ body {
 }
 
 .self {
-  background-color: #3b82f680 !important;
+  color: #3b82f6 !important;
 }
 
 .node-toolbar-button {
@@ -443,6 +443,10 @@ body {
   overflow: hidden;
   transition: flex 0.15s ease, opacity 0.15s ease;
   &.closed { flex: 0 0 0; opacity: 0; pointer-events: none; }
+  input {
+    width: 100%;
+    margin-bottom: 0.4em;
+  }
 }
 
 .collection-list {

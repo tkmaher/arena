@@ -33,9 +33,9 @@ export default function BlockProp({ id, data }: NodeProps) {
   }, [edges, id, selectedOnGraph]);
 
   useEffect(() => {
-    if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
+    if (user && (isBlock(data.object) || isChannel(data.object)) && user.user.id === data.object.owner.id)
       setChangeBackground(true);
-    else if (isUser(data.object) && user?.user.id === data.object.id)
+    else if (user && isUser(data.object) && user.user.id === data.object.id)
       setChangeBackground(true);
     else
       setChangeBackground(false);

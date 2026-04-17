@@ -167,6 +167,13 @@ function CanvasInner() {
         zoomIn();
     } else if (e.key === "-" || e.key === "_" ) {
         zoomOut();
+    } else if (e.key === "Backspace" || e.key === "Delete") {
+      if (!selectedId || deleteAll) return;
+      const activeElement = document.activeElement;
+      if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+        return;
+      }
+      engine.removeNode(selectedId);
     }
   }, [deleteAll, selectedId, imageViewerOpen, about, uploader, createPopupOpen]);
 

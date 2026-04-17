@@ -28,11 +28,16 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
   const [open,     setOpen]     = useState(limitSize ? false : true);
   const [hovered,  setHovered]  = useState<string | null>(null);
   const [fetching, setFetching] = useState(false);
+  const [search, setSearch] = useState("");
 
   useEffect(() => { setFetching(false); }, [status, list]);
   useEffect(() => { if (limitSize) limitSize(open); }, [open, limitSize]);
 
   const isComplete = "complete" in status ? status.complete : true;
+
+  const filtered = list.filter(ch =>
+    (ch.title ?? ch.id).toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <motion.div
@@ -52,10 +57,17 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
       </div>
 
       <div className={`collection-body${open ? "" : " closed"}`}>
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder={`Search ${label.toLowerCase()}...`}
+          className="text-input"
+        />
         <div className="collection-list">
-          {list.length === 0
+          {filtered.length === 0
             ? <em>[No {label.toLowerCase()} found]</em>
-            : list.map(node => (
+            : filtered.map(node => (
                 <div
                   key={node.id}
                   className="checklist"
