@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { HTMLDecode, isBlock, hasImage, isChannel, isUser, isGroup, isText } from "@/scripts/utility";
+import { HTMLDecode, isBlock, hasImage, isChannel, isUser, isGroup, isText, userIsOwner } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
 import { Position, Handle, useStore } from "@xyflow/react";
 import { Block, Group, User, Channel } from "@/types/arena";
@@ -15,7 +15,6 @@ interface NodeProps {
 export default function BlockProp({ id, data }: NodeProps) {
   const { removeNode, selectedOnGraph, user } = useGraphActions();
   const [imageLoaded, setImageLoaded] = useState(isBlock(data.object) && !hasImage(data.object));
-  const [changeBackground, setChangeBackground] = useState(false);
 
   const handleRemove = () => removeNode(id);
 
@@ -32,15 +31,6 @@ export default function BlockProp({ id, data }: NodeProps) {
     );
   }, [edges, id, selectedOnGraph]);
 
-  useEffect(() => {
-    if (user && (isBlock(data.object) || isChannel(data.object)) && user.user.id === data.object.owner.id)
-      setChangeBackground(true);
-    else if (user && isUser(data.object) && user.user.id === data.object.id)
-      setChangeBackground(true);
-    else
-      setChangeBackground(false);
-  }, [user, data.object])
-
   return (
     <>
       <Handle type="target" position={Position.Top} />
@@ -53,7 +43,7 @@ export default function BlockProp({ id, data }: NodeProps) {
           position: "relative"
         }}
       >
-        <div className={changeBackground ? "node-body self" : "node-body"}>
+        <div className={userIsOwner(data.object, user) ? "node-body self" : "node-body"}>
           {"childrenStatus" in data.object ? (
               <div className="node-title"><div>{data.object.title}</div>
                 {data.object.type == "User" && <img src="user.svg" alt="User"/>}

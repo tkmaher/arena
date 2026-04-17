@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { Block, Channel, User, Group, ImageBlock, TextBlock, AttachmentBlock, LinkBlock, EmbedBlock, PendingBlock } from "@/types/arena";
+import { Block, Channel, User, Group, ImageBlock, TextBlock, AttachmentBlock, LinkBlock, EmbedBlock, PendingBlock, AuthUser } from "@/types/arena";
 
 export function HTMLDecode({rawHTML}: {rawHTML: string}) {
     const sanitizedHTML = DOMPurify.sanitize(rawHTML);
@@ -73,3 +73,12 @@ export const isAttachment = (n: Block): n is AttachmentBlock       => n.type ===
 export const isEmbed      = (n: Block): n is EmbedBlock            => n.type === "Embed";
 export const isLink       = (n: Block): n is LinkBlock             => n.type === "Link";
 export const isPending    = (n: Block): n is PendingBlock          => n.type === "PendingBlock";
+
+export const userIsOwner = (n: Block | Channel | User | Group, user: AuthUser | null) => {
+  if (user && (isBlock(n) || isChannel(n)) && user.user.id === n.owner.id)
+    return true;
+  else if (user && isUser(n) && user.user.id === n.id)
+    return true;
+  else
+    return false;
+}

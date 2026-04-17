@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Panel } from "@xyflow/react";
 import { Block, Channel, ChildrenStatus, ConnectionStatus, User, FollowingStatus, FollowersStatus, Group, ToggleOptions } from "@/types/arena";
 import Image from "next/image";
-import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser, hasImage, isText, isAttachment, isEmbed, isLink } from "@/scripts/utility";
+import { HTMLDecode, login, isBlock, isChannel, isGroup, isUser, hasImage, isText, isAttachment, isEmbed, isLink, userIsOwner } from "@/scripts/utility";
 import ImageViewer from "@/components/ui/imageviewer";
 import NodeList from "@/components/ui/nodelist";
 import { useGraphActions } from "@/context/graphcontext";
@@ -176,7 +176,7 @@ export default function InfoPanel({
                     {isGroup(current) && <img src="group.svg" alt="Group"/>}
                     {isChannel(current) && <img src="channel.svg" alt="Channel"/>}
                     {isBlock(current) && <img src="block.svg" alt="Block"/>}
-                    <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
+                    <a className={userIsOwner(current, user) ? "ellipse self" : "ellipse"} href={linkOut} target="_blank">{current.title ?? current.id}</a> 
                     {(isBlock(current) || isChannel(current)) && 
                       <a className="linkout loader" onClick={() => user ? handleSelectOpen(true) : login()}>
                         Connect
