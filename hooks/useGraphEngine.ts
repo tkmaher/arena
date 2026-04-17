@@ -43,7 +43,7 @@ import type {
 import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
-import { isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
+import { isBlock, isChannel, isGroup, isPending, isUser } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -664,19 +664,42 @@ export function useGraphEngine(): GraphEngineAPI {
   // ── Create on are.na + graph ──────────────────────────────────────────────
 
   const createBlock = useCallback(
-    async (
-      data: BlockCreation,
-    ): Promise<string | null> => {
-      if (!fetchOK()) return null;
-      const block = await createBlockAPI(data);
-      if (!block) return null;
+    async (data: BlockCreation): Promise<string | null> => {
+        if (!fetchOK()) return null;
+        const block = await createBlockAPI(data);
+        if (!block) return null;
 
-      const blockId = sid(block.id);
-      addBlockNode(blockId, undefined, block);
-      return blockId;
+        const blockId = sid(block.id);
+        addBlockNode(blockId, undefined, block);
+
+        if (isPending(block)) {
+            pollForBlock(blockId);
+        }
+
+        return blockId;
     },
     [addBlockNode]
   );
+
+  const pollForBlock = useCallback((blockId: string) => {
+      const INTERVAL = 2000;
+      const MAX_ATTEMPTS = 15;
+      let attempts = 0;
+      console.log("POLLING");
+
+      const poll = async () => {
+          if (attempts++ >= MAX_ATTEMPTS) return;
+          const updated = fetchOK() && await getBlock(blockId);
+          if (!updated || isPending(updated)) {
+              setTimeout(poll, INTERVAL);
+              return;
+          }
+          graph.current.updateObject(blockId, updated);
+          flush();
+      };
+
+      setTimeout(poll, INTERVAL);
+  }, [flush]);
 
   const createChannel = useCallback(
     async (

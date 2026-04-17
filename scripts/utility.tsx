@@ -1,5 +1,5 @@
 import DOMPurify from 'dompurify';
-import { Block, Channel, User, Group, ImageBlock, TextBlock, AttachmentBlock, LinkBlock, EmbedBlock } from "@/types/arena";
+import { Block, Channel, User, Group, ImageBlock, TextBlock, AttachmentBlock, LinkBlock, EmbedBlock, PendingBlock } from "@/types/arena";
 
 export function HTMLDecode({rawHTML}: {rawHTML: string}) {
     const sanitizedHTML = DOMPurify.sanitize(rawHTML);
@@ -72,3 +72,4 @@ export const isText       = (n: Block): n is TextBlock             => n.type ===
 export const isAttachment = (n: Block): n is AttachmentBlock       => n.type === "Attachment";
 export const isEmbed      = (n: Block): n is EmbedBlock            => n.type === "Embed";
 export const isLink       = (n: Block): n is LinkBlock             => n.type === "Link";
+export const isPending    = (n: Block): n is PendingBlock          => n.type === "PendingBlock";

@@ -129,6 +129,11 @@ export interface EmbedBlock extends Block {
     embed: string;
 }
 
+export interface PendingBlock extends Block {
+    type: "PendingBlock";
+    state: "processing";
+}
+
 export interface ChannelCreation {
     title: string,
     visibility: string,

@@ -14,7 +14,8 @@ import {
     User,
     AuthUser,
     ChannelCreation,
-    BlockCreation
+    BlockCreation,
+    PendingBlock
 } from "@/types/arena";
 
 const CONNECTIONS_PER_PAGE = 50;
@@ -463,6 +464,10 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
         attachment.thumbnailUrl = data.image ? data.image.small.src : null;
         attachment.imageUrl     = data.image ? data.image.large.src : null;
         return attachment;
+      }
+      case "PendingBlock": {
+        const pending = block as PendingBlock;
+        return pending;
       }
       default:
         console.warn(`[parseBlock] Unrecognised block type "${data.type}" for block ${data.id} — returning base block.`);
