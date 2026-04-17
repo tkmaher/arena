@@ -147,7 +147,7 @@ export default function CreatePopup({
                 </select>
             }
 
-            {!isChannel && <ChannelList id={""} selected={selected} toggleChannel={toggleChannel}/>}
+            {!isChannel && <ChannelList selected={selected} toggleChannel={toggleChannel}/>}
 
             <div className="confirm-toolbar">
                 <button onClick={handleCreate} className="node-toolbar-button react-flow__controls popup-menu menu-title">

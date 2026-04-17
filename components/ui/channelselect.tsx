@@ -3,16 +3,26 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useGraphActions } from "@/context/graphcontext";
 import { isChannel } from "@/scripts/utility";
+import { Channel, Block } from "@/types/arena";
 
-export function ChannelList({ id, selected, toggleChannel }: { id: string, selected: Set<string>, toggleChannel: (channelId: string) => void}) {
+export function ChannelList({ 
+    selected, 
+    toggleChannel,
+    newNode, 
+}: { 
+    selected: Set<string>, 
+    toggleChannel: (channelId: string) => void,
+    newNode?: Block | Channel, 
+}) {
     const { user } = useGraphActions();
     if (!user) return;
 
     const [search, setSearch] = useState("");
 
-    const channels = Array.from(user.user.childrenStatus.children).filter(
-        (child) => (isChannel(child) && !child.childrenStatus.children.some(obj => (obj.id === id)))
-    );
+    const channels = newNode ? 
+    (Array.from(user.user.childrenStatus.children).filter(
+        (child) => (isChannel(child) && !newNode.connectionStatus.connections.some(obj => (obj.id === String(child.id))))
+    )) : (user.user.childrenStatus.children);
 
     const filtered = channels.filter(ch => {
         return (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase());
@@ -48,7 +58,6 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Search channels..."
-                autoFocus
                 className="text-input"
             />
         </motion.div>
@@ -57,12 +66,12 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
 
 export default function ChannelSelect({
     setSelectOpen,
-    id,
-    type
+    type,
+    newNode,
 }: {
     setSelectOpen: (val: boolean) => void;
-    id: string;
     type: string;
+    newNode: (Block | Channel);
 }) {
     const { makeConnection, user } = useGraphActions();
     if (!user) return;
@@ -78,7 +87,7 @@ export default function ChannelSelect({
     };
 
     const handleConnect = () => {
-        makeConnection(id, type, Array.from(selected));
+        makeConnection(newNode.id, type, Array.from(selected));
         setSelectOpen(false);
     };
 
@@ -105,7 +114,7 @@ export default function ChannelSelect({
             <p className="info-title">
                 Select a channel
             </p>
-            <ChannelList id={id} selected={selected} toggleChannel={toggleChannel}/>
+            <ChannelList newNode={newNode} selected={selected} toggleChannel={toggleChannel}/>
 
             <div className="confirm-toolbar">
                 <button

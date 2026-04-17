@@ -51,6 +51,7 @@ export interface AuthUser {
     followers: Set<User>;
     following: Set<User | Group | Channel>;
     children: Set<Block | Channel>;
+    tier: string;
 }
 
 export interface Group {
@@ -68,11 +69,17 @@ export interface Group {
     childrenStatus: ChildrenStatus; // TODO: How to get group members/
 }
 
+
 export interface ConnectionStatus {
     connections: Channel[];
     complete: boolean;
     page: number;
 }
+
+// export interface ChildConnection {
+//     child: Block | Channel;
+//     id: string;
+// }
 
 export interface ChildrenStatus {
     children: (Block | Channel)[];

@@ -256,7 +256,10 @@ body {
   align-items: center;
   align-self: center;
   height: 100%;
-  button { pointer-events: auto; flex-shrink: 0; }
+  button { pointer-events: auto; }
+  .confirm {
+    pointer-events: all;
+  }
 }
 
 /* Panel card — grows to fill available height, clips overflow */

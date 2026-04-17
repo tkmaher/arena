@@ -44,6 +44,7 @@ import type { CanvasNode } from "@/types/reactflow";
 
 import { RandomChannels } from "@/lib/random";
 import { isBlock, isChannel, isGroup, isUser } from "@/scripts/utility";
+import { useGraphActions } from "@/context/graphcontext";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -97,6 +98,23 @@ export function useGraphEngine(): GraphEngineAPI {
   const [rfEdges, setRfEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const [visibleIds, setVisibleIds] = useState<Set<string>>(new Set());
 
+  const { user } = useGraphActions();
+
+  let fetchCount = 30;
+  switch(user?.tier) {
+    case "free":
+      fetchCount = 120;
+      break;
+    case "premium":
+      fetchCount = 300;
+      break;
+    case "supporter":
+      fetchCount = 600;
+      break;
+    default:
+      break;
+  }
+
   const freeFetchList = useCallback(() => {
     const now = new Date();
     fetchLimiter.current = fetchLimiter.current.filter(
@@ -110,7 +128,7 @@ export function useGraphEngine(): GraphEngineAPI {
   }, [freeFetchList]);
 
   function fetchOK() {
-    if (fetchLimiter.current.length < 30) {
+    if (fetchLimiter.current.length < fetchCount) {
       fetchLimiter.current.push(new Date().getTime());
       return true;
     }

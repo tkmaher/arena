@@ -80,7 +80,7 @@ export default function InfoPanel({
   const handleSelectOpen = useCallback((val: boolean) => {
     setSelectOpen(val);
     setImageOpen(val);
-  }, [setSelectOpen])
+  }, [setImageOpen, setSelectOpen])
 
   const toggleNode     = (node: Block | Channel | User | Group) =>
     makeNodeVisible({ id: node.id, body: node, linkedToId: current?.id });
@@ -118,10 +118,10 @@ export default function InfoPanel({
           linkOut={linkOut}
         />
       )}
-      {current && user && selectOpen &&
+      {current && user && selectOpen && (isBlock(current) || isChannel(current)) &&
         <ChannelSelect
           setSelectOpen={handleSelectOpen}
-          id={current.id}
+          newNode={current}
           type={isChannel(current) ? "Channel" : "Block"}
         />
       }

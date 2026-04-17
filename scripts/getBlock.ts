@@ -398,6 +398,7 @@ export async function setUser(): Promise<AuthUser | null> {
             followers: new Set(user.followersStatus.followers),
             following: new Set(user.followingStatus.following),
             children:  new Set(user.childrenStatus.children),
+            tier: data.tier
         };
         return superUser;
     } catch (error) {
