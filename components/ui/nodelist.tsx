@@ -35,8 +35,10 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
 
   const isComplete = "complete" in status ? status.complete : true;
 
-  const filtered = list.filter(ch =>
-    (ch.title ?? (ch.id ?? "")).toLowerCase().includes(search.toLowerCase())
+  const filtered = list.filter(ch => {
+      let splitter: string = ch.title ?? ch.id;
+      (splitter).toLowerCase().includes(search.toLowerCase())
+    }
   );
 
   return (

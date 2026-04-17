@@ -14,8 +14,10 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
         (child) => (isChannel(child) && !child.childrenStatus.children.some(obj => (obj.id === id)))
     );
 
-    const filtered = channels.filter(ch =>
-        (ch.title ?? ch.id).toLowerCase().includes(search.toLowerCase())
+    const filtered = channels.filter(ch => {
+            let splitter: string = ch.title ?? ch.id;
+            (splitter).toLowerCase().includes(search.toLowerCase())
+        }
     );
 
     return (
