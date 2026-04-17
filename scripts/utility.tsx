@@ -19,16 +19,18 @@ export function formattedDate(dateString: string): string {
 // for token authentication
 
 export async function login() {
-  const REDIRECT_URI = "https://arena-flow.org/auth-response";
+    const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
-  // Open synchronously — while still inside the user gesture
-  const popup = window.open("", "_blank", "width=600,height=700");
+    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) { 
+        console.error("Missing client ID");
+    }
 
-  const verifier = generateVerifier();
-  const challenge = await generateChallenge(verifier);
-  sessionStorage.setItem("arena_pkce_verifier", verifier);
+    const verifier = generateVerifier();
+    const challenge = await generateChallenge(verifier);
 
-  const url =
+    sessionStorage.setItem("arena_pkce_verifier", verifier);
+
+    const url =
       "https://www.are.na/oauth/authorize" +
       `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
       `&redirect_uri=${REDIRECT_URI}` +
@@ -37,12 +39,7 @@ export async function login() {
       `&code_challenge=${challenge}` +
       `&code_challenge_method=S256`;
 
-  if (popup) {
-      popup.location.href = url;
-  } else {
-      // Fallback if popup was still blocked (e.g. no gesture at all)
-      window.location.href = url;
-  }
+    window.open(url, "_blank", "width=600,height=700");
 }
 
 function generateVerifier() {
