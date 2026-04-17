@@ -178,7 +178,7 @@ export default function InfoPanel({
                     {isBlock(current) && <img src="block.svg" alt="Block"/>}
                     <a className="ellipse" href={linkOut} target="_blank">{current.title ?? current.id}</a> 
                     {(isBlock(current) || isChannel(current)) && 
-                      <a className="linkout loader" onClick={() => user ? setSelectOpen(true) : login()}>
+                      <a className="linkout loader" onClick={() => user ? handleSelectOpen(true) : login()}>
                         Connect
                       </a>
                     }

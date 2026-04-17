@@ -21,12 +21,9 @@ export function ChannelList({
 
     const channels = newNode ? 
     (Array.from(user.user.childrenStatus.children).filter(
-        (child) => (isChannel(child) && !newNode.connectionStatus.connections.some(obj => (obj.id === String(child.id))))
+        (child) => (isChannel(child) && !newNode.connectionStatus.connections.some(obj => (String(obj.id) === String(child.id))))
     )) : (user.user.childrenStatus.children);
-
-    console.log("user children filtered: ", channels);
-    console.log("new node connections:", newNode?.connectionStatus.connections);
-        
+    
     const filtered = channels.filter(ch => {
         return (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase());
     });
