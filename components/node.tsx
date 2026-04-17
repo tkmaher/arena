@@ -37,13 +37,13 @@ export default function BlockProp({ id, data }: NodeProps) {
       <Handle type="source" position={Position.Bottom} />
 
       <div
-        className="node-parent"
+        className={userIsOwner(data.object, user) ? "node-parent self" : "node-parent"}
         style={{
           border: isSelected ? `0.5px solid #1f1f1f` : isConnectedToSelected ? `0.5px dashed #1f1f1f` : `0.5px dashed #1f1f1f00`,
           position: "relative"
         }}
       >
-        <div className={userIsOwner(data.object, user) ? "node-body self" : "node-body"}>
+        <div className="node-body">
           {"childrenStatus" in data.object ? (
               <div className="node-title"><div>{data.object.title}</div>
                 {data.object.type == "User" && <img src="user.svg" alt="User"/>}

@@ -285,7 +285,7 @@ function CanvasInner() {
         >
         <p className="info-title">Remove all nodes?</p>
         <div className="confirm-toolbar">
-          <button onClick={engine.removeAllNodes} className="node-toolbar-button react-flow__controls popup-menu menu-title">
+          <button onClick={engine.removeAllNodes} className="node-toolbar-button react-flow__controls popup-menu menu-title danger">
             Yes
           </button>
           <button onClick={() => setDeleteAll(false)} className="node-toolbar-button react-flow__controls popup-menu menu-title">

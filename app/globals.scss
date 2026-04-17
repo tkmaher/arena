@@ -7,7 +7,8 @@
   --fg-muted:  #565656;
   --fg-sec:    #cfcfcf;
   --bg:        #1f1f1f;
-  --link:      #3b82f6;
+  --blue:      #3b82f6;
+  --red:         rgb(202, 77, 63);
 }
 
 body {
@@ -96,7 +97,7 @@ body {
 }
 
 .self {
-  background-color: #3b82f6 !important;
+  background-color: var(--blue) !important;
 }
 
 .node-toolbar-button {
@@ -184,6 +185,10 @@ body {
   display: flex; align-items: center; gap: 6px; flex-direction: row !important;
   transition: background-color 0.1s;
   &:hover { background-color: var(--fg-sec) !important; }
+}
+
+.danger {
+  &:hover { background-color: var(--red) !important; }
 }
 
 .popup-menu-input {
