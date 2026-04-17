@@ -19,11 +19,10 @@ export function ChannelList({
 
     const [search, setSearch] = useState("");
 
-    const channels = newNode ? 
-    (Array.from(user.user.childrenStatus.children).filter(
-        (child) => (isChannel(child) && !newNode.connectionStatus.connections.some(obj => (String(obj.id) === String(child.id))))
-    )) : (user.user.childrenStatus.children);
-    
+    const channels = (Array.from(user.user.childrenStatus.children).filter(
+        (child) => (isChannel(child) && (!newNode || !newNode.connectionStatus.connections.some(obj => (String(obj.id) === String(child.id)))))
+    ));
+
     const filtered = channels.filter(ch => {
         return (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase());
     });
