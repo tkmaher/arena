@@ -15,9 +15,8 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
     );
 
     const filtered = channels.filter(ch => {
-            (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase())
-        }
-    );
+        return (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase());
+    });
 
     return (
         <motion.div
@@ -97,10 +96,11 @@ export default function ChannelSelect({
 
     return (
         <motion.div
-            className="confirm about"
+            className="confirm"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
+            style={{left: 0}}
         >
             <p className="info-title">
                 Select a channel

@@ -36,9 +36,9 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
   const isComplete = "complete" in status ? status.complete : true;
 
   const filtered = list.filter(ch => {
-      (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase())
-    }
-  );
+    return (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase());
+  });
+  
 
   return (
     <motion.div
