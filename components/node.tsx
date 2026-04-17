@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import { HTMLDecode, isBlock, hasImage, isChannel, isUser, isGroup, isText } from "@/scripts/utility";
 import { useGraphActions } from "@/context/graphcontext";
@@ -15,6 +15,7 @@ interface NodeProps {
 export default function BlockProp({ id, data }: NodeProps) {
   const { removeNode, selectedOnGraph, user } = useGraphActions();
   const [imageLoaded, setImageLoaded] = useState(isBlock(data.object) && !hasImage(data.object));
+  const [changeBackground, setChangeBackground] = useState(false);
 
   const handleRemove = () => removeNode(id);
 
@@ -31,11 +32,14 @@ export default function BlockProp({ id, data }: NodeProps) {
     );
   }, [edges, id, selectedOnGraph]);
 
-  let background = "auto";
-  if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
-    background = "#32a852 !important";
-  else if (isUser(data.object) && user?.user.id === data.object.id)
-    background = "#32a852 !important";
+  useEffect(() => {
+    if (isBlock(data.object) || isChannel(data.object) && user?.user.id === data.object.owner.id)
+      setChangeBackground(true);
+    else if (isUser(data.object) && user?.user.id === data.object.id)
+      setChangeBackground(true);
+    else
+      setChangeBackground(false);
+  }, [user, data.object])
 
   return (
     <>
@@ -46,11 +50,10 @@ export default function BlockProp({ id, data }: NodeProps) {
         className="node-parent"
         style={{
           border: isSelected ? `0.5px solid #1f1f1f` : isConnectedToSelected ? `0.5px dashed #1f1f1f` : `0.5px dashed #1f1f1f00`,
-          position: "relative",
-          backgroundColor: background
+          position: "relative"
         }}
       >
-        <div className="node-body">
+        <div className={changeBackground ? "node-body self" : "node-body"}>
           {"childrenStatus" in data.object ? (
               <div className="node-title"><div>{data.object.title}</div>
                 {data.object.type == "User" && <img src="user.svg" alt="User"/>}

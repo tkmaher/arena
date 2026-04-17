@@ -174,7 +174,8 @@ export function useGraphEngine(): GraphEngineAPI {
             y: window.innerHeight / 2,
           });
       const gridPos = positions.current.allocate(centerFlow);
-      g.ensure(id, { object, gridPos, onCanvas: true });
+      const existing = g.get(id);
+      g.ensure(id, { object: existing?.object ?? object, gridPos, onCanvas: true });
       return true;
     },
     [screenToFlowPosition]
@@ -246,6 +247,8 @@ export function useGraphEngine(): GraphEngineAPI {
   
         if (!data && shown++ < INITIAL_CANVAS_LIMIT) mountNode(connId, conn, mousePos);
       }
+
+      g.link(sid(block.owner.id), nodeId);
   
       flush();
       return nodeId;
@@ -277,6 +280,7 @@ export function useGraphEngine(): GraphEngineAPI {
             shown++;
           }
         }
+        g.link(sid(channel.owner.id), nodeId);
       }
 
       flush();
@@ -533,6 +537,7 @@ export function useGraphEngine(): GraphEngineAPI {
         ...node.object,
         followersStatus: { complete: result.complete, page: result.page, followers: merged },
       } as User | Group);
+      for (const follower of result.followers) g.link(sid(nodeId), sid(follower.id));
       flush();
     },
     [flush]
@@ -553,6 +558,7 @@ export function useGraphEngine(): GraphEngineAPI {
         ...node.object,
         followingStatus: { complete: result.complete, page: result.page, following: merged },
       } as User);
+      for (const following of result.following) g.link(sid(following.id), sid(nodeId));
       flush();
     },
     [flush]

@@ -40,7 +40,6 @@ export interface User {
 
     type: string;
 
-    channelCount: number;
 
     followersStatus: FollowersStatus;
     followingStatus: FollowingStatus;
@@ -64,7 +63,6 @@ export interface Group {
 
     type: string;
 
-    channelCount: number;
 
     followersStatus: FollowersStatus;
     childrenStatus: ChildrenStatus; // TODO: How to get group members/

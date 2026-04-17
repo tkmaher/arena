@@ -215,8 +215,8 @@ export default function InfoPanel({
                       {current.id}
                     </a> · {
                       isChannel(current) ? ` Channel · ${current.itemCount} children` 
-                      : isUser(current) ? ` User · ${current.channelCount} channels` 
-                      : isGroup(current) ? ` Group · ${current.channelCount} channels` : " Block"}
+                      : isUser(current) ? ` User` 
+                      : isGroup(current) ? ` Group` : " Block"}
                   </span>
                   {current.description && <DescriptionRef html={current.description} />}
                 </>

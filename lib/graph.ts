@@ -184,11 +184,11 @@ export class Graph {
     return this.nodes.get(id)!;
   }
 
-  link(parentId: string, childId: string): void {
-    const p = this.ensure(parentId);
-    const c = this.ensure(childId);
-    p.children.add(childId);
-    c.parents.add(parentId);
+  link(parentId: string | number, childId: string | number): void {
+    const p = this.ensure(String(parentId));
+    const c = this.ensure(String(childId));
+    p.children.add(String(childId));
+    c.parents.add(String(parentId));
   }
 
   unlink(parentId: string, childId: string): void {

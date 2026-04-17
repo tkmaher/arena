@@ -45,7 +45,7 @@ interface FetchOptions {
 async function arenaFetch(url: string | URL, options: FetchOptions = {}): Promise<any> {
     const method = options.method ?? "GET";
     const original = new URL(url.toString());
-    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
+    const proxyUrl = original.href.replace(ARENA_BASE, ARENA_BASE);
 
     let response: Response;
     try {
@@ -416,58 +416,58 @@ async function parseBlock(data: any, performFetch: boolean): Promise<Block | nul
     let conn: ConnectionStatus = { connections: [], complete: false, page: 1 };
     if (performFetch) conn = await getConnections(data.id, "blocks", 1);
     const owner = await parseUser(data.user, false);
-
+  
     const block: Block = {
-        id: data.id,
-        date: formattedDate(data.created_at),
-        title: data.title ?? null,
-        description: data.description ? data.description.html : null,
-        owner,
-        type: data.type,
-        connectionStatus: conn,
+      id:               data.id,
+      date:             formattedDate(data.created_at),
+      title:            data.title ?? null,
+      description:      data.description ? data.description.html : null,
+      owner,
+      type:             data.type,
+      connectionStatus: conn,
     };
-
+  
     switch (data.type) {
-        case "Text": {
-            const text = block as TextBlock;
-            text.content = data.content.html;
-            return text;
-        }
-        case "Image": {
-            const image = block as ImageBlock;
-            image.thumbnailUrl = data.image.small.src;
-            image.imageUrl     = data.image.large.src;
-            return image;
-        }
-        case "Link": {
-            const link = block as LinkBlock;
-            link.url          = data.source.url;
-            link.urlTitle     = data.source.title;
-            link.thumbnailUrl = data.image ? data.image.small.src : null;
-            link.imageUrl     = data.image ? data.image.large.src : null;
-            return link;
-        }
-        case "Embed": {
-            const embed = block as EmbedBlock;
-            embed.url          = data.source.url;
-            embed.urlTitle     = data.source.title;
-            embed.thumbnailUrl = data.image?.small?.src ?? null;
-            embed.embed        = data.embed.html;
-            return embed;
-        }
-        case "Attachment": {
-            const attachment = block as AttachmentBlock;
-            attachment.filename     = data.attachment.filename;
-            attachment.url          = data.attachment.url;
-            attachment.thumbnailUrl = data.image ? data.image.small.src : null;
-            attachment.imageUrl     = data.image ? data.image.large.src : null;
-            return attachment;
-        }
-        default:
-            console.warn(`[parseBlock] Unrecognised block type "${data.type}" for block ${data.id} — skipping.`);
-            return null;
+      case "Text": {
+        const text = block as TextBlock;
+        text.content = data.content.html;
+        return text;
+      }
+      case "Image": {
+        const image = block as ImageBlock;
+        image.thumbnailUrl = data.image.small.src;
+        image.imageUrl     = data.image.large.src;
+        return image;
+      }
+      case "Link": {
+        const link = block as LinkBlock;
+        link.url          = data.source.url;
+        link.urlTitle     = data.source.title;
+        link.thumbnailUrl = data.image ? data.image.small.src : null;
+        link.imageUrl     = data.image ? data.image.large.src : null;
+        return link;
+      }
+      case "Embed": {
+        const embed = block as EmbedBlock;
+        embed.url          = data.source.url;
+        embed.urlTitle     = data.source.title;
+        embed.thumbnailUrl = data.image?.small?.src ?? null;
+        embed.embed        = data.embed.html;
+        return embed;
+      }
+      case "Attachment": {
+        const attachment = block as AttachmentBlock;
+        attachment.filename     = data.attachment.filename;
+        attachment.url          = data.attachment.url;
+        attachment.thumbnailUrl = data.image ? data.image.small.src : null;
+        attachment.imageUrl     = data.image ? data.image.large.src : null;
+        return attachment;
+      }
+      default:
+        console.warn(`[parseBlock] Unrecognised block type "${data.type}" for block ${data.id} — returning base block.`);
+        return block;
     }
-}
+  }
 
 async function parseChannel(data: any, performFetch: boolean): Promise<Channel> {
     let children: ChildrenStatus   = { children: [],   complete: false, page: 1 };
@@ -524,7 +524,6 @@ async function parseUser(data: any, performFetch: boolean): Promise<User> {
         imageUrl:     data.avatar ?? null,
         description:  data.bio ? data.bio.html : null,
         type: "User",
-        channelCount: data.counts.channels,
         followingStatus: following,
         childrenStatus:  children,
         followersStatus: followers,
@@ -550,7 +549,6 @@ async function parseGroup(data: any, performFetch: boolean): Promise<Group> {
         imageUrl:     data.avatar ?? null,
         description:  data.bio ? data.bio.html : null,
         type: "Group",
-        channelCount: data.counts.channels,
         childrenStatus:  children,
         followersStatus: followers,
     };
