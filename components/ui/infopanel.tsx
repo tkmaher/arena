@@ -79,6 +79,7 @@ export default function InfoPanel({
 
   const handleSelectOpen = useCallback((val: boolean) => {
     setSelectOpen(val);
+    setImageOpen(val);
   }, [setSelectOpen])
 
   const toggleNode     = (node: Block | Channel | User | Group) =>
