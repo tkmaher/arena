@@ -11,7 +11,7 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
     const [search, setSearch] = useState("");
 
     const channels = Array.from(user.user.childrenStatus.children).filter(
-        (child) => isChannel(child) && !child.childrenStatus.children.some(obj => obj.id === id)
+        (child) => (isChannel(child) && !child.childrenStatus.children.some(obj => (obj.id === id)))
     );
 
     const filtered = channels.filter(ch =>
