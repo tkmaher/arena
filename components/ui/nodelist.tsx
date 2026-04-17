@@ -36,7 +36,7 @@ export default function NodeList({ list, status, checkNodeVisible, onToggle, onS
   const isComplete = "complete" in status ? status.complete : true;
 
   const filtered = list.filter(ch => {
-      String(ch.title ?? ch.id ?? "").toLowerCase().includes(search.toLowerCase())
+      (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase())
     }
   );
 

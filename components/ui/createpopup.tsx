@@ -132,7 +132,7 @@ export default function CreatePopup({
                 className="text-input"
             />}
 
-            {!isChannel && 
+            {isChannel && 
                 <select 
                     id="choice-select" 
                     value={visibility} 

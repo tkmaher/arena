@@ -15,7 +15,7 @@ export function ChannelList({ id, selected, toggleChannel }: { id: string, selec
     );
 
     const filtered = channels.filter(ch => {
-            String(ch.title ?? ch.id ?? "").toLowerCase().includes(search.toLowerCase())
+            (ch.title ?? ch.id.toString()).toLowerCase().includes(search.toLowerCase())
         }
     );
 
