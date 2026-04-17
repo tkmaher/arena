@@ -174,6 +174,9 @@ function CanvasInner() {
         return;
       }
       engine.removeNode(selectedId);
+      const id = engine.getNearestNode(selectedId) ?? null;
+      setSelectedId(String(id));
+      engine.setSelectedNode(String(id));
     }
   }, [deleteAll, selectedId, imageViewerOpen, about, uploader, createPopupOpen]);
 

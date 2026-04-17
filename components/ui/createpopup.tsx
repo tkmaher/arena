@@ -50,7 +50,7 @@ export default function CreatePopup({
     const handleCreate = () => {
         if (!isChannel) {
             if (body == "") {
-                alert("Please enter the block contents.");
+                alert("Please specify the block contents.");
                 return;
             } else if (selected.size == 0) {
                 alert("Please select at least one channel.");
@@ -108,7 +108,6 @@ export default function CreatePopup({
                 value={title}
                 onChange={e => setTitle(e.target.value)}
                 placeholder="Title"
-                autoFocus
                 style={{marginBottom: "0.8em"}}
                 className="text-input"
             />
