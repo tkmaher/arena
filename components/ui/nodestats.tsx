@@ -40,9 +40,6 @@ export default function NodeStats({ checkNodeVisible, makeNodeVisible, setSelect
                     onSelect={handleSelect}
                 />
             </div>
-            <div className="react-flow__controls popup-menu node-toolbar-button stat-label">
-                Nodes: <b>{engine.nodes.length}</b> | Edges: <b>{engine.edges.length}</b>
-            </div>
             <div
                 className="info-section-scroll react-flow__controls info-stats"
                 style={{ height: isOpen ? "300px" : "fit-content", transition: "height 1s ease-in-out" }}
