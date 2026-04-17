@@ -57,11 +57,13 @@ export default function About({setAbout}: {setAbout: (val: boolean) => void}) {
                     <a href="https://github.com/nicschumann/arena-connectome" target="_blank">
                         https://github.com/nicschumann/arena-connectome
                     </a>
-                    
+                    <a href="https://arena-infinity.vercel.app/canvas" target="_blank">
+                        https://arena-infinity.vercel.app/canvas
+                    </a>
                 </div>
                 <br/>
                 <em style={{opacity: 0.5}}>
-                    Built by <a href="https://otherseas1.com" target="_blank">otherseas1</a>
+                    Built by <a href="https://otherseas1.com" target="_blank">otherseas1</a>. If you find any bugs, please report them to <a href="mailto:os@otherseas1.com" target="_blank">os@otherseas1.com</a>.
                 </em>
             </div>
             <br/>
