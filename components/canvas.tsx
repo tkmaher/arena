@@ -219,7 +219,6 @@ function CanvasInner() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onPaneClick={onPaneClick}
-        fitView
         minZoom={0.1}
         maxZoom={4}
         panOnDrag
@@ -239,6 +238,7 @@ function CanvasInner() {
         onNodeDragStop={onDrag}
         autoPanOnNodeFocus={true}
         autoPanOnNodeDrag={false}
+        
         deleteKeyCode={null} 
         disableKeyboardA11y={true}
         selectionKeyCode={null} 
