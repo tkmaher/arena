@@ -10,6 +10,7 @@ function SearchComponent() {
     <AuthResponseClient
         code={searchParams.get('code')}
         error={searchParams.get('error')}
+        state={searchParams.get('state')}
     />
   )
 }
