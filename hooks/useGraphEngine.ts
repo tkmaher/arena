@@ -783,10 +783,10 @@ export function useGraphEngine(): GraphEngineAPI {
           register(follower);
         }
       }
-      if (!g.isOnCanvas(obj.id)) mountNode(obj.id, obj);
     };
-  
+    
     registerRecursive(auth.user);
+    if (!g.isOnCanvas(auth.user.id)) mountNode(auth.user.id, auth.user);
   
     for (const child of auth.user.childrenStatus.children) registerRecursive(child);
     for (const item of auth.user.followingStatus.following) registerRecursive(item);
