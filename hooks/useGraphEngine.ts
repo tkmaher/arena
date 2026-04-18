@@ -783,6 +783,7 @@ export function useGraphEngine(): GraphEngineAPI {
           register(follower);
         }
       }
+      if (!g.isOnCanvas(obj.id)) mountNode(obj.id, obj);
     };
   
     registerRecursive(auth.user);
