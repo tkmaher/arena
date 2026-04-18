@@ -785,8 +785,8 @@ export function useGraphEngine(): GraphEngineAPI {
       }
     };
     
-    registerRecursive(auth.user);
     addUserNode(auth.user.id, undefined, auth.user);
+    registerRecursive(auth.user);
     
     let shown = 0;
     for (const child of auth.user.childrenStatus.children) {

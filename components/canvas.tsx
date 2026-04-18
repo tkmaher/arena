@@ -72,7 +72,12 @@ function CanvasInner() {
   
   useEffect(() => {
     engine.hydrateFromAuthUser().then(res => {
-      if (res) setAuthUser(res);
+      if (res) {
+        setAuthUser(res);
+        setSelectedId(String(res.user.id));
+        engine.setSelectedNode(String(res.user.id)); 
+        setInfoOpen(true);                          
+      }
     });
   }, []);
   
