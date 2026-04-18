@@ -19,27 +19,30 @@ export function formattedDate(dateString: string): string {
 // for token authentication
 
 export async function login() {
-    const REDIRECT_URI = "https://arena-flow.org/auth-response";
+  const REDIRECT_URI = "https://arena-flow.org/auth-response";
 
-    if (!process.env.NEXT_PUBLIC_ARENA_CLIENT_ID) { 
-        console.error("Missing client ID");
-    }
+  // Open synchronously — while still inside the user gesture
+  const popup = window.open("", "_blank", "width=600,height=700");
 
-    const verifier = generateVerifier();
-    const challenge = await generateChallenge(verifier);
+  const verifier = generateVerifier();
+  const challenge = await generateChallenge(verifier);
+  sessionStorage.setItem("arena_pkce_verifier", verifier);
 
-    sessionStorage.setItem("arena_pkce_verifier", verifier);
+  const url =
+    "https://www.are.na/oauth/authorize" +
+    `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
+    `&redirect_uri=${REDIRECT_URI}` +
+    `&response_type=code` +
+    `&scope=write` +
+    `&code_challenge=${challenge}` +
+    `&code_challenge_method=S256` +
+    `&state=${encodeURIComponent(verifier)}`; 
 
-    const url =
-      "https://www.are.na/oauth/authorize" +
-      `?client_id=${process.env.NEXT_PUBLIC_ARENA_CLIENT_ID}` +
-      `&redirect_uri=${REDIRECT_URI}` +
-      `&response_type=code` +
-      `&scope=write` +
-      `&code_challenge=${challenge}` +
-      `&code_challenge_method=S256`;
-
-    window.open(url, "_blank", "width=600,height=700");
+  if (popup) {
+      popup.location.href = url;
+  } else {
+      window.location.href = url;
+  }
 }
 
 function generateVerifier() {

@@ -5,9 +5,11 @@ import { useEffect } from "react";
 export default function AuthResponseClient({
   code,
   error,
+  state
 }: {
   code: string | null;
   error: string | null;
+  state: string | null;
 }) {
   useEffect(() => {
     async function run() {
@@ -43,7 +45,7 @@ export default function AuthResponseClient({
           return;
         }
 
-        const verifier = sessionStorage.getItem("arena_pkce_verifier");
+        const verifier = state ? decodeURIComponent(state) : null;
 
         console.log("Exchanging code for token with verifier", verifier);
 
