@@ -65,6 +65,8 @@ function CanvasInner() {
     if (res) {
       setAuthUser(res);
       setSelectedId(res.user.id);
+      engine.setSelectedNode(res.user.id);
+      setInfoOpen(true);                   
     }
   }, []);
   
