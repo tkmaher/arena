@@ -798,7 +798,7 @@ export function useGraphEngine(): GraphEngineAPI {
   
     flush();
     return auth;
-  }, [flush, mountNode]);
+  }, [flush, mountNode, addUserNode]);
 
   // ── Return ────────────────────────────────────────────────────────────────
 
