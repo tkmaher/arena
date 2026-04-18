@@ -61,21 +61,19 @@ function CanvasInner() {
       body: JSON.stringify({ token }),
     });
   
-    const res = await engine.hydrateFromAuthUser(); // no token argument needed anymore
+    const res = await engine.hydrateFromAuthUser(); 
     if (res) {
       setAuthUser(res);
+      setSelectedId(res.user.id);
     }
   }, []);
   
   useEffect(() => {
-    // On mount, check if a session already exists
     engine.hydrateFromAuthUser().then(res => {
       if (res) setAuthUser(res);
     });
   }, []);
   
-  // FLnDTqen2Qi0YymoOXxKLhM9dMTDMaQ9g19VztL4Pko
-
   const selectedNode = useMemo(
     () => engine.nodes.find(n => n.id === selectedId),
     [engine.nodes, selectedId]
@@ -85,7 +83,6 @@ function CanvasInner() {
     setMenuOrigin({ x: event.clientX, y: event.clientY });
   }, []);
 
-  // Pass selectedId so the engine can wire the edge on toggle-on
   const makeNodeVisible = useCallback(
     (data: ToggleOptions) => {
       engine.toggleNode(data);
