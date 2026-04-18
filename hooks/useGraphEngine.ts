@@ -787,8 +787,12 @@ export function useGraphEngine(): GraphEngineAPI {
     
     registerRecursive(auth.user);
     addUserNode(auth.user.id, undefined, auth.user);
-  
-    for (const child of auth.user.childrenStatus.children) registerRecursive(child);
+    
+    let shown = 0;
+    for (const child of auth.user.childrenStatus.children) {
+      registerRecursive(child);
+      if (shown++ < INITIAL_CANVAS_LIMIT) mountNode(child.id, child);
+    }
     for (const item of auth.user.followingStatus.following) registerRecursive(item);
     for (const follower of auth.user.followersStatus.followers) registerRecursive(follower);
   
