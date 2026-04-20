@@ -401,6 +401,7 @@ body {
   font-weight: 300; 
   display: flex; 
   gap: 0.4em;
+  max-width: 100%;
   .username {
 
     cursor: pointer;
@@ -524,6 +525,7 @@ input[type="checkbox"] {
   cursor: pointer; display: grid; place-content: center;
   transition: all 0.1s; align-self: center;
   &:checked { background-color: var(--bg); border-color: var(--bg); }
+  margin: 1px;
 }
 
 /* ─── Mobile ────────────────────────────────────── */
@@ -536,7 +538,6 @@ input[type="checkbox"] {
   .info-box { width: 100vw; }
   .info-stats { display: none; }
   .tooltip { display: none; }
-  .collections-grid { flex-direction: column; }
 
   .stat-label, .info-stats { width: 50vw; max-width: 50vw; }
 
