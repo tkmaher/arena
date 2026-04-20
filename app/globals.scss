@@ -559,23 +559,30 @@ input[type="checkbox"] {
 }
 
 @media (hover: hover) {
-  .node-parent:hover {
-    transform: scale(1.02);
-  }
+  .node-parent:hover { transform: scale(1.02); }
   .button:hover { transform: scale(1.2); cursor: pointer; }
   .delete-all:hover { content: url("../public/deleteallhover.svg"); }
-  .about > .examples > .example-box:hover { transform: scale(1.05); cursor: pointer; }
+  .about .examples .example-box:hover { transform: scale(1.05); cursor: pointer; }
   .popup-menu:hover { background-color: var(--fg-sec) !important; }
   .danger:hover { background-color: var(--red) !important; }
-  .logo-container:hover {
-    .logo-hover {
-      clip-path: inset(0 0 0 0);
-    }
-  }
-  .info-sub > .username:hover { background-color: var(--fg-sec); }
-  .checklist > a:hover { background-color: var(--fg-sec); }
+  .logo-container:hover { .logo-hover { clip-path: inset(0 0 0 0); } }
+  .info-sub .username:hover { background-color: var(--fg-sec); }
+  .checklist a:hover { background-color: var(--fg-sec); }
   .loader:hover { background-color: var(--fg-sec); }
   input[type="checkbox"]:hover { background-color: var(--fg-sec); }
-  .login > em:hover { background-color: var(--fg-sec); }
+  .login em:hover { background-color: var(--fg-sec); }
 
 } 
+
+@media (hover: none) {
+  .node-parent:active         { transform: scale(1.02); }
+  .button:active              { transform: scale(1.2); cursor: pointer; }
+  .about .examples .example-box:active { transform: scale(1.05); cursor: pointer; }
+  .popup-menu:active          { background-color: var(--fg-sec) !important; }
+  .danger:active              { background-color: var(--red) !important; }
+  .info-sub .username:active  { background-color: var(--fg-sec); }
+  .checklist a:active         { background-color: var(--fg-sec); }
+  .loader:active              { background-color: var(--fg-sec); }
+  input[type="checkbox"]:active { background-color: var(--fg-sec); }
+  .login em:active          { background-color: var(--fg-sec); }
+}
