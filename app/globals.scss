@@ -68,9 +68,7 @@ body {
   overflow: hidden; box-sizing: border-box;
   transition: border 0.1s;
   transition: transform 0.1s;
-  &:hover {
-    transform: scale(1.02);
-  }
+
 }
 
 .node-body {
@@ -119,7 +117,7 @@ body {
 
 .button {
   transition: transform 0.2s;
-  &:hover { transform: scale(1.2); cursor: pointer; }
+  
 }
 
 /* ─── Misc UI ─────────────────────────────────────── */
@@ -127,7 +125,7 @@ body {
 .delete-all {
   cursor: pointer;
   content: url("../public/deleteall.svg");
-  &:hover { content: url("../public/deleteallhover.svg"); }
+  
 }
 
 .svg { max-height: 18px; padding: 0 !important; height: auto !important; width: auto !important; }
@@ -165,7 +163,7 @@ body {
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 0 2px rgba(0,0,0,.38) !important;
       transition: transform 0.1s;
-      &:hover { transform: scale(1.05); cursor: pointer; }
+      
     }
     .solid  { border: 0.5px solid var(--bg); }
     .dotted { border: 0.5px dashed var(--bg); }
@@ -184,11 +182,6 @@ body {
   white-space: nowrap; cursor: default;
   display: flex; align-items: center; gap: 6px; flex-direction: row !important;
   transition: background-color 0.1s;
-  &:hover { background-color: var(--fg-sec) !important; }
-}
-
-.danger {
-  &:hover { background-color: var(--red) !important; }
 }
 
 .popup-menu-input {
@@ -336,11 +329,7 @@ body {
     transition: clip-path 0.3s ease;
     cursor: pointer;
   }
-  &:hover {
-    .logo-hover {
-      clip-path: inset(0 0 0 0);
-    }
-  }
+  
   height: 5dvh;
 }
 
@@ -415,7 +404,7 @@ body {
   .username {
 
     cursor: pointer;
-    &:hover { background-color: var(--fg-sec); }
+    
   }
 }
 .info-id       { font-size: 11px; opacity: 0.5; }
@@ -479,7 +468,6 @@ body {
     flex-grow: 1; cursor: pointer;
 
     text-overflow: ellipsis; overflow: hidden; white-space: nowrap;
-    &:hover { background-color: var(--fg-sec); }
   }
   input, button { cursor: pointer; }
 }
@@ -505,7 +493,6 @@ body {
   padding: 0.2em 0.5em; border: 0.5px solid var(--bg);
   flex-shrink: 0;
   transition: background-color 0.1s;
-  &:hover { background-color: var(--fg-sec); }
   &.disabled { cursor: not-allowed; opacity: 0.5; pointer-events: none; }
 }
 
@@ -536,7 +523,6 @@ input[type="checkbox"] {
   background-color: var(--fg);
   cursor: pointer; display: grid; place-content: center;
   transition: all 0.1s; align-self: center;
-  &:hover { background-color: var(--fg-sec); }
   &:checked { background-color: var(--bg); border-color: var(--bg); }
 }
 
@@ -569,6 +555,27 @@ input[type="checkbox"] {
     cursor: pointer;
     width: 100%;
     display: block;
-    &:hover { background-color: var(--fg-sec); }
   }
 }
+
+@media (hover: hover) {
+  .node-parent:hover {
+    transform: scale(1.02);
+  }
+  .button:hover { transform: scale(1.2); cursor: pointer; }
+  .delete-all:hover { content: url("../public/deleteallhover.svg"); }
+  .about > .examples > .example-box:hover { transform: scale(1.05); cursor: pointer; }
+  .popup-menu:hover { background-color: var(--fg-sec) !important; }
+  .danger:hover { background-color: var(--red) !important; }
+  .logo-container:hover {
+    .logo-hover {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+  .info-sub > .username:hover { background-color: var(--fg-sec); }
+  .checklist > a:hover { background-color: var(--fg-sec); }
+  .loader:hover { background-color: var(--fg-sec); }
+  input[type="checkbox"]:hover { background-color: var(--fg-sec); }
+  .login > em:hover { background-color: var(--fg-sec); }
+
+} 
