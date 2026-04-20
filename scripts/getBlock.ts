@@ -46,7 +46,7 @@ interface FetchOptions {
 async function arenaFetch(url: string | URL, options: FetchOptions = {}): Promise<any> {
     const method = options.method ?? "GET";
     const original = new URL(url.toString());
-    const proxyUrl = original.href.replace(ARENA_BASE, ARENA_BASE);
+    const proxyUrl = original.href.replace(ARENA_BASE, PROXY_BASE);
 
     let response: Response;
     try {
